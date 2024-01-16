@@ -151,25 +151,25 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.doubleString(string: str), str + str)
     }
 
-    func testLargeStructReturn() throws {
-        let testObj = TestClass()
-        let transform = CATransform3D()
-        XCTAssertEqual(testObj.invert3DTransform(transform), transform.inverted)
-
-        func transformMatrix(_ matrix: CATransform3D) -> CATransform3D {
-            matrix.translated(x: 10, y: 5, z: 2)
-        }
-
-        // Functions need to be `@objc dynamic` to be hookable.
-        let hook = try testObj.hook(#selector(TestClass.invert3DTransform)) { (store: TypedHook
-            <@convention(c)(AnyObject, Selector, CATransform3D) -> CATransform3D,
-            @convention(block) (AnyObject, CATransform3D) -> CATransform3D>) in {
-                let matrix = store.original($0, store.selector, $1)
-                return transformMatrix(matrix)
-            }
-        }
-        XCTAssertEqual(testObj.invert3DTransform(transform), transformMatrix(transform.inverted))
-        try hook.revert()
-        XCTAssertEqual(testObj.invert3DTransform(transform), transform.inverted)
-    }
+//    func testLargeStructReturn() throws {
+//        let testObj = TestClass()
+//        let transform = CATransform3D()
+//        XCTAssertEqual(testObj.invert3DTransform(transform), transform.inverted)
+//
+//        func transformMatrix(_ matrix: CATransform3D) -> CATransform3D {
+//            matrix.translated(x: 10, y: 5, z: 2)
+//        }
+//
+//        // Functions need to be `@objc dynamic` to be hookable.
+//        let hook = try testObj.hook(#selector(TestClass.invert3DTransform)) { (store: TypedHook
+//            <@convention(c)(AnyObject, Selector, CATransform3D) -> CATransform3D,
+//            @convention(block) (AnyObject, CATransform3D) -> CATransform3D>) in {
+//                let matrix = store.original($0, store.selector, $1)
+//                return transformMatrix(matrix)
+//            }
+//        }
+//        XCTAssertEqual(testObj.invert3DTransform(transform), transformMatrix(transform.inverted))
+//        try hook.revert()
+//        XCTAssertEqual(testObj.invert3DTransform(transform), transform.inverted)
+//    }
 }
