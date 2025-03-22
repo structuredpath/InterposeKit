@@ -2,7 +2,6 @@
 
 [![SwiftPM](https://github.com/steipete/InterposeKit/workflows/SwiftPM/badge.svg)](https://github.com/steipete/InterposeKit/actions?query=workflow%3ASwiftPM)
 [![xcodebuild](https://github.com/steipete/InterposeKit/workflows/xcodebuild/badge.svg)](https://github.com/steipete/InterposeKit/actions?query=workflow%3Axcodebuild)
-[![pod lib lint](https://github.com/steipete/InterposeKit/workflows/pod%20lib%20lint/badge.svg)](https://github.com/steipete/InterposeKit/actions?query=workflow%3A%22pod+lib+lint%22)
 ![Xcode 11.4+](https://img.shields.io/badge/Xcode-11.4%2B-blue.svg)
 ![Swift 5.2+](https://img.shields.io/badge/Swift-5.2%2B-orange.svg)
 <!--
@@ -157,10 +156,6 @@ Building InterposeKit requires Xcode 11.4+ or a Swift 5.2+ toolchain with the Sw
 
 Add `.package(url: "https://github.com/steipete/InterposeKit.git", from: "0.0.1")` to your
 `Package.swift` file's `dependencies`.
-
-### CocoaPods
-
-[InterposeKit is on CocoaPods](https://cocoapods.org/pods/InterposeKit). Add `pod 'InterposeKit'` to your `Podfile`.
 
 ### Carthage
 
