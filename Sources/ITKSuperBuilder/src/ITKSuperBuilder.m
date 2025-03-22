@@ -6,7 +6,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NSString *const SuperBuilderErrorDomain = @"com.steipete.superbuilder";
+NSString *const ITKSuperBuilderErrorDomain = @"com.steipete.InterposeKit";
 
 void msgSendSuperTrampoline(void);
 void msgSendSuperStretTrampoline(void);
@@ -37,9 +37,9 @@ static IMP ITKGetTrampolineForTypeEncoding(__unused const char *typeEncoding) {
 }
 
 #define ERROR_AND_RETURN(CODE, STRING)\
-if (error) { *error = [NSError errorWithDomain:SuperBuilderErrorDomain code:CODE userInfo:@{NSLocalizedDescriptionKey: STRING}];} return NO;
+if (error) { *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain code:CODE userInfo:@{NSLocalizedDescriptionKey: STRING}];} return NO;
 
-@implementation SuperBuilder
+@implementation ITKSuperBuilder
 
 + (BOOL)isSupportedArchitecture {
 #if defined (__arm64__) || defined (__x86_64__)

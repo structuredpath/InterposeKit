@@ -17,10 +17,10 @@ let package = Package(
         ),
     ],
     targets: [
-        .target(name: "SuperBuilder"),
+        .target(name: "ITKSuperBuilder"),
         .target(
             name: "InterposeKit",
-            dependencies: ["SuperBuilder"]
+            dependencies: ["ITKSuperBuilder"]
         ),
         .testTarget(
             name: "InterposeKitTests",

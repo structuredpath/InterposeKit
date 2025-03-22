@@ -44,11 +44,13 @@ There are a few important details:
 
 @see https://steipete.com/posts/calling-super-at-runtime/
 */
-@interface SuperBuilder : NSObject
+@interface ITKSuperBuilder : NSObject
 
 /// Adds an empty super implementation instance method to originalClass.
 /// If a method already exists, this will return NO and a descriptive error message.
-+ (BOOL)addSuperInstanceMethodToClass:(Class)originalClass selector:(SEL)selector error:(NSError **)error;
++ (BOOL)addSuperInstanceMethodToClass:(Class)originalClass
+                             selector:(SEL)selector
+                                error:(NSError **)error;
 
 /// Check if the instance method in `originalClass` is a super trampoline.
 + (BOOL)isSuperTrampolineForClass:(Class)originalClass selector:(SEL)selector;
@@ -63,9 +65,9 @@ There are a few important details:
 
 @end
 
-NSString *const SuperBuilderErrorDomain;
+NSString *const ITKSuperBuilderErrorDomain;
 
-typedef NS_ERROR_ENUM(SuperBuilderErrorDomain, SuperBuilderErrorCode) {
+typedef NS_ERROR_ENUM(ITKSuperBuilderErrorDomain, ITKSuperBuilderErrorCode) {
     SuperBuilderErrorCodeArchitectureNotSupported,
     SuperBuilderErrorCodeNoSuperClass,
     SuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable,

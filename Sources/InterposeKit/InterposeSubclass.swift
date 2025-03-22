@@ -1,5 +1,5 @@
 import Foundation
-import SuperBuilder
+import ITKSuperBuilder
 
 class InterposeSubclass {
 
@@ -86,12 +86,12 @@ class InterposeSubclass {
     }
 
     class var supportsSuperTrampolines: Bool {
-        NSClassFromString("SuperBuilder")?.value(forKey: "isSupportedArchitecture") as? Bool ?? false
+        ITKSuperBuilder.isSupportedArchitecture
     }
 
     func addSuperTrampoline(selector: Selector) {
         do {
-            try SuperBuilder.addSuperInstanceMethod(to: dynamicClass, selector: selector)
+            try ITKSuperBuilder.addSuperInstanceMethod(to: dynamicClass, selector: selector)
 
             let imp = class_getMethodImplementation(dynamicClass, selector)!
             Interpose.log("Added super for -[\(dynamicClass).\(selector)]: \(imp)")
