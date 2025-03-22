@@ -1,8 +1,5 @@
 import Foundation
-
-#if !os(Linux)
 import MachO.dyld
-#endif
 
 // MARK: Interpose Class Load Watcher
 

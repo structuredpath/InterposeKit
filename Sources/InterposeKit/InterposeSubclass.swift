@@ -76,9 +76,7 @@ class InterposeSubclass {
         return nil
     }
 
-    #if !os(Linux)
     private func replaceGetClass(in class: AnyClass, decoy perceivedClass: AnyClass) {
-        // crashes on linux
         let getClass: @convention(block) (AnyObject) -> AnyClass = { _ in
             perceivedClass
         }
@@ -101,9 +99,4 @@ class InterposeSubclass {
             Interpose.log("Failed to add super implementation to -[\(dynamicClass).\(selector)]: \(error)")
         }
     }
-    #else
-    func addSuperTrampoline(selector: Selector) { }
-    class var supportsSuperTrampolines: Bool { return false }
-    private func replaceGetClass(in class: AnyClass, decoy perceivedClass: AnyClass) {}
-    #endif
 }
