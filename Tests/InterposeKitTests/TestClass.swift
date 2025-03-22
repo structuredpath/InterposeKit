@@ -10,8 +10,6 @@ public func == (lhs: CATransform3D, rhs: CATransform3D) -> Bool {
     return CATransform3DEqualToTransform(lhs, rhs)
 }
 
-extension CATransform3D: Equatable { }
-
 public extension CATransform3D {
 
     // swiftlint:disable:next identifier_name

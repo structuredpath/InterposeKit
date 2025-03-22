@@ -171,12 +171,5 @@ final class InterposeKitTests: InterposeKitTestCase {
 
         func keep() { }
     }
-
-    static var allTests = [
-        ("testClassOverrideAndRevert", testClassOverrideAndRevert),
-        ("testSubclassOverride", testSubclassOverride),
-        ("testInterposedCleanup", testInterposedCleanup),
-        ("testRevertedCleanup", testRevertedCleanup),
-        ("testImpRemoveBlockWorks", testImpRemoveBlockWorks)
-    ]
+    
 }
