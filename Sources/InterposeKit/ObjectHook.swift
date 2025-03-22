@@ -142,7 +142,7 @@ extension Interpose {
                 //
                 // This codepath will be hit if the super helper is missing.
                 // We could recreate the whole class at runtime and rebuild all hooks,
-                // but that seesm excessive when we have a trampoline at our disposal.
+                // but that seems excessive when we have a trampoline at our disposal.
                 Interpose.log("Reset of -[\(`class`).\(selector)] not supported. No IMP")
                 throw InterposeError.resetUnsupported("No Original IMP found. SuperBuilder missing?")
             }

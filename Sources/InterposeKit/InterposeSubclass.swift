@@ -88,7 +88,7 @@ class InterposeSubclass {
     }
 
     class var supportsSuperTrampolines: Bool {
-        NSClassFromString("SuperBuilder")?.value(forKey: "isSupportedArchitecure") as? Bool ?? false
+        NSClassFromString("SuperBuilder")?.value(forKey: "isSupportedArchitecture") as? Bool ?? false
     }
 
     func addSuperTrampoline(selector: Selector) {

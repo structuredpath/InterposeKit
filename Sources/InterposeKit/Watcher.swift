@@ -7,7 +7,7 @@ import MachO.dyld
 // MARK: Interpose Class Load Watcher
 
 extension Interpose {
-    // Separate definitions to have more eleveant calling syntax when completion is not needed.
+    // Separate definitions to have more relevant calling syntax when completion is not needed.
 
     /// Interpose a class once available. Class is passed via `classParts` string array.
     @discardableResult public class func whenAvailable(_ classParts: [String],

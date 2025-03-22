@@ -54,11 +54,11 @@ There are a few important details:
 + (BOOL)isSuperTrampolineForClass:(Class)originalClass selector:(SEL)selector;
 
 /// x86-64 and ARM64 are currently supported.
-@property(class, readonly) BOOL isSupportedArchitecure;
+@property(class, readonly) BOOL isSupportedArchitecture;
 
 #if (defined (__arm64__) || defined (__x86_64__)) && __APPLE__
 /// Helper that does not exist if architecture is not supported.
-+ (BOOL)isCompileTimeSupportedArchitecure;
++ (BOOL)isCompileTimeSupportedArchitecture;
 #endif
 
 @end

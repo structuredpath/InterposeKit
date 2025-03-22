@@ -19,7 +19,7 @@ public class AnyHook {
 
     /// The possible task states
     public enum State: Equatable {
-        /// The task is prepared to be nterposed.
+        /// The task is prepared to be interposed.
         case prepared
 
         /// The method has been successfully interposed.
@@ -51,7 +51,7 @@ public class AnyHook {
         return self
     }
 
-    /// Revert the interpose hoook.
+    /// Revert the interpose hook.
     @discardableResult public func revert() throws -> AnyHook {
         try execute(newState: .prepared) { try resetImplementation() }
         return self

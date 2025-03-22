@@ -41,7 +41,7 @@ if (error) { *error = [NSError errorWithDomain:SuperBuilderErrorDomain code:CODE
 
 @implementation SuperBuilder
 
-+ (BOOL)isSupportedArchitecure {
++ (BOOL)isSupportedArchitecture {
 #if defined (__arm64__) || defined (__x86_64__)
     return YES;
 #else
@@ -50,8 +50,8 @@ if (error) { *error = [NSError errorWithDomain:SuperBuilderErrorDomain code:CODE
 }
 
 #if defined (__arm64__) || defined (__x86_64__)
-+ (BOOL)isCompileTimeSupportedArchitecure {
-    return [self isSupportedArchitecure];
++ (BOOL)isCompileTimeSupportedArchitecture {
+    return [self isSupportedArchitecture];
 }
 #endif
 
@@ -62,7 +62,7 @@ if (error) { *error = [NSError errorWithDomain:SuperBuilderErrorDomain code:CODE
 }
 
 + (BOOL)addSuperInstanceMethodToClass:(Class)originalClass selector:(SEL)selector error:(NSError **)error {
-    if (!self.isSupportedArchitecure) {
+    if (!self.isSupportedArchitecture) {
         let msg = @"Unsupported Architecture. (Support includes ARM64 and x86-64 )";
         ERROR_AND_RETURN(SuperBuilderErrorCodeArchitectureNotSupported, msg)
     }
