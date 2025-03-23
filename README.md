@@ -1,13 +1,10 @@
 <img src="https://raw.githubusercontent.com/steipete/InterposeKit/master/logo.png" width="60%" alt="InterposeKit"/>
 
-[![SwiftPM](https://github.com/steipete/InterposeKit/workflows/SwiftPM/badge.svg)](https://github.com/steipete/InterposeKit/actions?query=workflow%3ASwiftPM)
-[![xcodebuild](https://github.com/steipete/InterposeKit/workflows/xcodebuild/badge.svg)](https://github.com/steipete/InterposeKit/actions?query=workflow%3Axcodebuild)
-![Xcode 11.4+](https://img.shields.io/badge/Xcode-11.4%2B-blue.svg)
-![Swift 5.2+](https://img.shields.io/badge/Swift-5.2%2B-orange.svg)
-<!--
-[![codecov](https://codecov.io/gh/steipete/InterposeKit/branch/master/graph/badge.svg)](https://codecov.io/gh/steipete/InterposeKit) -->
+[![CI](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml)
+![Xcode 15+](https://img.shields.io/badge/Xcode-15%2B-blue.svg)
+![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)
 
-InterposeKit is a modern library to swizzle elegantly in Swift, supporting hooks on classes and individual objects. It is [well-documented](http://interposekit.com/), [tested](https://github.com/steipete/InterposeKit/actions?query=workflow%3ASwiftPM), written in "pure" Swift 5.2 and works on `@objc dynamic` Swift functions or Objective-C instance methods. The Inspiration for InterposeKit was [a race condition in Mac Catalyst](https://steipete.com/posts/mac-catalyst-crash-hunt/), which required tricky swizzling to fix, I also wrote up  [implementation thoughts on my blog](https://steipete.com/posts/interposekit/).
+InterposeKit is a modern library to swizzle elegantly in Swift, supporting hooks on classes and individual objects. It is [well-documented](http://interposekit.com/), [tested](https://github.com/steipete/InterposeKit/actions?query=workflow%3ASwiftPM), written in "pure" Swift and works on `@objc dynamic` Swift functions or Objective-C instance methods. The Inspiration for InterposeKit was [a race condition in Mac Catalyst](https://steipete.com/posts/mac-catalyst-crash-hunt/), which required tricky swizzling to fix, I also wrote up  [implementation thoughts on my blog](https://steipete.com/posts/interposekit/).
 
 Instead of [adding new methods and exchanging implementations](https://nshipster.com/method-swizzling/) based on [`method_exchangeImplementations`](https://developer.apple.com/documentation/objectivec/1418769-method_exchangeimplementations), this library replaces the implementation directly using [`class_replaceMethod`](https://developer.apple.com/documentation/objectivec/1418677-class_replacemethod). This avoids some of [the usual problems with swizzling](https://pspdfkit.com/blog/2019/swizzling-in-swift/).
 
@@ -150,7 +147,7 @@ Pull Requests welcome! You might wanna open a draft before to lay out what you p
 
 ## Installation
 
-Building InterposeKit requires Xcode 11.4+ or a Swift 5.2+ toolchain with the Swift Package Manager.
+Building InterposeKit requires Xcode 15+ or a Swift 5.9+ toolchain with the Swift Package Manager.
 
 ### Swift Package Manager
 
