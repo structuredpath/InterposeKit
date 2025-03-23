@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Xcode ${{ matrix.xcode }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os:
+          - macos-13     # x86_64 (Intel)
+          - macos-latest # arm64 (Apple Silicon)
+        xcode:
+          - 15.4         # Swift 5.10
+          - 16.1         # Swift 6.0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode version ${{ matrix.xcode }}
+        run: |
+          sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
+          xcodebuild -version
+
+      - name: Build
+        run: swift build -v
+
+      - name: Run tests
+        run: swift test -v
