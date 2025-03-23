@@ -44,7 +44,7 @@ extension NSObject {
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature?
+        implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
     ) throws -> AnyHook {
         try Interpose.ObjectHook(
             object: self,
@@ -63,7 +63,7 @@ extension NSObject {
         _ selector: Selector,
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature?
+        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
     ) throws -> AnyHook {
         precondition(
             !(self is AnyClass),
@@ -88,7 +88,7 @@ extension NSObject {
         _ selector: Selector,
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature?
+        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
     ) throws -> AnyHook {
         return try Interpose.ClassHook(
             class: self as AnyClass,

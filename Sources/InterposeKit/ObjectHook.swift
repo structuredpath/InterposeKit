@@ -16,8 +16,11 @@ extension Interpose {
         let generatesSuperIMP = InterposeSubclass.supportsSuperTrampolines
 
         /// Initialize a new hook to interpose an instance method.
-        public init(object: AnyObject, selector: Selector,
-                    implementation: (ObjectHook<MethodSignature, HookSignature>) -> HookSignature?) throws {
+        public init(
+            object: AnyObject,
+            selector: Selector,
+            implementation: (ObjectHook<MethodSignature, HookSignature>) -> HookSignature
+        ) throws {
             self.object = object
             try super.init(class: type(of: object), selector: selector)
             let block = implementation(self) as AnyObject

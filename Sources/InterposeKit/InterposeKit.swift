@@ -69,8 +69,8 @@ final public class Interpose {
         _ selName: String,
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature?)
-        throws -> TypedHook<MethodSignature, HookSignature> {
+        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
+    ) throws -> TypedHook<MethodSignature, HookSignature> {
         try hook(NSSelectorFromString(selName),
             methodSignature: methodSignature, hookSignature: hookSignature, implementation)
     }
@@ -80,13 +80,12 @@ final public class Interpose {
         _ selector: Selector,
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature?)
-        throws -> TypedHook<MethodSignature, HookSignature> {
-            let hook = try prepareHook(selector, methodSignature: methodSignature,
-                                       hookSignature: hookSignature, implementation)
-            try hook.apply()
-            return hook
-
+        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
+    ) throws -> TypedHook<MethodSignature, HookSignature> {
+        let hook = try prepareHook(selector, methodSignature: methodSignature,
+                                   hookSignature: hookSignature, implementation)
+        try hook.apply()
+        return hook
     }
 
     /// Prepares a hook, but does not call apply immediately.
@@ -94,16 +93,16 @@ final public class Interpose {
         _ selector: Selector,
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature?)
-        throws -> TypedHook<MethodSignature, HookSignature> {
-            var hook: TypedHook<MethodSignature, HookSignature>
-            if let object = self.object {
-                hook = try ObjectHook(object: object, selector: selector, implementation: implementation)
-            } else {
-                hook = try ClassHook(class: `class`, selector: selector, implementation: implementation)
-            }
-            hooks.append(hook)
-            return hook
+        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
+    ) throws -> TypedHook<MethodSignature, HookSignature> {
+        var hook: TypedHook<MethodSignature, HookSignature>
+        if let object = self.object {
+            hook = try ObjectHook(object: object, selector: selector, implementation: implementation)
+        } else {
+            hook = try ClassHook(class: `class`, selector: selector, implementation: implementation)
+        }
+        hooks.append(hook)
+        return hook
     }
 
     /// Apply all stored hooks.
