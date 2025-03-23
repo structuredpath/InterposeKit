@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     # Run build and tests for each Swift version and OS combination
-    name: Build and Test on ${{ matrix.swift }} / ${{ matrix.os }}
+    name: Swift ${{ matrix.swift }} / OS ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
     strategy:
