@@ -150,7 +150,64 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         try hook.revert()
         XCTAssertEqual(testObj.doubleString(string: str), str + str)
     }
-
+    
+    func testHook_getPoint() throws {
+        let object = TestClass()
+        XCTAssertEqual(object.getPoint(), CGPoint(x: -1, y: 1))
+        
+        let hook = try object.hook(
+            #selector(TestClass.getPoint),
+            methodSignature: (@convention(c) (NSObject, Selector) -> CGPoint).self,
+            hookSignature: (@convention(block) (NSObject) -> CGPoint).self
+        ) { hook in
+            return { `self` in
+                var point = hook.original(self, hook.selector)
+                point.x += 2
+                point.y += 2
+                return point
+            }
+        }
+        
+        XCTAssertEqual(object.getPoint(), CGPoint(x: 1, y: 3))
+        
+        try hook.revert()
+        XCTAssertEqual(object.getPoint(), CGPoint(x: -1, y: 1))
+    }
+    
+    func testHook_passthroughPoint() throws {
+        let object = TestClass()
+        
+        XCTAssertEqual(
+            object.passthroughPoint(CGPoint(x: 1, y: 1)),
+            CGPoint(x: 1, y: 1)
+        )
+        
+        let hook = try object.hook(
+            #selector(TestClass.passthroughPoint(_:)),
+            methodSignature: (@convention(c) (NSObject, Selector, CGPoint) -> CGPoint).self,
+            hookSignature: (@convention(block) (NSObject, CGPoint) -> CGPoint).self
+        ) { hook in
+            return { `self`, inPoint in
+                var outPoint = hook.original(self, hook.selector, inPoint)
+                outPoint.x += 1
+                outPoint.y += 1
+                return outPoint
+            }
+        }
+        
+        XCTAssertEqual(
+            object.passthroughPoint(CGPoint(x: 1, y: 1)),
+            CGPoint(x: 2, y: 2)
+        )
+        
+        try hook.revert()
+        
+        XCTAssertEqual(
+            object.passthroughPoint(CGPoint(x: 1, y: 1)),
+            CGPoint(x: 1, y: 1)
+        )
+    }
+    
 //    func testLargeStructReturn() throws {
 //        let testObj = TestClass()
 //        let transform = CATransform3D()

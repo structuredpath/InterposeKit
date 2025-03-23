@@ -50,7 +50,15 @@ class TestClass: NSObject {
     @objc dynamic func calculate2(var1: Int, var2: Int, var3: Int, var4: Int, var5: Int, var6: Int) -> Int {
         var1 + var2 + var3 + var4 + var5 + var6
     }
-
+    
+    @objc dynamic func getPoint() -> CGPoint {
+        CGPoint(x: -1, y: 1)
+    }
+    
+    @objc dynamic func passthroughPoint(_ point: CGPoint) -> CGPoint {
+        point
+    }
+    
     // This requires _objc_msgSendSuper_stret on x64, returns a large struct
     @objc dynamic func invert3DTransform(_ input: CATransform3D) -> CATransform3D {
         input.inverted
