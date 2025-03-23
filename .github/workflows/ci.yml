@@ -13,12 +13,13 @@ jobs:
 
     strategy:
       matrix:
-        os:
-          - macos-13     # x86_64 (Intel)
-          - macos-latest # arm64 (Apple Silicon)
-        xcode:
-          - 15.4         # Swift 5.10
-          - 16.1         # Swift 6.0
+        include:
+          - os: macos-13     # x86_64 (Intel)
+            xcode: 15.2      # Swift 5.9.2
+          - os: macos-14     # ???
+            xcode: 15.3      # Swift 5.10
+          - os: macos-latest # arch64 (Apple Silicon)
+            xcode: 16.2      # Swift 6.0
 
     steps:
       - uses: actions/checkout@v4
