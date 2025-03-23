@@ -23,6 +23,8 @@ public extension CATransform3D {
 }
 
 class TestClass: NSObject {
+    
+    @objc dynamic static var staticInt = 42
 
     @objc dynamic var age: Int = 1
     @objc dynamic var name: String = "Tim Apple"
