@@ -25,12 +25,14 @@ final class MultipleInterposingTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
         XCTAssertEqual(testObj2.sayHi(), testClassHi)
 
-        try testObj.hook(
-            #selector(TestClass.sayHi),
+        try testObj.addHook(
+            for: #selector(TestClass.sayHi),
             methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
-                return store.original(bSelf, store.selector) + testString2
-                }
+            hookSignature: (@convention(block) (AnyObject) -> String).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + testString2
+            }
         }
 
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString + testString2)

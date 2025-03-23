@@ -11,15 +11,17 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi)
         XCTAssertEqual(testObj2.sayHi(), testClassHi)
 
-        let hook = try testObj.hook(
-            #selector(TestClass.sayHi),
+        let hook = try testObj.addHook(
+            for: #selector(TestClass.sayHi),
             methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
-                print("Before Interposing \(bSelf)")
-                let string = store.original(bSelf, store.selector)
-                print("After Interposing \(bSelf)")
+            hookSignature: (@convention(block) (AnyObject) -> String).self
+        ) { hook in
+            return { `self` in
+                print("Before Interposing \(self)")
+                let string = hook.original(self, hook.selector)
+                print("After Interposing \(self)")
                 return string + testString
-                }
+            }
         }
 
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
@@ -38,11 +40,14 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         let returnIntOverrideOffset = 2
         XCTAssertEqual(testObj.returnInt(), returnIntDefault)
 
-        let hook = try testObj.hook(#selector(TestClass.returnInt)) { (store: TypedHook
-            <@convention(c) (AnyObject, Selector) -> Int,
-                @convention(block) (AnyObject) -> Int>) in {
-                    let int = store.original($0, store.selector)
-                    return int + returnIntOverrideOffset
+        let hook = try testObj.addHook(
+            for: #selector(TestClass.returnInt),
+            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (AnyObject) -> Int).self
+        ) { hook in
+            return { `self` in
+                let int = hook.original(self, hook.selector)
+                return int + returnIntOverrideOffset
             }
         }
 
@@ -66,11 +71,14 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.returnInt(), returnIntDefault)
 
         // Functions need to be `@objc dynamic` to be hookable.
-        let hook = try testObj.hook(#selector(TestClass.returnInt)) { (store: TypedHook
-            <@convention(c) (AnyObject, Selector) -> Int,
-            @convention(block) (AnyObject) -> Int>) in {
+        let hook = try testObj.addHook(
+            for: #selector(TestClass.returnInt),
+            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (AnyObject) -> Int).self
+        ) { hook in
+            return { `self` in
                 // You're free to skip calling the original implementation.
-                store.original($0, store.selector) + returnIntOverrideOffset
+                hook.original(self, hook.selector) + returnIntOverrideOffset
             }
         }
         XCTAssertEqual(testObj.returnInt(), returnIntDefault + returnIntOverrideOffset)
@@ -102,11 +110,13 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.calculate(var1: 1, var2: 2, var3: 3), 1 + 2 + 3)
 
         // Functions need to be `@objc dynamic` to be hookable.
-        let hook = try testObj.hook(#selector(TestClass.calculate)) { (store: TypedHook
-            <@convention(c) (AnyObject, Selector, Int, Int, Int) -> Int,
-            @convention(block) (AnyObject, Int, Int, Int) -> Int>) in {
-                // You're free to skip calling the original implementation.
-                let orig = store.original($0, store.selector, $1, $2, $3)
+        let hook = try testObj.addHook(
+            for: #selector(TestClass.calculate),
+            methodSignature: (@convention(c) (AnyObject, Selector, Int, Int, Int) -> Int).self,
+            hookSignature: (@convention(block) (AnyObject, Int, Int, Int) -> Int).self
+        ) { hook in
+            return {
+                let orig = hook.original($0, hook.selector, $1, $2, $3)
                 return orig + 1
             }
         }
@@ -121,11 +131,14 @@ final class ObjectInterposeTests: InterposeKitTestCase {
                                           var4: 4, var5: 5, var6: 6), 1 + 2 + 3 + 4 + 5 + 6)
 
         // Functions need to be `@objc dynamic` to be hookable.
-        let hook = try testObj.hook(#selector(TestClass.calculate2)) { (store: TypedHook
-            <@convention(c) (AnyObject, Selector, Int, Int, Int, Int, Int, Int) -> Int,
-            @convention(block) (AnyObject, Int, Int, Int, Int, Int, Int) -> Int>) in {
+        let hook = try testObj.addHook(
+            for: #selector(TestClass.calculate2),
+            methodSignature: (@convention(c) (AnyObject, Selector, Int, Int, Int, Int, Int, Int) -> Int).self,
+            hookSignature: (@convention(block) (AnyObject, Int, Int, Int, Int, Int, Int) -> Int).self
+        ) { hook in
+            return {
                 // You're free to skip calling the original implementation.
-                let orig = store.original($0, store.selector, $1, $2, $3, $4, $5, $6)
+                let orig = hook.original($0, hook.selector, $1, $2, $3, $4, $5, $6)
                 return orig + 1
             }
         }
@@ -140,10 +153,13 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.doubleString(string: str), str + str)
 
         // Functions need to be `@objc dynamic` to be hookable.
-        let hook = try testObj.hook(#selector(TestClass.doubleString)) { (store: TypedHook
-            <@convention(c) (AnyObject, Selector, String) -> String,
-            @convention(block) (AnyObject, String) -> String>) in {
-                store.original($0, store.selector, $1) + str
+        let hook = try testObj.addHook(
+            for: #selector(TestClass.doubleString),
+            methodSignature: (@convention(c) (AnyObject, Selector, String) -> String).self,
+            hookSignature: (@convention(block) (AnyObject, String) -> String).self
+        ) { hook in
+            return { `self`, parameter in
+                hook.original(self, hook.selector, parameter) + str
             }
         }
         XCTAssertEqual(testObj.doubleString(string: str), str + str + str)
@@ -155,8 +171,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         let object = TestClass()
         XCTAssertEqual(object.getPoint(), CGPoint(x: -1, y: 1))
         
-        let hook = try object.hook(
-            #selector(TestClass.getPoint),
+        let hook = try object.addHook(
+            for: #selector(TestClass.getPoint),
             methodSignature: (@convention(c) (NSObject, Selector) -> CGPoint).self,
             hookSignature: (@convention(block) (NSObject) -> CGPoint).self
         ) { hook in
@@ -182,8 +198,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
             CGPoint(x: 1, y: 1)
         )
         
-        let hook = try object.hook(
-            #selector(TestClass.passthroughPoint(_:)),
+        let hook = try object.addHook(
+            for: #selector(TestClass.passthroughPoint(_:)),
             methodSignature: (@convention(c) (NSObject, Selector, CGPoint) -> CGPoint).self,
             hookSignature: (@convention(block) (NSObject, CGPoint) -> CGPoint).self
         ) { hook in
