@@ -112,11 +112,11 @@ final public class Interpose {
 
     /// Revert all stored hooks.
     @discardableResult public func revert(_ hook: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
-        try execute(hook, expectedState: .interposed) { try $0.revert() }
+        try execute(hook, expectedState: .active) { try $0.revert() }
     }
 
     private func execute(_ task: ((Interpose) throws -> Void)? = nil,
-                         expectedState: AnyHook.State = .prepared,
+                         expectedState: AnyHook.State = .pending,
                          executor: ((AnyHook) throws -> Void)) throws -> Interpose {
         // Run pre-apply code first
         if let task = task {

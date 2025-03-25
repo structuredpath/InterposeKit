@@ -21,7 +21,7 @@ extension Interpose {
         }
 
         override func resetImplementation() throws {
-            let method = try validate(expectedState: .interposed)
+            let method = try validate(expectedState: .active)
             precondition(origIMP != nil)
             let previousIMP = class_replaceMethod(`class`, selector, origIMP!, method_getTypeEncoding(method))
             guard previousIMP == replacementIMP else {

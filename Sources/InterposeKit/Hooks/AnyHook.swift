@@ -9,7 +9,7 @@ public class AnyHook {
     public let selector: Selector
 
     /// The current state of the hook.
-    public internal(set) var state = State.prepared
+    public internal(set) var state = State.pending
 
     // else we validate init order
     var replacementIMP: IMP!
@@ -17,18 +17,8 @@ public class AnyHook {
     // fetched at apply time, changes late, thus class requirement
     var origIMP: IMP?
 
-    /// The possible task states
-    public enum State: Equatable {
-        /// The task is prepared to be interposed.
-        case prepared
-
-        /// The method has been successfully interposed.
-        case interposed
-
-        /// An error happened while interposing a method.
-        indirect case error(InterposeError)
-    }
-
+    public typealias State = HookState
+    
     init(`class`: AnyClass, selector: Selector) throws {
         self.selector = selector
         self.class = `class`
@@ -47,22 +37,24 @@ public class AnyHook {
 
     /// Apply the interpose hook.
     @discardableResult public func apply() throws -> AnyHook {
-        try execute(newState: .interposed) { try replaceImplementation() }
+        try execute(newState: .active) { try replaceImplementation() }
         return self
     }
 
     /// Revert the interpose hook.
     @discardableResult public func revert() throws -> AnyHook {
-        try execute(newState: .prepared) { try resetImplementation() }
+        try execute(newState: .pending) { try resetImplementation() }
         return self
     }
 
     /// Validate that the selector exists on the active class.
-    @discardableResult func validate(expectedState: State = .prepared) throws -> Method {
+    @discardableResult func validate(expectedState: State = .pending) throws -> Method {
         guard let method = class_getInstanceMethod(`class`, selector) else {
             throw InterposeError.methodNotFound(`class`, selector)
         }
-        guard state == expectedState else { throw InterposeError.invalidState(expectedState: expectedState) }
+        guard state == expectedState else {
+            throw InterposeError.invalidState(expectedState: expectedState)
+        }
         return method
     }
 
@@ -71,7 +63,7 @@ public class AnyHook {
             try task()
             state = newState
         } catch let error as InterposeError {
-            state = .error(error)
+            state = .failed
             throw error
         }
     }
@@ -79,13 +71,13 @@ public class AnyHook {
     /// Release the hook block if possible.
     public func cleanup() {
         switch state {
-        case .prepared:
+        case .pending:
             Interpose.log("Releasing -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
             imp_removeBlock(replacementIMP)
-        case .interposed:
+        case .active:
             Interpose.log("Keeping -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
-        case let .error(error):
-            Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(replacementIMP!) due to error: \(error)")
+        case .failed:
+            Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
         }
     }
 }

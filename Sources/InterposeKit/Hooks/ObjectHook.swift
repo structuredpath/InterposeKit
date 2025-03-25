@@ -136,7 +136,7 @@ extension Interpose {
         }
 
         override func resetImplementation() throws {
-            let method = try validate(expectedState: .interposed)
+            let method = try validate(expectedState: .active)
 
             guard super.origIMP != nil else {
                 // Removing methods at runtime is not supported.
