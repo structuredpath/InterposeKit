@@ -70,7 +70,7 @@ final public class Interpose {
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
         _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
-    ) throws -> TypedHook<MethodSignature, HookSignature> {
+    ) throws -> some Hook {
         try hook(NSSelectorFromString(selName),
             methodSignature: methodSignature, hookSignature: hookSignature, implementation)
     }
@@ -81,7 +81,7 @@ final public class Interpose {
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
         _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
-    ) throws -> TypedHook<MethodSignature, HookSignature> {
+    ) throws -> some Hook {
         let hook = try prepareHook(selector, methodSignature: methodSignature,
                                    hookSignature: hookSignature, implementation)
         try hook.apply()
@@ -94,7 +94,7 @@ final public class Interpose {
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
         _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
-    ) throws -> TypedHook<MethodSignature, HookSignature> {
+    ) throws -> some Hook {
         var hook: TypedHook<MethodSignature, HookSignature>
         if let object = self.object {
             hook = try ObjectHook(object: object, selector: selector, implementation: implementation)

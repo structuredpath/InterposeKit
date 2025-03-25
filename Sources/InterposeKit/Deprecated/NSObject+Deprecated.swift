@@ -9,7 +9,7 @@ extension NSObject {
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
         _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
-    ) throws -> AnyHook {
+    ) throws -> some Hook {
         precondition(
             !(self is AnyClass),
             "There should not be a way to cast an NSObject to AnyClass."
@@ -34,12 +34,14 @@ extension NSObject {
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
         _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
-    ) throws -> AnyHook {
-        return try Interpose.ClassHook(
+    ) throws -> some Hook {
+        let hook = try Interpose.ClassHook(
             class: self as AnyClass,
             selector: selector,
             implementation: implementation
-        ).apply()
+        )
+        try hook.apply()
+        return hook
     }
     
 }
