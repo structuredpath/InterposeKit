@@ -1,7 +1,7 @@
 import Foundation
 
 /// Base class, represents a hook to exactly one method.
-public class AnyHook {
+public class AnyHook: Hook {
     /// The class this hook is based on.
     public let `class`: AnyClass
 
