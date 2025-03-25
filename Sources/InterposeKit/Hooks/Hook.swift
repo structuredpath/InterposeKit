@@ -18,6 +18,9 @@ public protocol Hook: AnyObject {
     /// Reverts the hook, restoring the original method implementation.
     func revert() throws
     
+    // TODO: Rename to `cleanUp()`
+    func cleanup()
+    
 }
 
 public enum HookState: Equatable {
