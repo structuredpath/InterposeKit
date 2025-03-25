@@ -26,19 +26,6 @@ extension Interpose {
                 strategyProvider: strategyProvider
             )
         }
-
-        override func replaceImplementation() throws {
-            try (self.strategy as! ClassHookStrategy<MethodSignature>).replaceImplementation()
-        }
-
-        override func resetImplementation() throws {
-            try (self.strategy as! ClassHookStrategy<MethodSignature>).resetImplementation()
-        }
-
-        /// The original implementation is cached at hook time.
-        public override var original: MethodSignature {
-            (self.strategy as! ClassHookStrategy<MethodSignature>).original
-        }
         
     }
 }
