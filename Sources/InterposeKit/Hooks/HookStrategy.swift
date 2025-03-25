@@ -1,16 +1,22 @@
 import ObjectiveC
 
-protocol HookStrategy: AnyObject {
+protocol _HookStrategy: AnyObject {
     
     /// The replacement implementation used to interpose the method, created during hook setup.
     var replacementIMP: IMP { get }
     
     /// The original method implementation, captured when the hook is applied.
-    var originalIMP: IMP? { get set }
+    var originalIMP: IMP? { get }
     
 }
 
-final class AnyHookStrategy: HookStrategy {
+protocol HookStrategy<MethodSignature>: _HookStrategy {
+    
+    associatedtype MethodSignature
+    
+}
+
+final class DummyHookStrategy<MethodSignature>: HookStrategy {
     
     init(replacementIMP: IMP) {
         self.replacementIMP = replacementIMP
