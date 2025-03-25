@@ -79,8 +79,30 @@ public class AnyHook: Hook {
 
 /// Hook baseclass with generic signatures.
 public class TypedHook<MethodSignature, HookSignature>: AnyHook {
+    
+    override func replaceImplementation() throws {
+        if let strategy = self.strategy as? ClassHookStrategy<MethodSignature> {
+            return try strategy.replaceImplementation()
+        } else {
+            preconditionFailure("Not implemented")
+        }
+    }
+    
+    override func resetImplementation() throws {
+        if let strategy = self.strategy as? ClassHookStrategy<MethodSignature> {
+            return try strategy.resetImplementation()
+        } else {
+            preconditionFailure("Not implemented")
+        }
+    }
+    
     /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
     public var original: MethodSignature {
-        preconditionFailure("Always override")
+        if let strategy = self.strategy as? ClassHookStrategy<MethodSignature> {
+            return strategy.original
+        } else {
+            preconditionFailure("Not implemented")
+        }
     }
+    
 }
