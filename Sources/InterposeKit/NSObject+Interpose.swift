@@ -18,8 +18,7 @@ extension NSObject {
     ///   - implementation: A closure that receives a `TypedHook` and returns the replacement
     ///     implementation block.
     ///
-    /// - Returns: An `AnyHook` representing the installed hook, allowing to remove the hook later
-    ///   by calling `hook.revert()`.
+    /// - Returns: The installed hook, allowing to remove the hook later by calling `hook.revert()`.
     ///
     /// - Throws: An error if the hook could not be applied, such as if the method does not exist
     ///   or is not implemented in Objective-C.
