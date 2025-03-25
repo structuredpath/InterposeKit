@@ -1,3 +1,10 @@
+extension AnyHook {
+    
+    @available(*, deprecated, renamed: "HookState", message: "Use top-level 'HookState' instead of 'AnyHook.State'.")
+    public typealias State = HookState
+    
+}
+
 extension HookState {
     
     @available(*, deprecated, renamed: "pending", message: "Use 'pending' instead.")

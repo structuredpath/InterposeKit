@@ -116,7 +116,7 @@ final public class Interpose {
     }
 
     private func execute(_ task: ((Interpose) throws -> Void)? = nil,
-                         expectedState: AnyHook.State = .pending,
+                         expectedState: HookState = .pending,
                          executor: ((AnyHook) throws -> Void)) throws -> Interpose {
         // Run pre-apply code first
         if let task = task {
