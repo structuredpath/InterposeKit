@@ -34,17 +34,15 @@ public class AnyHook {
     }
 
     /// Apply the interpose hook.
-    @discardableResult public func apply() throws -> AnyHook {
+    public func apply() throws {
         try execute(newState: .active) { try replaceImplementation() }
-        return self
     }
 
     /// Revert the interpose hook.
-    @discardableResult public func revert() throws -> AnyHook {
+    public func revert() throws {
         try execute(newState: .pending) { try resetImplementation() }
-        return self
     }
-
+    
     /// Validate that the selector exists on the active class.
     @discardableResult func validate(expectedState: HookState = .pending) throws -> Method {
         guard let method = class_getInstanceMethod(`class`, selector) else {

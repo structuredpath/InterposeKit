@@ -46,11 +46,12 @@ extension NSObject {
         hookSignature: HookSignature.Type,
         implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
     ) throws -> AnyHook {
-        try Interpose.ObjectHook(
-            object: self,
-            selector: selector,
-            implementation: implementation
-        ).apply()
+        return try Interpose(self).hook(
+            selector,
+            methodSignature: methodSignature,
+            hookSignature: hookSignature,
+            implementation
+        )
     }
     
 }

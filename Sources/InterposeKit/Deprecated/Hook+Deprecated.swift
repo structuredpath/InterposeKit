@@ -1,7 +1,21 @@
 extension AnyHook {
     
-    @available(*, deprecated, renamed: "HookState", message: "Use top-level 'HookState' instead of 'AnyHook.State'.")
+    @available(*, deprecated, renamed: "HookState", message: "Use top-level 'HookState'.")
     public typealias State = HookState
+    
+    @available(*, deprecated, message: "Use 'apply()' returning Void. The overload returning 'Self' has been removed.")
+    @_disfavoredOverload
+    public func apply() throws -> Self {
+        try self.apply()
+        return self
+    }
+    
+    @available(*, deprecated, message: "Use 'revert()' returning Void. The overload returning 'Self' has been removed.")
+    @_disfavoredOverload
+    public func revert() throws -> Self {
+        try revert()
+        return self
+    }
     
 }
 
