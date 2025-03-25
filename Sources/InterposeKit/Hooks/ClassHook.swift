@@ -24,24 +24,24 @@ extension Interpose {
 
         override func replaceImplementation() throws {
             let method = try validate()
-            origIMP = class_replaceMethod(`class`, selector, self.strategy.replacementIMP, method_getTypeEncoding(method))
-            guard origIMP != nil else { throw InterposeError.nonExistingImplementation(`class`, selector) }
-            Interpose.log("Swizzled -[\(`class`).\(selector)] IMP: \(origIMP!) -> \(self.strategy.replacementIMP)")
+            self.strategy.originalIMP = class_replaceMethod(`class`, selector, self.strategy.replacementIMP, method_getTypeEncoding(method))
+            guard self.strategy.originalIMP != nil else { throw InterposeError.nonExistingImplementation(`class`, selector) }
+            Interpose.log("Swizzled -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!) -> \(self.strategy.replacementIMP)")
         }
 
         override func resetImplementation() throws {
             let method = try validate(expectedState: .active)
-            precondition(origIMP != nil)
-            let previousIMP = class_replaceMethod(`class`, selector, origIMP!, method_getTypeEncoding(method))
+            precondition(self.strategy.originalIMP != nil)
+            let previousIMP = class_replaceMethod(`class`, selector, self.strategy.originalIMP!, method_getTypeEncoding(method))
             guard previousIMP == self.strategy.replacementIMP else {
                 throw InterposeError.unexpectedImplementation(`class`, selector, previousIMP)
             }
-            Interpose.log("Restored -[\(`class`).\(selector)] IMP: \(origIMP!)")
+            Interpose.log("Restored -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!)")
         }
 
         /// The original implementation is cached at hook time.
         public override var original: MethodSignature {
-           unsafeBitCast(origIMP, to: MethodSignature.self)
+            unsafeBitCast(self.strategy.originalIMP, to: MethodSignature.self)
         }
     }
 }
@@ -49,7 +49,7 @@ extension Interpose {
 #if DEBUG
 extension Interpose.ClassHook: CustomDebugStringConvertible {
     public var debugDescription: String {
-        return "\(selector) -> \(String(describing: origIMP))"
+        return "\(selector) -> \(String(describing: self.strategy.originalIMP))"
     }
 }
 #endif

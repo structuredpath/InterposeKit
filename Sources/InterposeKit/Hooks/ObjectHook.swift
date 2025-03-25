@@ -50,7 +50,7 @@ extension Interpose {
         /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
         public override var original: MethodSignature {
             // If we switched implementations, return stored.
-            if let savedOrigIMP = origIMP {
+            if let savedOrigIMP = self.strategy.originalIMP {
                 return unsafeBitCast(savedOrigIMP, to: MethodSignature.self)
             }
             // Else, perform a dynamic lookup
@@ -117,16 +117,16 @@ extension Interpose {
                 }
 
                 // Replace IMP (by now we guarantee that it exists)
-                origIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
-                guard origIMP != nil else {
+                self.strategy.originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                guard self.strategy.originalIMP != nil else {
                     throw InterposeError.nonExistingImplementation(dynamicSubclass, selector)
                 }
-                Interpose.log("Added -[\(`class`).\(selector)] IMP: \(origIMP!) -> \(replacementIMP)")
+                Interpose.log("Added -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!) -> \(replacementIMP)")
             } else {
                 // Could potentially be unified in the code paths
                 if hasExistingMethod {
-                    origIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
-                    if origIMP != nil {
+                    self.strategy.originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                    if self.strategy.originalIMP != nil {
                         Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP) via replacement")
                     } else {
                         Interpose.log("Unable to replace: -[\(`class`).\(selector)] IMP: \(replacementIMP)")
@@ -147,7 +147,7 @@ extension Interpose {
         override func resetImplementation() throws {
             let method = try validate(expectedState: .active)
 
-            guard super.origIMP != nil else {
+            guard self.strategy.originalIMP != nil else {
                 // Removing methods at runtime is not supported.
                 // https://stackoverflow.com/questions/1315169/
                 // how-do-i-remove-instance-methods-at-runtime-in-objective-c-2-0
@@ -167,15 +167,15 @@ extension Interpose {
             let replacementIMP = self.strategy.replacementIMP
             if currentIMP == replacementIMP {
                 let previousIMP = class_replaceMethod(
-                    dynamicSubclass, selector, origIMP!, method_getTypeEncoding(method))
+                    dynamicSubclass, selector, self.strategy.originalIMP!, method_getTypeEncoding(method))
                 guard previousIMP == replacementIMP else {
                     throw InterposeError.unexpectedImplementation(dynamicSubclass, selector, previousIMP)
                 }
-                Interpose.log("Restored -[\(`class`).\(selector)] IMP: \(origIMP!)")
+                Interpose.log("Restored -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!)")
             } else {
                 let nextHook = Interpose.findNextHook(selfHook: self, topmostIMP: currentIMP)
                 // Replace next's original IMP
-                nextHook?.origIMP = self.origIMP
+                nextHook?.strategy.originalIMP = self.strategy.originalIMP
             }
 
             // FUTURE: remove class pair!

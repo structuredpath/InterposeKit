@@ -46,7 +46,7 @@ extension Interpose {
             }
             // crawl down the chain until we find ourselves
             currentHook = hook
-            impl = hook?.origIMP
+            impl = hook?.strategy.originalIMP
         } while impl != nil
         return nil
     }

@@ -13,9 +13,6 @@ public class AnyHook: Hook {
 
     private var _strategy: AnyHookStrategy!
     var strategy: AnyHookStrategy { _strategy }
-    
-    // fetched at apply time, changes late, thus class requirement
-    var origIMP: IMP?
 
     init(`class`: AnyClass, selector: Selector, strategyProvider: (AnyHook) -> AnyHookStrategy) throws {
         self.selector = selector
