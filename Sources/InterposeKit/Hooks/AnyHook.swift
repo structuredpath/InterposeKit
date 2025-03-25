@@ -11,10 +11,10 @@ public class AnyHook: Hook {
     /// The current state of the hook.
     public internal(set) var state = HookState.pending
 
-    private var _strategy: HookStrategy!
-    var strategy: HookStrategy { _strategy }
+    private var _strategy: _HookStrategy!
+    var strategy: _HookStrategy { _strategy }
 
-    init(`class`: AnyClass, selector: Selector, strategyProvider: (AnyHook) -> HookStrategy) throws {
+    init(`class`: AnyClass, selector: Selector, strategyProvider: (AnyHook) -> _HookStrategy) throws {
         self.selector = selector
         self.class = `class`
 

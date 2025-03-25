@@ -9,7 +9,7 @@ extension Interpose {
             selector: Selector,
             implementation: (ClassHook<MethodSignature, HookSignature>) -> HookSignature
         ) throws {
-            let strategyProvider: (AnyHook) -> HookStrategy = { hook in
+            let strategyProvider: (AnyHook) -> _HookStrategy = { hook in
                 let hook = hook as! Self
                 let replacementIMP = imp_implementationWithBlock(implementation(hook))
                 

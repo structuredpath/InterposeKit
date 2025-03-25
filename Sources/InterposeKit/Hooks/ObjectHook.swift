@@ -23,7 +23,7 @@ extension Interpose {
         ) throws {
             self.object = object
             
-            let strategyProvider: (AnyHook) -> AnyHookStrategy = { hook in
+            let strategyProvider: (AnyHook) -> any _HookStrategy = { hook in
                 let hook = hook as! Self
                 let block = implementation(hook) as AnyObject
                 let replacementIMP = imp_implementationWithBlock(block)
@@ -31,7 +31,7 @@ extension Interpose {
                 // Weakly store reference to hook inside the block of the IMP.
                 Interpose.storeHook(hook: hook, to: block)
                 
-                return AnyHookStrategy(replacementIMP: replacementIMP)
+                return DummyHookStrategy<MethodSignature>(replacementIMP: replacementIMP)
             }
             
             try super.init(
@@ -117,7 +117,7 @@ extension Interpose {
                 }
 
                 // Replace IMP (by now we guarantee that it exists)
-                self.strategy.originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                (self.strategy as! DummyHookStrategy<MethodSignature>).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
                 guard self.strategy.originalIMP != nil else {
                     throw InterposeError.nonExistingImplementation(dynamicSubclass, selector)
                 }
@@ -125,7 +125,7 @@ extension Interpose {
             } else {
                 // Could potentially be unified in the code paths
                 if hasExistingMethod {
-                    self.strategy.originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                    (self.strategy as! DummyHookStrategy<MethodSignature>).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
                     if self.strategy.originalIMP != nil {
                         Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP) via replacement")
                     } else {
@@ -175,7 +175,7 @@ extension Interpose {
             } else {
                 let nextHook = Interpose.findNextHook(selfHook: self, topmostIMP: currentIMP)
                 // Replace next's original IMP
-                nextHook?.strategy.originalIMP = self.strategy.originalIMP
+                (nextHook?.strategy as? DummyHookStrategy<MethodSignature>)?.originalIMP = self.strategy.originalIMP
             }
 
             // FUTURE: remove class pair!
