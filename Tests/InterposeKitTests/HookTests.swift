@@ -15,7 +15,7 @@ final class HookTests: InterposeKitTestCase {
         let hook = try interposer.prepareHook(
             #selector(ExampleClass.foo),
             methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
-            hookSignature: (@convention(block) (NSObject) -> Void).self,
+            hookSignature: (@convention(block) (NSObject) -> Void).self
         ) { hook in
             return { `self` in }
         }
@@ -36,7 +36,7 @@ final class HookTests: InterposeKitTestCase {
         let hook = try interposer.prepareHook(
             #selector(ExampleClass.foo),
             methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
-            hookSignature: (@convention(block) (NSObject) -> Void).self,
+            hookSignature: (@convention(block) (NSObject) -> Void).self
         ) { hook in
             return { `self` in }
         }
