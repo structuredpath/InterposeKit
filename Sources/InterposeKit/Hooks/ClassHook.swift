@@ -9,10 +9,15 @@ extension Interpose {
             selector: Selector,
             implementation: (ClassHook<MethodSignature, HookSignature>) -> HookSignature
         ) throws {
-            let strategyProvider: (AnyHook) -> AnyHookStrategy = { hook in
+            let strategyProvider: (AnyHook) -> HookStrategy = { hook in
                 let hook = hook as! Self
                 let replacementIMP = imp_implementationWithBlock(implementation(hook))
-                return AnyHookStrategy(replacementIMP: replacementIMP)
+                
+                return ClassHookStrategy<MethodSignature>(
+                    class: `class`,
+                    selector: selector,
+                    replacementIMP: replacementIMP
+                )
             }
             
             try super.init(
@@ -23,27 +28,85 @@ extension Interpose {
         }
 
         override func replaceImplementation() throws {
-            let method = try validate()
-            self.strategy.originalIMP = class_replaceMethod(`class`, selector, self.strategy.replacementIMP, method_getTypeEncoding(method))
-            guard self.strategy.originalIMP != nil else { throw InterposeError.nonExistingImplementation(`class`, selector) }
-            Interpose.log("Swizzled -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!) -> \(self.strategy.replacementIMP)")
+            try (self.strategy as! ClassHookStrategy<MethodSignature>).replaceImplementation()
         }
 
         override func resetImplementation() throws {
-            let method = try validate(expectedState: .active)
-            precondition(self.strategy.originalIMP != nil)
-            let previousIMP = class_replaceMethod(`class`, selector, self.strategy.originalIMP!, method_getTypeEncoding(method))
-            guard previousIMP == self.strategy.replacementIMP else {
-                throw InterposeError.unexpectedImplementation(`class`, selector, previousIMP)
-            }
-            Interpose.log("Restored -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!)")
+            try (self.strategy as! ClassHookStrategy<MethodSignature>).resetImplementation()
         }
 
         /// The original implementation is cached at hook time.
         public override var original: MethodSignature {
-            unsafeBitCast(self.strategy.originalIMP, to: MethodSignature.self)
+            (self.strategy as! ClassHookStrategy<MethodSignature>).original
         }
+        
     }
+}
+
+final class ClassHookStrategy<MethodSignature>: HookStrategy {
+    
+    init(
+        `class`: AnyClass,
+        selector: Selector,
+        replacementIMP: IMP
+    ) {
+        self.class = `class`
+        self.selector = selector
+        self.replacementIMP = replacementIMP
+    }
+    
+    let `class`: AnyClass
+    let selector: Selector
+    let replacementIMP: IMP
+    var originalIMP: IMP?
+    
+    func replaceImplementation() throws {
+        guard let method = class_getInstanceMethod(self.class, self.selector) else {
+            throw InterposeError.methodNotFound(self.class, self.selector)
+        }
+        
+        guard let originalIMP = class_replaceMethod(
+            self.class,
+            self.selector,
+            self.replacementIMP,
+            method_getTypeEncoding(method)
+        ) else {
+            throw InterposeError.nonExistingImplementation(self.class, self.selector)
+        }
+        
+        self.originalIMP = originalIMP
+        
+        Interpose.log("Swizzled -[\(self.class).\(self.selector)] IMP: \(originalIMP) -> \(self.replacementIMP)")
+    }
+    
+    func resetImplementation() throws {
+        guard let method = class_getInstanceMethod(self.class, self.selector) else {
+            throw InterposeError.methodNotFound(self.class, self.selector)
+        }
+        
+        guard let originalIMP = self.originalIMP else {
+            // Ignore? Throw error?
+            fatalError("The original implementation should be loaded when resetting")
+        }
+        
+        let previousIMP = class_replaceMethod(
+            self.class,
+            self.selector,
+            originalIMP,
+            method_getTypeEncoding(method)
+        )
+        
+        guard previousIMP == self.replacementIMP else {
+            throw InterposeError.unexpectedImplementation(self.class, self.selector, previousIMP)
+        }
+        
+        Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(originalIMP)")
+    }
+    
+    var original: MethodSignature {
+        unsafeBitCast(self.originalIMP, to: MethodSignature.self)
+    }
+    
 }
 
 #if DEBUG
