@@ -9,22 +9,31 @@ extension Interpose {
             selector: Selector,
             implementation: (ClassHook<MethodSignature, HookSignature>) -> HookSignature
         ) throws {
-            try super.init(class: `class`, selector: selector)
-            replacementIMP = imp_implementationWithBlock(implementation(self))
+            let strategyProvider: (AnyHook) -> AnyHookStrategy = { hook in
+                let hook = hook as! Self
+                let replacementIMP = imp_implementationWithBlock(implementation(hook))
+                return AnyHookStrategy(replacementIMP: replacementIMP)
+            }
+            
+            try super.init(
+                class: `class`,
+                selector: selector,
+                strategyProvider: strategyProvider
+            )
         }
 
         override func replaceImplementation() throws {
             let method = try validate()
-            origIMP = class_replaceMethod(`class`, selector, replacementIMP, method_getTypeEncoding(method))
+            origIMP = class_replaceMethod(`class`, selector, self.strategy.replacementIMP, method_getTypeEncoding(method))
             guard origIMP != nil else { throw InterposeError.nonExistingImplementation(`class`, selector) }
-            Interpose.log("Swizzled -[\(`class`).\(selector)] IMP: \(origIMP!) -> \(replacementIMP!)")
+            Interpose.log("Swizzled -[\(`class`).\(selector)] IMP: \(origIMP!) -> \(self.strategy.replacementIMP)")
         }
 
         override func resetImplementation() throws {
             let method = try validate(expectedState: .active)
             precondition(origIMP != nil)
             let previousIMP = class_replaceMethod(`class`, selector, origIMP!, method_getTypeEncoding(method))
-            guard previousIMP == replacementIMP else {
+            guard previousIMP == self.strategy.replacementIMP else {
                 throw InterposeError.unexpectedImplementation(`class`, selector, previousIMP)
             }
             Interpose.log("Restored -[\(`class`).\(selector)] IMP: \(origIMP!)")

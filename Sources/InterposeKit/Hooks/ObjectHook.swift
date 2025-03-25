@@ -22,15 +22,23 @@ extension Interpose {
             implementation: (ObjectHook<MethodSignature, HookSignature>) -> HookSignature
         ) throws {
             self.object = object
-            try super.init(class: type(of: object), selector: selector)
-            let block = implementation(self) as AnyObject
-            replacementIMP = imp_implementationWithBlock(block)
-            guard replacementIMP != nil else {
-                throw InterposeError.unknownError("imp_implementationWithBlock failed for \(block) - slots exceeded?")
+            
+            let strategyProvider: (AnyHook) -> AnyHookStrategy = { hook in
+                let hook = hook as! Self
+                let block = implementation(hook) as AnyObject
+                let replacementIMP = imp_implementationWithBlock(block)
+                
+                // Weakly store reference to hook inside the block of the IMP.
+                Interpose.storeHook(hook: hook, to: block)
+                
+                return AnyHookStrategy(replacementIMP: replacementIMP)
             }
-
-            // Weakly store reference to hook inside the block of the IMP.
-            Interpose.storeHook(hook: self, to: block)
+            
+            try super.init(
+                class: type(of: object),
+                selector: selector,
+                strategyProvider: strategyProvider
+            )
         }
 
         //    /// Release the hook block if possible.
@@ -99,6 +107,7 @@ extension Interpose {
             //  This function searches superclasses for implementations
             let hasExistingMethod = exactClassImplementsSelector(dynamicSubclass, selector)
             let encoding = method_getTypeEncoding(method)
+            let replacementIMP = self.strategy.replacementIMP
 
             if self.generatesSuperIMP {
                 // If the subclass is empty, we create a super trampoline first.
@@ -112,23 +121,23 @@ extension Interpose {
                 guard origIMP != nil else {
                     throw InterposeError.nonExistingImplementation(dynamicSubclass, selector)
                 }
-                Interpose.log("Added -[\(`class`).\(selector)] IMP: \(origIMP!) -> \(replacementIMP!)")
+                Interpose.log("Added -[\(`class`).\(selector)] IMP: \(origIMP!) -> \(replacementIMP)")
             } else {
                 // Could potentially be unified in the code paths
                 if hasExistingMethod {
                     origIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
                     if origIMP != nil {
-                        Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP!) via replacement")
+                        Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP) via replacement")
                     } else {
-                        Interpose.log("Unable to replace: -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
+                        Interpose.log("Unable to replace: -[\(`class`).\(selector)] IMP: \(replacementIMP)")
                         throw InterposeError.unableToAddMethod(`class`, selector)
                     }
                 } else {
                     let didAddMethod = class_addMethod(dynamicSubclass, selector, replacementIMP, encoding)
                     if didAddMethod {
-                        Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
+                        Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP)")
                     } else {
-                        Interpose.log("Unable to add: -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
+                        Interpose.log("Unable to add: -[\(`class`).\(selector)] IMP: \(replacementIMP)")
                         throw InterposeError.unableToAddMethod(`class`, selector)
                     }
                 }
@@ -155,6 +164,7 @@ extension Interpose {
             }
 
             // We are the topmost hook, replace method.
+            let replacementIMP = self.strategy.replacementIMP
             if currentIMP == replacementIMP {
                 let previousIMP = class_replaceMethod(
                     dynamicSubclass, selector, origIMP!, method_getTypeEncoding(method))

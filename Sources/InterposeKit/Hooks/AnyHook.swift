@@ -11,18 +11,20 @@ public class AnyHook: Hook {
     /// The current state of the hook.
     public internal(set) var state = HookState.pending
 
-    // else we validate init order
-    var replacementIMP: IMP!
-
+    private var _strategy: AnyHookStrategy!
+    var strategy: AnyHookStrategy { _strategy }
+    
     // fetched at apply time, changes late, thus class requirement
     var origIMP: IMP?
 
-    init(`class`: AnyClass, selector: Selector) throws {
+    init(`class`: AnyClass, selector: Selector, strategyProvider: (AnyHook) -> AnyHookStrategy) throws {
         self.selector = selector
         self.class = `class`
 
         // Check if method exists
         try validate()
+        
+        self._strategy = strategyProvider(self)
     }
 
     func replaceImplementation() throws {
@@ -68,12 +70,12 @@ public class AnyHook: Hook {
     public func cleanup() {
         switch state {
         case .pending:
-            Interpose.log("Releasing -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
-            imp_removeBlock(replacementIMP)
+            Interpose.log("Releasing -[\(`class`).\(selector)] IMP: \(self.strategy.replacementIMP)")
+            imp_removeBlock(strategy.replacementIMP)
         case .active:
-            Interpose.log("Keeping -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
+            Interpose.log("Keeping -[\(`class`).\(selector)] IMP: \(self.strategy.replacementIMP)")
         case .failed:
-            Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(replacementIMP!)")
+            Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(self.strategy.replacementIMP)")
         }
     }
 }
