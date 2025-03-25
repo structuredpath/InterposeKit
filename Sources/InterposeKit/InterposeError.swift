@@ -32,7 +32,7 @@ public enum InterposeError: LocalizedError {
     case objectPosingAsDifferentClass(AnyObject, actualClass: AnyClass)
 
     /// Can't revert or apply if already done so.
-    case invalidState(expectedState: AnyHook.State)
+    case invalidState(expectedState: HookState)
 
     /// Unable to remove hook.
     case resetUnsupported(_ reason: String)

@@ -9,7 +9,7 @@ public class AnyHook {
     public let selector: Selector
 
     /// The current state of the hook.
-    public internal(set) var state = State.pending
+    public internal(set) var state = HookState.pending
 
     // else we validate init order
     var replacementIMP: IMP!
@@ -17,8 +17,6 @@ public class AnyHook {
     // fetched at apply time, changes late, thus class requirement
     var origIMP: IMP?
 
-    public typealias State = HookState
-    
     init(`class`: AnyClass, selector: Selector) throws {
         self.selector = selector
         self.class = `class`
@@ -48,7 +46,7 @@ public class AnyHook {
     }
 
     /// Validate that the selector exists on the active class.
-    @discardableResult func validate(expectedState: State = .pending) throws -> Method {
+    @discardableResult func validate(expectedState: HookState = .pending) throws -> Method {
         guard let method = class_getInstanceMethod(`class`, selector) else {
             throw InterposeError.methodNotFound(`class`, selector)
         }
@@ -58,7 +56,7 @@ public class AnyHook {
         return method
     }
 
-    private func execute(newState: State, task: () throws -> Void) throws {
+    private func execute(newState: HookState, task: () throws -> Void) throws {
         do {
             try task()
             state = newState
