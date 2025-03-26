@@ -161,7 +161,7 @@ final class ObjectHookStrategy: HookStrategy {
             }
             Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!)")
         } else {
-            let nextHook = self.findNextHook(selfHook: self.handle, topmostIMP: currentIMP)
+            let nextHook = self._findParentHook(from: currentIMP)
             // Replace next's original IMP
             nextHook?.originalIMP = self.storedOriginalIMP
         }
@@ -174,30 +174,31 @@ final class ObjectHookStrategy: HookStrategy {
         // self.dynamicSubclass = nil
     }
     
-    // Find the hook above us (not necessarily topmost)
-    private func findNextHook(selfHook: ObjectHookHandle, topmostIMP: IMP) -> ObjectHookHandle? {
-        // We are not topmost hook, so find the hook above us!
-        var impl: IMP? = topmostIMP
-        var currentHook: ObjectHookHandle?
-        repeat {
-            // get topmost hook
-            let hook: ObjectHookHandle? = ObjectHookRegistry.handle(for: impl!)
-            if hook === selfHook {
-                // return parent
-                return currentHook
-            }
-            // crawl down the chain until we find ourselves
-            currentHook = hook
-            impl = hook?.originalIMP
-        } while impl != nil
+    /// Traverses the object hook chain to find the handle to the parent of this hook, starting
+    /// from the topmost IMP for the hooked method.
+    ///
+    /// This is used when removing an object hook to rewire the parent hook’s original IMP
+    /// back to this hook’s original IMP, effectively unlinking it from the chain.
+    ///
+    /// - Parameter topmostIMP: The IMP of the topmost installed hook.
+    /// - Returns: The handle to the parent hook in the chain, or `nil` if topmost.
+    private func _findParentHook(from topmostIMP: IMP) -> ObjectHookHandle? {
+        var currentIMP: IMP? = topmostIMP
+        var previousHandle: ObjectHookHandle?
+        
+        while let imp = currentIMP {
+            // Get the handle for the current IMP and stop if not found.
+            guard let currentHandle = ObjectHookRegistry.handle(for: imp) else { break }
+            
+            // If we’ve reached this hook, the previous one is its parent.
+            if currentHandle === self.handle { return previousHandle }
+            
+            previousHandle = currentHandle
+            currentIMP = currentHandle.originalIMP
+        }
+        
         return nil
     }
-    
-    //    /// Release the hook block if possible.
-    //    public override func cleanup() {
-    //        // remove subclass!
-    //        super.cleanup()
-    //    }
     
 }
 
