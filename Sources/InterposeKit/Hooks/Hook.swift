@@ -1,7 +1,5 @@
 import Foundation
 
-// TODO: Make originalIMP private
-
 /// A runtime hook that interposes a single instance method on a class or object.
 public final class Hook {
     
@@ -72,7 +70,7 @@ public final class Hook {
     }
     
     // ============================================================================ //
-    // MARK: ...
+    // MARK: Target Info
     // ============================================================================ //
     
     /// The class whose instance method is being interposed.
@@ -88,47 +86,76 @@ public final class Hook {
     public var selector: Selector {
         self.strategy.selector
     }
+    
+    // ============================================================================ //
+    // MARK: State
+    // ============================================================================ //
 
     /// The current state of the hook.
     public internal(set) var state = HookState.pending
+    
+    // ============================================================================ //
+    // MARK: Applying & Reverting
+    // ============================================================================ //
+
+    /// Applies the hook by interposing the method implementation.
+    public func apply() throws {
+        guard self.state == .pending else { return }
+        
+        do {
+            try self.strategy.replaceImplementation()
+            self.state = .active
+        } catch {
+            self.state = .failed
+            throw error
+        }
+    }
+
+    /// Reverts the hook, restoring the original method implementation.
+    public func revert() throws {
+        guard self.state == .active else { return }
+        
+        do {
+            try self.strategy.restoreImplementation()
+            self.state = .pending
+        } catch {
+            self.state = .failed
+            throw error
+        }
+    }
+
+    // ============================================================================ //
+    // MARK: Original Implementation
+    // ============================================================================ //
+    
+    // TODO: Make originalIMP private
+    
+    /// The effective original implementation of the hook. Might be looked up at runtime.
+    /// Do not cache this.
+    internal var originalIMP: IMP? {
+        self.strategy.originalIMP
+    }
+    
+    // ============================================================================ //
+    // MARK: Underlying Strategy
+    // ============================================================================ //
     
     private var _strategy: HookStrategy!
     
     private var strategy: HookStrategy {
         self._strategy
     }
-
-    /// The effective original implementation of the hook. Might be looked up at runtime.
-    /// Do not cache this.
-    internal var originalIMP: IMP? {
-        self.strategy.originalIMP
-    }
-
-    /// Applies the hook by interposing the method implementation.
-    public func apply() throws {
-        try execute(newState: .active) {
-            try self.strategy.replaceImplementation()
-        }
-    }
-
-    /// Reverts the hook, restoring the original method implementation.
-    public func revert() throws {
-        try execute(newState: .pending) {
-            try self.strategy.restoreImplementation()
-        }
-    }
     
-    private func execute(newState: HookState, task: () throws -> Void) throws {
-        do {
-            try task()
-            state = newState
-        } catch let error as InterposeError {
-            state = .failed
-            throw error
-        }
-    }
+}
 
-    // TODO: Rename to `cleanUp()`
+extension Hook: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        self.strategy.debugDescription
+    }
+}
+
+// TODO: Try to make clean-up automatic in deinit
+extension Hook {
     public func cleanup() {
         switch state {
         case .pending:
@@ -139,13 +166,6 @@ public final class Hook {
         case .failed:
             Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
         }
-    }
-    
-}
-
-extension Hook: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        self.strategy.debugDescription
     }
 }
 
