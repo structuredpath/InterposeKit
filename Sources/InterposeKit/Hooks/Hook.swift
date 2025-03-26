@@ -21,7 +21,7 @@ public class Hook {
                 selector: selector,
                 originalProvider: {
                     unsafeBitCast(
-                        hook.strategy.originalIMP,
+                        hook.originalIMP,
                         to: MethodSignature.self
                     )
                 }
@@ -91,13 +91,10 @@ public class Hook {
         }
     }
     
-    /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
+    /// The effective original implementation of the hook. Might be looked up at runtime.
+    /// Do not cache this.
     var originalIMP: IMP? {
-        if let strategy = self.strategy as? ClassHookStrategy {
-            return strategy.originalIMP
-        } else {
-            preconditionFailure("Not implemented")
-        }
+        self.strategy.originalIMP
     }
 
     /// Applies the hook by interposing the method implementation.
