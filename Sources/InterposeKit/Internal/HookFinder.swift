@@ -17,7 +17,7 @@ extension Interpose {
         }
     }
 
-    static func storeHook<HookType: Hook>(hook: HookType, to block: AnyObject) {
+    static func storeHook(hook: Hook, to block: AnyObject) {
         // Weakly store reference to hook inside the block of the IMP.
         objc_setAssociatedObject(block, &AssociatedKeys.hookForBlock,
                                  WeakObjectContainer(with: hook), .OBJC_ASSOCIATION_RETAIN)
@@ -25,21 +25,21 @@ extension Interpose {
     }
 
     // Finds the hook to a given implementation.
-    static func hookForIMP<HookType: Hook>(_ imp: IMP) -> HookType? {
+    static func hookForIMP(_ imp: IMP) -> Hook? {
         // Get the block that backs our IMP replacement
         guard let block = imp_getBlock(imp) else { return nil }
-        let container = objc_getAssociatedObject(block, &AssociatedKeys.hookForBlock) as? WeakObjectContainer<HookType>
+        let container = objc_getAssociatedObject(block, &AssociatedKeys.hookForBlock) as? WeakObjectContainer<Hook>
         return container?.object
     }
 
     // Find the hook above us (not necessarily topmost)
-    static func findNextHook<HookType: Hook>(selfHook: HookType, topmostIMP: IMP) -> HookType? {
+    static func findNextHook(selfHook: Hook, topmostIMP: IMP) -> Hook? {
         // We are not topmost hook, so find the hook above us!
         var impl: IMP? = topmostIMP
-        var currentHook: HookType?
+        var currentHook: Hook?
         repeat {
             // get topmost hook
-            let hook: HookType? = Interpose.hookForIMP(impl!)
+            let hook: Hook? = Interpose.hookForIMP(impl!)
             if hook === selfHook {
                 // return parent
                 return currentHook
