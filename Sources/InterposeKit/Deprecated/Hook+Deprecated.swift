@@ -1,4 +1,4 @@
-extension AnyHook {
+extension Hook {
     
     @available(*, deprecated, renamed: "HookState", message: "Use top-level 'HookState'.")
     public typealias State = HookState

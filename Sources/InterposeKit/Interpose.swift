@@ -8,7 +8,7 @@ final public class Interpose {
     /// Stores swizzle hooks and executes them at once.
     public let `class`: AnyClass
     /// Lists all hooks for the current interpose class object.
-    public private(set) var hooks: [AnyHook] = []
+    public private(set) var hooks: [Hook] = []
 
     /// If Interposing is object-based, this is set.
     public let object: AnyObject?
@@ -71,7 +71,7 @@ final public class Interpose {
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
-    ) throws -> some Hook {
+    ) throws -> Hook {
         let hook = try prepareHook(selector, methodSignature: methodSignature,
                                    hookSignature: hookSignature, implementation)
         try hook.apply()
@@ -85,8 +85,8 @@ final public class Interpose {
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
-    ) throws -> some Hook {
-        var hook: AnyHook
+    ) throws -> Hook {
+        var hook: Hook
         if let object = self.object {
             hook = try ObjectHook(object: object, selector: selector, implementation: implementation)
         } else {
@@ -108,7 +108,7 @@ final public class Interpose {
 
     private func execute(_ task: ((Interpose) throws -> Void)? = nil,
                          expectedState: HookState = .pending,
-                         executor: ((AnyHook) throws -> Void)) throws -> Interpose {
+                         executor: ((Hook) throws -> Void)) throws -> Interpose {
         // Run pre-apply code first
         if let task = task {
             try task(self)
