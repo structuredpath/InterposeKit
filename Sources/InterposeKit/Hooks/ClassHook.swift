@@ -2,14 +2,14 @@ import Foundation
 
 extension Interpose {
     /// A hook to an instance method and stores both the original and new implementation.
-    final public class ClassHook: AnyHook {
+    final public class ClassHook: Hook {
         
         public init<MethodSignature, HookSignature>(
             `class`: AnyClass,
             selector: Selector,
             implementation: HookImplementationBuilder<MethodSignature, HookSignature>
         ) throws {
-            let strategyProvider: (AnyHook) -> HookStrategy = { hook in
+            let strategyProvider: (Hook) -> HookStrategy = { hook in
                 let hook = hook as! Self
                 
                 let hookProxy = HookProxy(

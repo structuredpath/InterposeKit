@@ -9,7 +9,7 @@ extension Interpose {
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
-    ) throws -> some Hook {
+    ) throws -> Hook {
         try self.hook(
             NSSelectorFromString(selectorName),
             methodSignature: methodSignature,
