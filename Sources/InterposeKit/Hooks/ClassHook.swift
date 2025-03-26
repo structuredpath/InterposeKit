@@ -7,7 +7,7 @@ extension Interpose {
         public init(
             `class`: AnyClass,
             selector: Selector,
-            implementation: (ClassHook<MethodSignature, HookSignature>) -> HookSignature
+            implementation: HookImplementationBuilder<MethodSignature, HookSignature>
         ) throws {
             let strategyProvider: (AnyHook) -> _HookStrategy = { hook in
                 let hook = hook as! Self

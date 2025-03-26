@@ -1,5 +1,7 @@
 import ObjectiveC
 
+public typealias HookImplementationBuilder<MethodSignature, HookSignature> = (TypedHook<MethodSignature, HookSignature>) -> HookSignature
+
 /// A runtime hook that interposes a single instance method on a class or object.
 public protocol Hook: AnyObject {
     

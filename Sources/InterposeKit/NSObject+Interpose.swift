@@ -1,5 +1,8 @@
 import ObjectiveC
 
+// TODO: Rename `addHook(…)` to `applyHook(…)`
+// TODO: Revise documentation (implementation builder)
+
 extension NSObject {
     
     /// Installs a hook for the specified Objective-C selector on this object instance.
@@ -43,7 +46,7 @@ extension NSObject {
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
+        implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
         let hook = try Interpose.ObjectHook(
             object: self,

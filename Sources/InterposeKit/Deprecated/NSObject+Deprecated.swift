@@ -8,7 +8,7 @@ extension NSObject {
         _ selector: Selector,
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
+        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
         precondition(
             !(self is AnyClass),
@@ -33,7 +33,7 @@ extension NSObject {
         _ selector: Selector,
         methodSignature: MethodSignature.Type = MethodSignature.self,
         hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: (TypedHook<MethodSignature, HookSignature>) -> HookSignature
+        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
         let hook = try Interpose.ClassHook(
             class: self as AnyClass,
