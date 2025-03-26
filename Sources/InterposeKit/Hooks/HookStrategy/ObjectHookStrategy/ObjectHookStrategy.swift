@@ -35,7 +35,7 @@ final class ObjectHookStrategy: HookStrategy {
             return storedOrigIMP
         }
         // Else, perform a dynamic lookup
-        guard let origIMP = self.lookupOrigIMP else {
+        guard let origIMP = self.lookUpIMP() else {
             InterposeError.nonExistingImplementation(`class`, selector).log()
             preconditionFailure("IMP must be found for call")
         }
@@ -52,20 +52,6 @@ final class ObjectHookStrategy: HookStrategy {
         interposeSubclass!.dynamicClass
     }
     
-    /// We look for the parent IMP dynamically, so later modifications to the class are no problem.
-    var lookupOrigIMP: IMP? {
-        var currentClass: AnyClass? = self.class
-        repeat {
-            if let currentClass = currentClass,
-               let method = class_getInstanceMethod(currentClass, self.selector) {
-                let origIMP = method_getImplementation(method)
-                return origIMP
-            }
-            currentClass = class_getSuperclass(currentClass)
-        } while currentClass != nil
-        return nil
-    }
-    
     func replaceImplementation() throws {
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(self.class, self.selector)
@@ -76,7 +62,7 @@ final class ObjectHookStrategy: HookStrategy {
         self.interposeSubclass = try InterposeSubclass(object: self.object)
         
         // The implementation of the call that is hooked must exist.
-        guard self.lookupOrigIMP != nil else {
+        guard self.lookUpIMP() != nil else {
             throw InterposeError.nonExistingImplementation(self.class, self.selector).log()
         }
         
