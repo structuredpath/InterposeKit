@@ -1,11 +1,7 @@
 import Foundation
 
-// TODO: Make final
-// TODO: Make strategy private
-// TODO: Make main init private
-
 /// A runtime hook that interposes a single instance method on a class or object.
-public class Hook {
+public final class Hook {
     
     // ============================================================================ //
     // MARK: Initialization
@@ -77,7 +73,7 @@ public class Hook {
         )
     }
     
-    init(
+    private init(
         `class`: AnyClass,
         selector: Selector,
         strategyProvider: (Hook) -> HookStrategy
@@ -105,7 +101,8 @@ public class Hook {
     public internal(set) var state = HookState.pending
     
     private var _strategy: HookStrategy!
-    var strategy: HookStrategy { _strategy }
+    
+    private var strategy: HookStrategy { _strategy }
 
     /// The effective original implementation of the hook. Might be looked up at runtime.
     /// Do not cache this.
