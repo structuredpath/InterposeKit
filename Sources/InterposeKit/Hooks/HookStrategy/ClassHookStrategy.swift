@@ -63,7 +63,7 @@ final class ClassHookStrategy: HookStrategy {
 }
 
 extension ClassHookStrategy: CustomDebugStringConvertible {
-    var debugDescription: String {
+    internal var debugDescription: String {
         "\(self.selector) → \(String(describing: self.originalIMP))"
     }
 }
