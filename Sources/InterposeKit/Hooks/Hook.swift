@@ -66,7 +66,7 @@ public final class Hook {
             }
         }
         
-        self._strategy = try makeStrategy(self)
+        self.strategy = try makeStrategy(self)
     }
     
     // ============================================================================ //
@@ -139,12 +139,12 @@ public final class Hook {
     // ============================================================================ //
     // MARK: Underlying Strategy
     // ============================================================================ //
-    
-    private var _strategy: HookStrategy!
-    
-    private var strategy: HookStrategy {
-        self._strategy
-    }
+
+    /// The active strategy used to interpose and manage the method implementation.
+    ///
+    /// This is an implicitly unwrapped optional, assigned immediately after initialization,
+    /// as constructing the strategy requires `self` to build the hook proxy.
+    private var strategy: HookStrategy!
     
 }
 
