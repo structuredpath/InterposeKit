@@ -37,7 +37,11 @@ extension Interpose {
                 // Weakly store reference to hook inside the block of the IMP.
                 Interpose.storeHook(hook: hook, to: block)
                 
-                return DummyHookStrategy<MethodSignature>(replacementIMP: replacementIMP)
+                return ObjectHookStrategy(
+                    object: object,
+                    selector: selector,
+                    replacementIMP: replacementIMP
+                )
             }
             
             try super.init(
@@ -123,7 +127,7 @@ extension Interpose {
                 }
 
                 // Replace IMP (by now we guarantee that it exists)
-                (self.strategy as! DummyHookStrategy<MethodSignature>).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
                 guard self.strategy.originalIMP != nil else {
                     throw InterposeError.nonExistingImplementation(dynamicSubclass, selector)
                 }
@@ -131,7 +135,7 @@ extension Interpose {
             } else {
                 // Could potentially be unified in the code paths
                 if hasExistingMethod {
-                    (self.strategy as! DummyHookStrategy<MethodSignature>).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                    (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
                     if self.strategy.originalIMP != nil {
                         Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP) via replacement")
                     } else {
@@ -181,7 +185,7 @@ extension Interpose {
             } else {
                 let nextHook = Interpose.findNextHook(selfHook: self, topmostIMP: currentIMP)
                 // Replace next's original IMP
-                (nextHook?.strategy as? DummyHookStrategy<MethodSignature>)?.originalIMP = self.strategy.originalIMP
+                (nextHook?.strategy as? ObjectHookStrategy)?.originalIMP = self.strategy.originalIMP
             }
 
             // FUTURE: remove class pair!
@@ -201,3 +205,30 @@ extension Interpose.ObjectHook: CustomDebugStringConvertible {
     }
 }
 #endif
+
+final class ObjectHookStrategy: HookStrategy {
+    
+    init(
+        object: AnyObject,
+        selector: Selector,
+        replacementIMP: IMP
+    ) {
+        self.object = object
+        self.class = type(of: object)
+        self.selector = selector
+        self.replacementIMP = replacementIMP
+    }
+    
+    let object: AnyObject
+    let `class`: AnyClass
+    let selector: Selector
+    let replacementIMP: IMP
+    var originalIMP: IMP?
+    
+}
+
+extension ObjectHookStrategy: CustomDebugStringConvertible {
+    var debugDescription: String {
+        ""
+    }
+}
