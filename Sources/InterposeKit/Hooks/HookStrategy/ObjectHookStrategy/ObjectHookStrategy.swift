@@ -23,27 +23,12 @@ final class ObjectHookStrategy: HookStrategy {
     let selector: Selector
     
     let hookIMP: IMP
-    var storedOriginalIMP: IMP?
+    private(set) var storedOriginalIMP: IMP?
     
     private lazy var handle = ObjectHookHandle(
         getOriginalIMP: { self.storedOriginalIMP },
         setOriginalIMP: { self.storedOriginalIMP = $0 }
     )
-    
-    /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
-    /// Actually not optional…
-    var originalIMP: IMP? {
-        // If we switched implementations, return stored.
-        if let storedOrigIMP = self.storedOriginalIMP {
-            return storedOrigIMP
-        }
-        // Else, perform a dynamic lookup
-        guard let origIMP = self.lookUpIMP() else {
-            InterposeError.nonExistingImplementation(`class`, selector).log()
-            preconditionFailure("IMP must be found for call")
-        }
-        return origIMP
-    }
     
     /// Subclass that we create on the fly
     var interposeSubclass: InterposeSubclass?
