@@ -36,7 +36,7 @@ final class ClassHookStrategy: HookStrategy {
         Interpose.log("Swizzled -[\(self.class).\(self.selector)] IMP: \(originalIMP) -> \(self.hookIMP)")
     }
     
-    func resetImplementation() throws {
+    func restoreImplementation() throws {
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(self.class, self.selector)
         }

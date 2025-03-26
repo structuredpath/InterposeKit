@@ -12,4 +12,8 @@ protocol HookStrategy: AnyObject, CustomDebugStringConvertible {
     /// the hook is reverted.
     var originalIMP: IMP? { get }
     
+    func replaceImplementation() throws
+    
+    func restoreImplementation() throws
+    
 }

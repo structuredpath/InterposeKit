@@ -74,24 +74,6 @@ public class Hook {
     private var _strategy: HookStrategy!
     var strategy: HookStrategy { _strategy }
 
-    
-
-    func replaceImplementation() throws {
-        if let strategy = self.strategy as? ClassHookStrategy {
-            return try strategy.replaceImplementation()
-        } else {
-            preconditionFailure("Not implemented")
-        }
-    }
-    
-    func resetImplementation() throws {
-        if let strategy = self.strategy as? ClassHookStrategy {
-            return try strategy.resetImplementation()
-        } else {
-            preconditionFailure("Not implemented")
-        }
-    }
-    
     /// The effective original implementation of the hook. Might be looked up at runtime.
     /// Do not cache this.
     var originalIMP: IMP? {
@@ -100,12 +82,16 @@ public class Hook {
 
     /// Applies the hook by interposing the method implementation.
     public func apply() throws {
-        try execute(newState: .active) { try replaceImplementation() }
+        try execute(newState: .active) {
+            try self.strategy.replaceImplementation()
+        }
     }
 
     /// Reverts the hook, restoring the original method implementation.
     public func revert() throws {
-        try execute(newState: .pending) { try resetImplementation() }
+        try execute(newState: .pending) {
+            try self.strategy.restoreImplementation()
+        }
     }
     
     /// Validate that the selector exists on the active class.

@@ -5,7 +5,6 @@ extension Interpose {
     /// A hook to an instance method of a single object, stores both the original and new implementation.
     /// Think about: Multiple hooks for one object
     final public class ObjectHook: Hook {
-
         /// Initialize a new hook to interpose an instance method.
         public init<MethodSignature, HookSignature>(
             object: AnyObject,
@@ -38,14 +37,6 @@ extension Interpose {
                 selector: selector,
                 strategyProvider: strategyProvider
             )
-        }
-
-        override func replaceImplementation() throws {
-            try (self.strategy as! ObjectHookStrategy).replaceImplementation()
-        }
-
-        override func resetImplementation() throws {
-            try (self.strategy as! ObjectHookStrategy).resetImplementation()
         }
     }
 }
@@ -192,7 +183,7 @@ final class ObjectHookStrategy: HookStrategy {
         return false
     }
     
-    func resetImplementation() throws {
+    func restoreImplementation() throws {
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(self.class, self.selector)
         }
