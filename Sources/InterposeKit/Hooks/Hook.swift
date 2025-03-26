@@ -44,6 +44,39 @@ public class Hook {
         )
     }
     
+    internal convenience init<MethodSignature, HookSignature>(
+        object: AnyObject,
+        selector: Selector,
+        build: HookBuilder<MethodSignature, HookSignature>
+    ) throws {
+        let strategyProvider: (Hook) -> any HookStrategy = { hook in
+            let hookProxy = HookProxy(
+                selector: selector,
+                originalProvider: {
+                    unsafeBitCast(
+                        hook.originalIMP,
+                        to: MethodSignature.self
+                    )
+                }
+            )
+            
+            let hookBlock = build(hookProxy)
+            let hookIMP = imp_implementationWithBlock(hookBlock)
+            
+            return ObjectHookStrategy(
+                object: object,
+                selector: selector,
+                hookIMP: hookIMP
+            )
+        }
+        
+        try self.init(
+            class: type(of: object),
+            selector: selector,
+            strategyProvider: strategyProvider
+        )
+    }
+    
     init(
         `class`: AnyClass,
         selector: Selector,
