@@ -100,10 +100,8 @@ final class ClassHookStrategy: HookStrategy {
     
 }
 
-#if DEBUG
-extension Interpose.ClassHook: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        return "\(selector) -> \(String(describing: self.strategy.originalIMP))"
+extension ClassHookStrategy: CustomDebugStringConvertible {
+    var debugDescription: String {
+        "\(self.selector) → \(String(describing: self.originalIMP))"
     }
 }
-#endif
