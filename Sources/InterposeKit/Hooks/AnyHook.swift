@@ -25,11 +25,28 @@ public class AnyHook: Hook {
     }
 
     func replaceImplementation() throws {
-        preconditionFailure("Not implemented")
+        if let strategy = self.strategy as? ClassHookStrategy {
+            return try strategy.replaceImplementation()
+        } else {
+            preconditionFailure("Not implemented")
+        }
     }
-
+    
     func resetImplementation() throws {
-        preconditionFailure("Not implemented")
+        if let strategy = self.strategy as? ClassHookStrategy {
+            return try strategy.resetImplementation()
+        } else {
+            preconditionFailure("Not implemented")
+        }
+    }
+    
+    /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
+    var originalIMP: IMP? {
+        if let strategy = self.strategy as? ClassHookStrategy {
+            return strategy.originalIMP
+        } else {
+            preconditionFailure("Not implemented")
+        }
     }
 
     /// Apply the interpose hook.
@@ -75,35 +92,4 @@ public class AnyHook: Hook {
             Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(self.strategy.replacementIMP)")
         }
     }
-}
-
-/// Hook baseclass with generic signatures.
-public class TypedHook: AnyHook {
-    
-    override func replaceImplementation() throws {
-        if let strategy = self.strategy as? ClassHookStrategy {
-            return try strategy.replaceImplementation()
-        } else {
-            preconditionFailure("Not implemented")
-        }
-    }
-    
-    override func resetImplementation() throws {
-        if let strategy = self.strategy as? ClassHookStrategy {
-            return try strategy.resetImplementation()
-        } else {
-            preconditionFailure("Not implemented")
-        }
-    }
-    
-    /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
-    
-    public var originalIMP: IMP? {
-        if let strategy = self.strategy as? ClassHookStrategy {
-            return strategy.originalIMP
-        } else {
-            preconditionFailure("Not implemented")
-        }
-    }
-    
 }
