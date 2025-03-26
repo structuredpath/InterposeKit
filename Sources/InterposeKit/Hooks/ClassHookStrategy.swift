@@ -1,43 +1,5 @@
 import Foundation
 
-extension Interpose {
-    /// A hook to an instance method and stores both the original and new implementation.
-    final public class ClassHook: Hook {
-        
-        public init<MethodSignature, HookSignature>(
-            `class`: AnyClass,
-            selector: Selector,
-            implementation: HookImplementationBuilder<MethodSignature, HookSignature>
-        ) throws {
-            let strategyProvider: (Hook) -> HookStrategy = { hook in
-                let hook = hook as! Self
-                
-                let hookProxy = HookProxy(
-                    selector: selector,
-                    originalProvider: {
-                        unsafeBitCast(hook.strategy.originalIMP, to: MethodSignature.self)
-                    }
-                )
-                
-                let replacementIMP = imp_implementationWithBlock(implementation(hookProxy))
-                
-                return ClassHookStrategy(
-                    class: `class`,
-                    selector: selector,
-                    replacementIMP: replacementIMP
-                )
-            }
-            
-            try super.init(
-                class: `class`,
-                selector: selector,
-                strategyProvider: strategyProvider
-            )
-        }
-        
-    }
-}
-
 final class ClassHookStrategy: HookStrategy {
     
     init(
