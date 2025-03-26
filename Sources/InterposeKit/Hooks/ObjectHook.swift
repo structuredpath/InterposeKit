@@ -27,7 +27,7 @@ extension Interpose {
                 let replacementIMP = imp_implementationWithBlock(block)
                 
                 // Weakly store reference to hook inside the block of the IMP.
-                Interpose.storeHook(hook: hook, to: block)
+                Interpose.storeHook(hook: hook, to: replacementIMP)
                 
                 return ObjectHookStrategy(
                     object: object,

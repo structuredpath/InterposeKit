@@ -17,10 +17,16 @@ extension Interpose {
         }
     }
 
-    static func storeHook(hook: Hook, to block: AnyObject) {
+    static func storeHook(hook: Hook, to imp: IMP) {
         // Weakly store reference to hook inside the block of the IMP.
-        objc_setAssociatedObject(block, &AssociatedKeys.hookForBlock,
-                                 WeakObjectContainer(with: hook), .OBJC_ASSOCIATION_RETAIN)
+        guard let block = imp_getBlock(imp) else { fatalError() }
+        
+        objc_setAssociatedObject(
+            block,
+            &AssociatedKeys.hookForBlock,
+            WeakObjectContainer(with: hook),
+            .OBJC_ASSOCIATION_RETAIN
+        )
 
     }
 
