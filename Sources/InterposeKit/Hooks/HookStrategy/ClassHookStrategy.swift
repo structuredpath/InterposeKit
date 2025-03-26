@@ -18,7 +18,7 @@ final class ClassHookStrategy: HookStrategy {
     var scope: HookScope { .class }
     let selector: Selector
     let hookIMP: IMP
-    private(set) var originalIMP: IMP?
+    private(set) var storedOriginalIMP: IMP?
     
     func replaceImplementation() throws {
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
@@ -34,7 +34,7 @@ final class ClassHookStrategy: HookStrategy {
             throw InterposeError.nonExistingImplementation(self.class, self.selector)
         }
         
-        self.originalIMP = originalIMP
+        self.storedOriginalIMP = originalIMP
         
         Interpose.log("Swizzled -[\(self.class).\(self.selector)] IMP: \(originalIMP) -> \(self.hookIMP)")
     }
@@ -44,7 +44,7 @@ final class ClassHookStrategy: HookStrategy {
             throw InterposeError.methodNotFound(self.class, self.selector)
         }
         
-        guard let originalIMP = self.originalIMP else {
+        guard let originalIMP = self.storedOriginalIMP else {
             // Ignore? Throw error?
             fatalError("The original implementation should be loaded when resetting")
         }
@@ -67,6 +67,6 @@ final class ClassHookStrategy: HookStrategy {
 
 extension ClassHookStrategy: CustomDebugStringConvertible {
     internal var debugDescription: String {
-        "\(self.selector) → \(String(describing: self.originalIMP))"
+        "\(self.selector) → \(String(describing: self.storedOriginalIMP))"
     }
 }
