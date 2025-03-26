@@ -4,10 +4,10 @@ extension Interpose {
 
     /// A hook to an instance method of a single object, stores both the original and new implementation.
     /// Think about: Multiple hooks for one object
-    final public class ObjectHook<MethodSignature>: Hook {
+    final public class ObjectHook: Hook {
 
         /// Initialize a new hook to interpose an instance method.
-        public init<HookSignature>(
+        public init<MethodSignature, HookSignature>(
             object: AnyObject,
             selector: Selector,
             build: HookBuilder<MethodSignature, HookSignature>
@@ -17,7 +17,12 @@ extension Interpose {
                 
                 let hookProxy = HookProxy(
                     selector: selector,
-                    originalProvider: { hook.original }
+                    originalProvider: {
+                        unsafeBitCast(
+                            hook.originalIMP,
+                            to: MethodSignature.self
+                        )
+                    }
                 )
                 
                 let block = build(hookProxy) as AnyObject
@@ -46,33 +51,6 @@ extension Interpose {
         //        super.cleanup()
         //    }
 
-        /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
-        public var original: MethodSignature {
-            // If we switched implementations, return stored.
-            if let savedOrigIMP = self.strategy.originalIMP {
-                return unsafeBitCast(savedOrigIMP, to: MethodSignature.self)
-            }
-            // Else, perform a dynamic lookup
-            guard let origIMP = lookupOrigIMP else { InterposeError.nonExistingImplementation(`class`, selector).log()
-                preconditionFailure("IMP must be found for call")
-            }
-            return origIMP
-        }
-
-        /// We look for the parent IMP dynamically, so later modifications to the class are no problem.
-        private var lookupOrigIMP: MethodSignature? {
-            var currentClass: AnyClass? = self.class
-            repeat {
-                if let currentClass = currentClass,
-                    let method = class_getInstanceMethod(currentClass, self.selector) {
-                    let origIMP = method_getImplementation(method)
-                    return unsafeBitCast(origIMP, to: MethodSignature.self)
-                }
-                currentClass = class_getSuperclass(currentClass)
-            } while currentClass != nil
-            return nil
-        }
-
         /// Looks for an instance method in the exact class, without looking up the hierarchy.
         func exactClassImplementsSelector(_ klass: AnyClass, _ selector: Selector) -> Bool {
             var methodCount: CUnsignedInt = 0
@@ -97,7 +75,7 @@ extension Interpose {
             strategy.interposeSubclass = try InterposeSubclass(object: strategy.object)
 
             // The implementation of the call that is hooked must exist.
-            guard lookupOrigIMP != nil else {
+            guard strategy.lookupOrigIMP != nil else {
                 throw InterposeError.nonExistingImplementation(`class`, selector).log()
             }
 
@@ -114,7 +92,7 @@ extension Interpose {
                 }
 
                 // Replace IMP (by now we guarantee that it exists)
-                (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(strategy.dynamicSubclass, selector, replacementIMP, encoding)
+                (self.strategy as! ObjectHookStrategy).storedOriginalIMP = class_replaceMethod(strategy.dynamicSubclass, selector, replacementIMP, encoding)
                 guard self.strategy.originalIMP != nil else {
                     throw InterposeError.nonExistingImplementation(strategy.dynamicSubclass, selector)
                 }
@@ -122,7 +100,7 @@ extension Interpose {
             } else {
                 // Could potentially be unified in the code paths
                 if hasExistingMethod {
-                    (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(strategy.dynamicSubclass, selector, replacementIMP, encoding)
+                    (self.strategy as! ObjectHookStrategy).storedOriginalIMP = class_replaceMethod(strategy.dynamicSubclass, selector, replacementIMP, encoding)
                     if self.strategy.originalIMP != nil {
                         Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP) via replacement")
                     } else {
@@ -174,7 +152,7 @@ extension Interpose {
             } else {
                 let nextHook = Interpose.findNextHook(selfHook: self, topmostIMP: currentIMP)
                 // Replace next's original IMP
-                (nextHook?.strategy as? ObjectHookStrategy)?.originalIMP = self.strategy.originalIMP
+                (nextHook?.strategy as? ObjectHookStrategy)?.storedOriginalIMP = self.strategy.originalIMP
             }
 
             // FUTURE: remove class pair!
@@ -212,7 +190,22 @@ final class ObjectHookStrategy: HookStrategy {
     let `class`: AnyClass
     let selector: Selector
     let replacementIMP: IMP
-    var originalIMP: IMP?
+    var storedOriginalIMP: IMP?
+    
+    /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
+    /// Actually not optional…
+    var originalIMP: IMP? {
+        // If we switched implementations, return stored.
+        if let storedOrigIMP = self.storedOriginalIMP {
+            return storedOrigIMP
+        }
+        // Else, perform a dynamic lookup
+        guard let origIMP = self.lookupOrigIMP else {
+            InterposeError.nonExistingImplementation(`class`, selector).log()
+            preconditionFailure("IMP must be found for call")
+        }
+        return origIMP
+    }
     
     /// Subclass that we create on the fly
     var interposeSubclass: InterposeSubclass?
@@ -222,6 +215,20 @@ final class ObjectHookStrategy: HookStrategy {
     
     var dynamicSubclass: AnyClass {
         interposeSubclass!.dynamicClass
+    }
+    
+    /// We look for the parent IMP dynamically, so later modifications to the class are no problem.
+    var lookupOrigIMP: IMP? {
+        var currentClass: AnyClass? = self.class
+        repeat {
+            if let currentClass = currentClass,
+               let method = class_getInstanceMethod(currentClass, self.selector) {
+                let origIMP = method_getImplementation(method)
+                return origIMP
+            }
+            currentClass = class_getSuperclass(currentClass)
+        } while currentClass != nil
+        return nil
     }
     
 }
