@@ -113,12 +113,14 @@ final public class Interpose {
         if let task = task {
             try task(self)
         }
+        
         // Validate all tasks, stop if anything is not valid
-        guard hooks.allSatisfy({
-            (try? $0.validate(expectedState: expectedState)) != nil
-        }) else {
-            throw InterposeError.invalidState(expectedState: expectedState)
+        for hook in self.hooks {
+            if hook.state != expectedState {
+                throw InterposeError.invalidState(expectedState: expectedState)
+            }
         }
+        
         // Execute all tasks
         try hooks.forEach(executor)
         return self
