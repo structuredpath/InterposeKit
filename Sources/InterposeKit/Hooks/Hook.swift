@@ -1,5 +1,7 @@
 import Foundation
 
+// TODO: Make originalIMP private
+
 /// A runtime hook that interposes a single instance method on a class or object.
 public final class Hook {
     
@@ -12,7 +14,7 @@ public final class Hook {
         selector: Selector,
         build: HookBuilder<MethodSignature, HookSignature>
     ) throws {
-        let strategyProvider: (Hook) -> HookStrategy = { hook in
+        try self.init { hook in
             let hookProxy = HookProxy(
                 selector: selector,
                 originalProvider: {
@@ -26,18 +28,12 @@ public final class Hook {
             let hookBlock = build(hookProxy)
             let hookIMP = imp_implementationWithBlock(hookBlock)
             
-            return ClassHookStrategy(
+            return try ClassHookStrategy(
                 class: `class`,
                 selector: selector,
                 hookIMP: hookIMP
             )
         }
-        
-        try self.init(
-            class: `class`,
-            selector: selector,
-            strategyProvider: strategyProvider
-        )
     }
     
     internal convenience init<MethodSignature, HookSignature>(
@@ -45,7 +41,7 @@ public final class Hook {
         selector: Selector,
         build: HookBuilder<MethodSignature, HookSignature>
     ) throws {
-        let strategyProvider: (Hook) -> any HookStrategy = { hook in
+        try self.init { hook in
             let hookProxy = HookProxy(
                 selector: selector,
                 originalProvider: {
@@ -59,32 +55,16 @@ public final class Hook {
             let hookBlock = build(hookProxy)
             let hookIMP = imp_implementationWithBlock(hookBlock)
             
-            return ObjectHookStrategy(
+            return try ObjectHookStrategy(
                 object: object,
                 selector: selector,
                 hookIMP: hookIMP
             )
         }
-        
-        try self.init(
-            class: type(of: object),
-            selector: selector,
-            strategyProvider: strategyProvider
-        )
     }
     
-    private init(
-        `class`: AnyClass,
-        selector: Selector,
-        strategyProvider: (Hook) -> HookStrategy
-    ) throws {
-        self.selector = selector
-        self.class = `class`
-        
-        // Check if method exists
-        try validate()
-        
-        self._strategy = strategyProvider(self)
+    private init(strategyProvider: (Hook) throws -> HookStrategy) rethrows {
+        self._strategy = try strategyProvider(self)
     }
     
     // ============================================================================ //
@@ -92,21 +72,31 @@ public final class Hook {
     // ============================================================================ //
     
     /// The class whose instance method is being interposed.
-    public let `class`: AnyClass
+    public var `class`: AnyClass {
+        self.strategy.class
+    }
+    
+    public var scope: HookScope {
+        self.strategy.scope
+    }
 
     /// The selector identifying the instance method being interposed.
-    public let selector: Selector
+    public var selector: Selector {
+        self.strategy.selector
+    }
 
     /// The current state of the hook.
     public internal(set) var state = HookState.pending
     
     private var _strategy: HookStrategy!
     
-    private var strategy: HookStrategy { _strategy }
+    private var strategy: HookStrategy {
+        self._strategy
+    }
 
     /// The effective original implementation of the hook. Might be looked up at runtime.
     /// Do not cache this.
-    var originalIMP: IMP? {
+    internal var originalIMP: IMP? {
         self.strategy.originalIMP
     }
 
