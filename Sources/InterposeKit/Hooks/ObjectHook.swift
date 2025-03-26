@@ -19,7 +19,7 @@ extension Interpose {
         public init(
             object: AnyObject,
             selector: Selector,
-            implementation: (ObjectHook<MethodSignature, HookSignature>) -> HookSignature
+            implementation: HookImplementationBuilder<MethodSignature, HookSignature>
         ) throws {
             self.object = object
             
