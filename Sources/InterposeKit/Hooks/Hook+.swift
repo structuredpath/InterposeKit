@@ -20,6 +20,16 @@ public final class HookProxy<MethodSignature> {
     
 }
 
+public enum HookScope {
+    
+    /// The scope that targets all instances of the class.
+    case `class`
+    
+    /// The scope that targets a specific instance of the class.
+    case object(AnyObject)
+    
+}
+
 public enum HookState: Equatable {
     
     /// The hook is ready to be applied.

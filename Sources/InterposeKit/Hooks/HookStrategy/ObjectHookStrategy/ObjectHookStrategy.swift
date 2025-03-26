@@ -6,20 +6,23 @@ final class ObjectHookStrategy: HookStrategy {
         object: AnyObject,
         selector: Selector,
         hookIMP: IMP
-    ) {
-        self.object = object
+    ) throws {
         self.class = type(of: object)
+        self.object = object
         self.selector = selector
         self.hookIMP = hookIMP
+
+        try self.validate()
         
         ObjectHookRegistry.register(self.handle, for: hookIMP)
     }
     
-    let object: AnyObject
     let `class`: AnyClass
+    let object: AnyObject
+    var scope: HookScope { .object(self.object) }
     let selector: Selector
-    let hookIMP: IMP
     
+    let hookIMP: IMP
     var storedOriginalIMP: IMP?
     
     private lazy var handle = ObjectHookHandle(

@@ -6,13 +6,16 @@ final class ClassHookStrategy: HookStrategy {
         `class`: AnyClass,
         selector: Selector,
         hookIMP: IMP
-    ) {
+    ) throws {
         self.class = `class`
         self.selector = selector
         self.hookIMP = hookIMP
+        
+        try self.validate()
     }
     
     let `class`: AnyClass
+    var scope: HookScope { .class }
     let selector: Selector
     let hookIMP: IMP
     private(set) var originalIMP: IMP?

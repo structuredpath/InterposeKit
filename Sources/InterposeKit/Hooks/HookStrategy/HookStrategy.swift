@@ -4,10 +4,8 @@ import ObjectiveC
 
 internal protocol HookStrategy: AnyObject, CustomDebugStringConvertible {
     
-    /// The class whose instance method is being interposed.
     var `class`: AnyClass { get }
-    
-    /// /// The selector identifying the instance method being interposed.
+    var scope: HookScope { get }
     var selector: Selector { get }
     
     /// The implementation used to interpose the method, created during hook setup and used
@@ -19,8 +17,18 @@ internal protocol HookStrategy: AnyObject, CustomDebugStringConvertible {
     var originalIMP: IMP? { get }
     
     func replaceImplementation() throws
-    
     func restoreImplementation() throws
+    
+}
+
+extension HookStrategy {
+    
+    /// Validates that the target method exists on the class, throwing if not found.
+    internal func validate() throws {
+        guard class_getInstanceMethod(self.class, self.selector) != nil else {
+            throw InterposeError.methodNotFound(self.class, self.selector)
+        }
+    }
     
 }
 
