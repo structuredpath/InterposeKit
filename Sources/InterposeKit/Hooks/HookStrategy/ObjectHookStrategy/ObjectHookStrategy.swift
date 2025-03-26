@@ -12,8 +12,7 @@ final class ObjectHookStrategy: HookStrategy {
         self.selector = selector
         self.hookIMP = hookIMP
         
-        // Weakly store reference to hook inside the block of the IMP.
-        Interpose.storeHook(hook: self.node, to: hookIMP)
+        ObjectHookRegistry.register(self.handle, for: hookIMP)
     }
     
     let object: AnyObject
@@ -21,12 +20,12 @@ final class ObjectHookStrategy: HookStrategy {
     let selector: Selector
     let hookIMP: IMP
     
-    var storedOriginalIMP: IMP? {
-        get { self.node.originalIMP }
-        set { self.node.originalIMP = newValue }
-    }
+    var storedOriginalIMP: IMP?
     
-    private lazy var node = ObjectHookLink()
+    private lazy var handle = ObjectHookHandle(
+        getOriginalIMP: { self.storedOriginalIMP },
+        setOriginalIMP: { self.storedOriginalIMP = $0 }
+    )
     
     /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
     /// Actually not optional…
@@ -162,7 +161,7 @@ final class ObjectHookStrategy: HookStrategy {
             }
             Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!)")
         } else {
-            let nextHook = Interpose.findNextHook(selfHook: self.node, topmostIMP: currentIMP)
+            let nextHook = self.findNextHook(selfHook: self.handle, topmostIMP: currentIMP)
             // Replace next's original IMP
             nextHook?.originalIMP = self.storedOriginalIMP
         }
@@ -173,6 +172,25 @@ final class ObjectHookStrategy: HookStrategy {
         //
         // objc_disposeClassPair(dynamicSubclass)
         // self.dynamicSubclass = nil
+    }
+    
+    // Find the hook above us (not necessarily topmost)
+    private func findNextHook(selfHook: ObjectHookHandle, topmostIMP: IMP) -> ObjectHookHandle? {
+        // We are not topmost hook, so find the hook above us!
+        var impl: IMP? = topmostIMP
+        var currentHook: ObjectHookHandle?
+        repeat {
+            // get topmost hook
+            let hook: ObjectHookHandle? = ObjectHookRegistry.handle(for: impl!)
+            if hook === selfHook {
+                // return parent
+                return currentHook
+            }
+            // crawl down the chain until we find ourselves
+            currentHook = hook
+            impl = hook?.originalIMP
+        } while impl != nil
+        return nil
     }
     
     //    /// Release the hook block if possible.
@@ -196,69 +214,3 @@ extension ObjectHookStrategy: CustomDebugStringConvertible {
 //    }
 //}
 //#endif
-
-final class ObjectHookLink {
-    
-    init() {}
-    
-    var originalIMP: IMP?
-    
-}
-
-extension Interpose {
-    
-    private struct AssociatedKeys {
-        static var hookForBlock: UInt8 = 0
-    }
-    
-    private class WeakObjectContainer<T: AnyObject>: NSObject {
-        private weak var _object: T?
-        
-        var object: T? {
-            return _object
-        }
-        init(with object: T?) {
-            _object = object
-        }
-    }
-    
-    static func storeHook(hook: ObjectHookLink, to imp: IMP) {
-        // Weakly store reference to hook inside the block of the IMP.
-        guard let block = imp_getBlock(imp) else { fatalError() }
-        
-        objc_setAssociatedObject(
-            block,
-            &AssociatedKeys.hookForBlock,
-            WeakObjectContainer(with: hook),
-            .OBJC_ASSOCIATION_RETAIN
-        )
-        
-    }
-    
-    // Finds the hook to a given implementation.
-    static func hookForIMP(_ imp: IMP) -> ObjectHookLink? {
-        // Get the block that backs our IMP replacement
-        guard let block = imp_getBlock(imp) else { return nil }
-        let container = objc_getAssociatedObject(block, &AssociatedKeys.hookForBlock) as? WeakObjectContainer<ObjectHookLink>
-        return container?.object
-    }
-    
-    // Find the hook above us (not necessarily topmost)
-    static func findNextHook(selfHook: ObjectHookLink, topmostIMP: IMP) -> ObjectHookLink? {
-        // We are not topmost hook, so find the hook above us!
-        var impl: IMP? = topmostIMP
-        var currentHook: ObjectHookLink?
-        repeat {
-            // get topmost hook
-            let hook: ObjectHookLink? = Interpose.hookForIMP(impl!)
-            if hook === selfHook {
-                // return parent
-                return currentHook
-            }
-            // crawl down the chain until we find ourselves
-            currentHook = hook
-            impl = hook?.originalIMP
-        } while impl != nil
-        return nil
-    }
-}
