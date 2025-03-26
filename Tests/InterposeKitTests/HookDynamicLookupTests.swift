@@ -13,12 +13,12 @@ class HookDynamicLookupTests: XCTestCase {
         typealias MethodSignature = @convention(c) (ExampleClass, Selector, String) -> String
         typealias HookSignature = @convention(block) (ExampleClass, String) -> String
         
-        let obj = ExampleClass()
+        let object = ExampleClass()
         
         // Create an ObjectHook for the 'greet(name:)' method.
         // Note: We don't explicitly set strategy.originalIMP, so the dynamic lookup path will be used.
-        let hook = try Interpose.ObjectHook(
-            object: obj,
+        let hook = try Hook(
+            object: object,
             selector: #selector(ExampleClass.greet(name:)),
             build: { (hook: HookProxy<MethodSignature>) -> HookSignature in
                 // Build a replacement block that calls the original implementation via the hook proxy.
@@ -36,7 +36,7 @@ class HookDynamicLookupTests: XCTestCase {
         )
         
         // Call the original implementation via the looked-up IMP.
-        let result = original(obj, #selector(ExampleClass.greet(name:)), "World")
+        let result = original(object, #selector(ExampleClass.greet(name:)), "World")
         XCTAssertEqual(result, "Hello, World!")
     }
 }

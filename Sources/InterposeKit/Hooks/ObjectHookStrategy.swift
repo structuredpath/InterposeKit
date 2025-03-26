@@ -1,54 +1,5 @@
 import Foundation
 
-extension Interpose {
-
-    /// A hook to an instance method of a single object, stores both the original and new implementation.
-    /// Think about: Multiple hooks for one object
-    final public class ObjectHook: Hook {
-        /// Initialize a new hook to interpose an instance method.
-        public init<MethodSignature, HookSignature>(
-            object: AnyObject,
-            selector: Selector,
-            build: HookBuilder<MethodSignature, HookSignature>
-        ) throws {
-            let strategyProvider: (Hook) -> any HookStrategy = { hook in
-                let hookProxy = HookProxy(
-                    selector: selector,
-                    originalProvider: {
-                        unsafeBitCast(
-                            hook.originalIMP,
-                            to: MethodSignature.self
-                        )
-                    }
-                )
-                
-                let hookBlock = build(hookProxy)
-                let hookIMP = imp_implementationWithBlock(hookBlock)
-                
-                return ObjectHookStrategy(
-                    object: object,
-                    selector: selector,
-                    hookIMP: hookIMP
-                )
-            }
-            
-            try super.init(
-                class: type(of: object),
-                selector: selector,
-                strategyProvider: strategyProvider
-            )
-        }
-    }
-}
-
-//#if DEBUG
-//extension Interpose.ObjectHook: CustomDebugStringConvertible {
-//    public var debugDescription: String {
-//        return "\(selector) of \(object) -> \(String(describing: original))"
-//    }
-//}
-//#endif
-
 final class ObjectHookStrategy: HookStrategy {
     
     init(
@@ -232,6 +183,20 @@ final class ObjectHookStrategy: HookStrategy {
     
 }
 
+extension ObjectHookStrategy: CustomDebugStringConvertible {
+    var debugDescription: String {
+        ""
+    }
+}
+
+//#if DEBUG
+//extension Interpose.ObjectHook: CustomDebugStringConvertible {
+//    public var debugDescription: String {
+//        return "\(selector) of \(object) -> \(String(describing: original))"
+//    }
+//}
+//#endif
+
 final class ObjectHookLink {
     
     init() {}
@@ -295,11 +260,5 @@ extension Interpose {
             impl = hook?.originalIMP
         } while impl != nil
         return nil
-    }
-}
-
-extension ObjectHookStrategy: CustomDebugStringConvertible {
-    var debugDescription: String {
-        ""
     }
 }
