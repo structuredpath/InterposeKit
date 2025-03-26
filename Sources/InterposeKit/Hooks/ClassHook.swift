@@ -11,7 +11,13 @@ extension Interpose {
         ) throws {
             let strategyProvider: (AnyHook) -> _HookStrategy = { hook in
                 let hook = hook as! Self
-                let replacementIMP = imp_implementationWithBlock(implementation(hook))
+                
+                let hookProxy = HookProxy(
+                    selector: selector,
+                    originalProvider: { hook.original }
+                )
+                
+                let replacementIMP = imp_implementationWithBlock(implementation(hookProxy))
                 
                 return ClassHookStrategy<MethodSignature>(
                     class: `class`,

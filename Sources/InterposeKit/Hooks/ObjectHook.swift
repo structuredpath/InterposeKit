@@ -25,7 +25,13 @@ extension Interpose {
             
             let strategyProvider: (AnyHook) -> any _HookStrategy = { hook in
                 let hook = hook as! Self
-                let block = implementation(hook) as AnyObject
+                
+                let hookProxy = HookProxy(
+                    selector: selector,
+                    originalProvider: { hook.original }
+                )
+                
+                let block = implementation(hookProxy) as AnyObject
                 let replacementIMP = imp_implementationWithBlock(block)
                 
                 // Weakly store reference to hook inside the block of the IMP.

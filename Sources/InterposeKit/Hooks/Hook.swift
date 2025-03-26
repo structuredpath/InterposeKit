@@ -1,6 +1,24 @@
 import ObjectiveC
 
-public typealias HookImplementationBuilder<MethodSignature, HookSignature> = (TypedHook<MethodSignature>) -> HookSignature
+public typealias HookImplementationBuilder<MethodSignature, HookSignature> = (HookProxy<MethodSignature>) -> HookSignature
+
+public final class HookProxy<MethodSignature> {
+    
+    internal init(
+        selector: Selector,
+        originalProvider: @escaping () -> MethodSignature
+    ) {
+        self.selector = selector
+        self.originalProvider = originalProvider
+    }
+    
+    public let selector: Selector
+    
+    private let originalProvider: () -> MethodSignature
+    
+    public var original: MethodSignature { self.originalProvider() }
+    
+}
 
 /// A runtime hook that interposes a single instance method on a class or object.
 public protocol Hook: AnyObject {
