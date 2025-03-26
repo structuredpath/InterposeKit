@@ -5,16 +5,16 @@ final class ClassHookStrategy: HookStrategy {
     init(
         `class`: AnyClass,
         selector: Selector,
-        replacementIMP: IMP
+        hookIMP: IMP
     ) {
         self.class = `class`
         self.selector = selector
-        self.replacementIMP = replacementIMP
+        self.hookIMP = hookIMP
     }
     
     let `class`: AnyClass
     let selector: Selector
-    let replacementIMP: IMP
+    let hookIMP: IMP
     private(set) var originalIMP: IMP?
     
     func replaceImplementation() throws {
@@ -25,7 +25,7 @@ final class ClassHookStrategy: HookStrategy {
         guard let originalIMP = class_replaceMethod(
             self.class,
             self.selector,
-            self.replacementIMP,
+            self.hookIMP,
             method_getTypeEncoding(method)
         ) else {
             throw InterposeError.nonExistingImplementation(self.class, self.selector)
@@ -33,7 +33,7 @@ final class ClassHookStrategy: HookStrategy {
         
         self.originalIMP = originalIMP
         
-        Interpose.log("Swizzled -[\(self.class).\(self.selector)] IMP: \(originalIMP) -> \(self.replacementIMP)")
+        Interpose.log("Swizzled -[\(self.class).\(self.selector)] IMP: \(originalIMP) -> \(self.hookIMP)")
     }
     
     func resetImplementation() throws {
@@ -53,7 +53,7 @@ final class ClassHookStrategy: HookStrategy {
             method_getTypeEncoding(method)
         )
         
-        guard previousIMP == self.replacementIMP else {
+        guard previousIMP == self.hookIMP else {
             throw InterposeError.unexpectedImplementation(self.class, self.selector, previousIMP)
         }
         

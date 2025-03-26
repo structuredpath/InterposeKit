@@ -23,16 +23,16 @@ extension Interpose {
                     }
                 )
                 
-                let block = build(hookProxy) as AnyObject
-                let replacementIMP = imp_implementationWithBlock(block)
+                let hookBlock = build(hookProxy)
+                let hookIMP = imp_implementationWithBlock(hookBlock)
                 
                 // Weakly store reference to hook inside the block of the IMP.
-                Interpose.storeHook(hook: hook, to: replacementIMP)
+                Interpose.storeHook(hook: hook, to: hookIMP)
                 
                 return ObjectHookStrategy(
                     object: object,
                     selector: selector,
-                    replacementIMP: replacementIMP
+                    hookIMP: hookIMP
                 )
             }
             
@@ -66,18 +66,18 @@ final class ObjectHookStrategy: HookStrategy {
     init(
         object: AnyObject,
         selector: Selector,
-        replacementIMP: IMP
+        hookIMP: IMP
     ) {
         self.object = object
         self.class = type(of: object)
         self.selector = selector
-        self.replacementIMP = replacementIMP
+        self.hookIMP = hookIMP
     }
     
     let object: AnyObject
     let `class`: AnyClass
     let selector: Selector
-    let replacementIMP: IMP
+    let hookIMP: IMP
     var storedOriginalIMP: IMP?
     
     /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
@@ -136,7 +136,6 @@ final class ObjectHookStrategy: HookStrategy {
         //  This function searches superclasses for implementations
         let hasExistingMethod = self.exactClassImplementsSelector(self.dynamicSubclass, self.selector)
         let encoding = method_getTypeEncoding(method)
-        let replacementIMP = self.replacementIMP
         
         if self.generatesSuperIMP {
             // If the subclass is empty, we create a super trampoline first.
@@ -146,27 +145,27 @@ final class ObjectHookStrategy: HookStrategy {
             }
             
             // Replace IMP (by now we guarantee that it exists)
-            self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, replacementIMP, encoding)
+            self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, self.hookIMP, encoding)
             guard self.storedOriginalIMP != nil else {
                 throw InterposeError.nonExistingImplementation(self.dynamicSubclass, self.selector)
             }
-            Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(replacementIMP)")
+            Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(self.hookIMP)")
         } else {
             // Could potentially be unified in the code paths
             if hasExistingMethod {
-                self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, replacementIMP, encoding)
+                self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, self.hookIMP, encoding)
                 if self.storedOriginalIMP != nil {
-                    Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(replacementIMP) via replacement")
+                    Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.hookIMP) via replacement")
                 } else {
-                    Interpose.log("Unable to replace: -[\(self.class).\(self.selector)] IMP: \(replacementIMP)")
+                    Interpose.log("Unable to replace: -[\(self.class).\(self.selector)] IMP: \(self.hookIMP)")
                     throw InterposeError.unableToAddMethod(self.class, self.selector)
                 }
             } else {
-                let didAddMethod = class_addMethod(self.dynamicSubclass, self.selector, replacementIMP, encoding)
+                let didAddMethod = class_addMethod(self.dynamicSubclass, self.selector, self.hookIMP, encoding)
                 if didAddMethod {
-                    Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(replacementIMP)")
+                    Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.hookIMP)")
                 } else {
-                    Interpose.log("Unable to add: -[\(self.class).\(self.selector)] IMP: \(replacementIMP)")
+                    Interpose.log("Unable to add: -[\(self.class).\(self.selector)] IMP: \(self.hookIMP)")
                     throw InterposeError.unableToAddMethod(self.class, self.selector)
                 }
             }
@@ -208,10 +207,9 @@ final class ObjectHookStrategy: HookStrategy {
         }
         
         // We are the topmost hook, replace method.
-        let replacementIMP = self.replacementIMP
-        if currentIMP == replacementIMP {
+        if currentIMP == self.hookIMP {
             let previousIMP = class_replaceMethod(self.dynamicSubclass, self.selector, self.storedOriginalIMP!, method_getTypeEncoding(method))
-            guard previousIMP == replacementIMP else {
+            guard previousIMP == self.hookIMP else {
                 throw InterposeError.unexpectedImplementation(self.dynamicSubclass, selector, previousIMP)
             }
             Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!)")

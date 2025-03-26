@@ -27,12 +27,13 @@ public class Hook {
                 }
             )
             
-            let replacementIMP = imp_implementationWithBlock(build(hookProxy))
+            let hookBlock = build(hookProxy)
+            let hookIMP = imp_implementationWithBlock(hookBlock)
             
             return ClassHookStrategy(
                 class: `class`,
                 selector: selector,
-                replacementIMP: replacementIMP
+                hookIMP: hookIMP
             )
         }
         
@@ -132,12 +133,12 @@ public class Hook {
     public func cleanup() {
         switch state {
         case .pending:
-            Interpose.log("Releasing -[\(`class`).\(selector)] IMP: \(self.strategy.replacementIMP)")
-            imp_removeBlock(strategy.replacementIMP)
+            Interpose.log("Releasing -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
+            imp_removeBlock(strategy.hookIMP)
         case .active:
-            Interpose.log("Keeping -[\(`class`).\(selector)] IMP: \(self.strategy.replacementIMP)")
+            Interpose.log("Keeping -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
         case .failed:
-            Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(self.strategy.replacementIMP)")
+            Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
         }
     }
     
