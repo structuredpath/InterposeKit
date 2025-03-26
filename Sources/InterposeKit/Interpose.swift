@@ -64,22 +64,12 @@ final public class Interpose {
         hooks.forEach({ $0.cleanup() })
     }
 
-    /// Hook an `@objc dynamic` instance method via selector name on the current class.
-    @discardableResult public func hook<MethodSignature, HookSignature>(
-        _ selName: String,
-        methodSignature: MethodSignature.Type = MethodSignature.self,
-        hookSignature: HookSignature.Type = HookSignature.self,
-        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
-    ) throws -> some Hook {
-        try hook(NSSelectorFromString(selName),
-            methodSignature: methodSignature, hookSignature: hookSignature, implementation)
-    }
-
     /// Hook an `@objc dynamic` instance method via selector  on the current class.
-    @discardableResult public func hook<MethodSignature, HookSignature> (
+    @discardableResult
+    public func hook<MethodSignature, HookSignature> (
         _ selector: Selector,
-        methodSignature: MethodSignature.Type = MethodSignature.self,
-        hookSignature: HookSignature.Type = HookSignature.self,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
         let hook = try prepareHook(selector, methodSignature: methodSignature,
@@ -89,10 +79,11 @@ final public class Interpose {
     }
 
     /// Prepares a hook, but does not call apply immediately.
-    @discardableResult public func prepareHook<MethodSignature, HookSignature> (
+    @discardableResult
+    public func prepareHook<MethodSignature, HookSignature> (
         _ selector: Selector,
-        methodSignature: MethodSignature.Type = MethodSignature.self,
-        hookSignature: HookSignature.Type = HookSignature.self,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
         var hook: TypedHook<MethodSignature, HookSignature>

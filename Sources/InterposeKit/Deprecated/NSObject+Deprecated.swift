@@ -6,8 +6,8 @@ extension NSObject {
     @discardableResult
     public func hook<MethodSignature, HookSignature> (
         _ selector: Selector,
-        methodSignature: MethodSignature.Type = MethodSignature.self,
-        hookSignature: HookSignature.Type = HookSignature.self,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
         precondition(
@@ -31,8 +31,8 @@ extension NSObject {
     @discardableResult
     public class func hook<MethodSignature, HookSignature> (
         _ selector: Selector,
-        methodSignature: MethodSignature.Type = MethodSignature.self,
-        hookSignature: HookSignature.Type = HookSignature.self,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
         let hook = try Interpose.ClassHook(
