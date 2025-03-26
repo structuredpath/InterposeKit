@@ -2,13 +2,29 @@ import ObjectiveC
 
 extension NSObject {
     
-    @available(*, deprecated, renamed: "addHook(for:methodSignature:hookSignature:implementation:)")
+    @available(*, deprecated, renamed: "applyHook(for:methodSignature:hookSignature:build:)")
+    @discardableResult
+    public func addHook<MethodSignature, HookSignature>(
+        for selector: Selector,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
+        implementation: HookBuilder<MethodSignature, HookSignature>
+    ) throws -> Hook {
+        return try self.applyHook(
+            for: selector,
+            methodSignature: methodSignature,
+            hookSignature: hookSignature,
+            build: implementation
+        )
+    }
+    
+    @available(*, deprecated, renamed: "addHook(for:methodSignature:hookSignature:build:)")
     @discardableResult
     public func hook<MethodSignature, HookSignature> (
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+        _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         precondition(
             !(self is AnyClass),
@@ -19,7 +35,7 @@ extension NSObject {
             for: selector,
             methodSignature: methodSignature,
             hookSignature: hookSignature,
-            implementation: implementation
+            implementation: build
         )
     }
     
@@ -33,12 +49,12 @@ extension NSObject {
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+        _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try Hook(
             class: self as AnyClass,
             selector: selector,
-            implementation: implementation
+            build: build
         )
         try hook.apply()
         return hook

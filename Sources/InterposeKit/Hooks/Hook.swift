@@ -14,7 +14,7 @@ public class Hook {
     internal convenience init<MethodSignature, HookSignature>(
         `class`: AnyClass,
         selector: Selector,
-        implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+        build: HookBuilder<MethodSignature, HookSignature>
     ) throws {
         let strategyProvider: (Hook) -> HookStrategy = { hook in
             let hookProxy = HookProxy(
@@ -27,7 +27,7 @@ public class Hook {
                 }
             )
             
-            let replacementIMP = imp_implementationWithBlock(implementation(hookProxy))
+            let replacementIMP = imp_implementationWithBlock(build(hookProxy))
             
             return ClassHookStrategy(
                 class: `class`,

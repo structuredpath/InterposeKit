@@ -1,6 +1,6 @@
 import ObjectiveC
 
-public typealias HookImplementationBuilder<MethodSignature, HookSignature> = (HookProxy<MethodSignature>) -> HookSignature
+public typealias HookBuilder<MethodSignature, HookSignature> = (HookProxy<MethodSignature>) -> HookSignature
 
 public final class HookProxy<MethodSignature> {
     

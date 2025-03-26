@@ -42,16 +42,16 @@ extension NSObject {
     /// hook.revert()
     /// ```
     @discardableResult
-    public func addHook<MethodSignature, HookSignature>(
+    public func applyHook<MethodSignature, HookSignature>(
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+        build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try Interpose.ObjectHook(
             object: self,
             selector: selector,
-            implementation: implementation
+            build: build
         )
         try hook.apply()
         return hook

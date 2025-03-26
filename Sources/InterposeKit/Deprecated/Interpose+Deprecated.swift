@@ -8,13 +8,13 @@ extension Interpose {
         _ selectorName: String,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+        _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         try self.hook(
             NSSelectorFromString(selectorName),
             methodSignature: methodSignature,
             hookSignature: hookSignature,
-            implementation
+            build
         )
     }
     
