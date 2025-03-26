@@ -4,7 +4,7 @@ extension Interpose {
 
     /// A hook to an instance method of a single object, stores both the original and new implementation.
     /// Think about: Multiple hooks for one object
-    final public class ObjectHook<MethodSignature>: TypedHook {
+    final public class ObjectHook<MethodSignature>: AnyHook {
 
         /// The object that is being hooked.
         public let object: AnyObject
