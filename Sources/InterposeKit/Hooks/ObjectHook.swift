@@ -6,23 +6,12 @@ extension Interpose {
     /// Think about: Multiple hooks for one object
     final public class ObjectHook<MethodSignature>: Hook {
 
-        /// The object that is being hooked.
-        public let object: AnyObject
-
-        /// Subclass that we create on the fly
-        var interposeSubclass: InterposeSubclass?
-
-        // Logic switch to use super builder
-        let generatesSuperIMP = InterposeSubclass.supportsSuperTrampolines
-
         /// Initialize a new hook to interpose an instance method.
         public init<HookSignature>(
             object: AnyObject,
             selector: Selector,
             build: HookBuilder<MethodSignature, HookSignature>
         ) throws {
-            self.object = object
-            
             let strategyProvider: (Hook) -> any HookStrategy = { hook in
                 let hook = hook as! Self
                 
@@ -98,16 +87,14 @@ extension Interpose {
             return false
         }
 
-        var dynamicSubclass: AnyClass {
-            interposeSubclass!.dynamicClass
-        }
-
         override func replaceImplementation() throws {
+            let strategy = self.strategy as! ObjectHookStrategy
+
             let method = try validate()
 
             // Check if there's an existing subclass we can reuse.
             // Create one at runtime if there is none.
-            interposeSubclass = try InterposeSubclass(object: object)
+            strategy.interposeSubclass = try InterposeSubclass(object: strategy.object)
 
             // The implementation of the call that is hooked must exist.
             guard lookupOrigIMP != nil else {
@@ -115,27 +102,27 @@ extension Interpose {
             }
 
             //  This function searches superclasses for implementations
-            let hasExistingMethod = exactClassImplementsSelector(dynamicSubclass, selector)
+            let hasExistingMethod = exactClassImplementsSelector(strategy.dynamicSubclass, selector)
             let encoding = method_getTypeEncoding(method)
             let replacementIMP = self.strategy.replacementIMP
 
-            if self.generatesSuperIMP {
+            if strategy.generatesSuperIMP {
                 // If the subclass is empty, we create a super trampoline first.
                 // If a hook already exists, we must skip this.
                 if !hasExistingMethod {
-                    interposeSubclass!.addSuperTrampoline(selector: selector)
+                    strategy.interposeSubclass!.addSuperTrampoline(selector: selector)
                 }
 
                 // Replace IMP (by now we guarantee that it exists)
-                (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(strategy.dynamicSubclass, selector, replacementIMP, encoding)
                 guard self.strategy.originalIMP != nil else {
-                    throw InterposeError.nonExistingImplementation(dynamicSubclass, selector)
+                    throw InterposeError.nonExistingImplementation(strategy.dynamicSubclass, selector)
                 }
                 Interpose.log("Added -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!) -> \(replacementIMP)")
             } else {
                 // Could potentially be unified in the code paths
                 if hasExistingMethod {
-                    (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                    (self.strategy as! ObjectHookStrategy).originalIMP = class_replaceMethod(strategy.dynamicSubclass, selector, replacementIMP, encoding)
                     if self.strategy.originalIMP != nil {
                         Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP) via replacement")
                     } else {
@@ -143,7 +130,7 @@ extension Interpose {
                         throw InterposeError.unableToAddMethod(`class`, selector)
                     }
                 } else {
-                    let didAddMethod = class_addMethod(dynamicSubclass, selector, replacementIMP, encoding)
+                    let didAddMethod = class_addMethod(strategy.dynamicSubclass, selector, replacementIMP, encoding)
                     if didAddMethod {
                         Interpose.log("Added -[\(`class`).\(selector)] IMP: \(replacementIMP)")
                     } else {
@@ -155,6 +142,8 @@ extension Interpose {
         }
 
         override func resetImplementation() throws {
+            let strategy = self.strategy as! ObjectHookStrategy
+            
             let method = try validate(expectedState: .active)
 
             guard self.strategy.originalIMP != nil else {
@@ -169,7 +158,7 @@ extension Interpose {
                 throw InterposeError.resetUnsupported("No Original IMP found. SuperBuilder missing?")
             }
 
-            guard let currentIMP = class_getMethodImplementation(dynamicSubclass, selector) else {
+            guard let currentIMP = class_getMethodImplementation(strategy.dynamicSubclass, selector) else {
                 throw InterposeError.unknownError("No Implementation found")
             }
 
@@ -177,9 +166,9 @@ extension Interpose {
             let replacementIMP = self.strategy.replacementIMP
             if currentIMP == replacementIMP {
                 let previousIMP = class_replaceMethod(
-                    dynamicSubclass, selector, self.strategy.originalIMP!, method_getTypeEncoding(method))
+                    strategy.dynamicSubclass, selector, self.strategy.originalIMP!, method_getTypeEncoding(method))
                 guard previousIMP == replacementIMP else {
-                    throw InterposeError.unexpectedImplementation(dynamicSubclass, selector, previousIMP)
+                    throw InterposeError.unexpectedImplementation(strategy.dynamicSubclass, selector, previousIMP)
                 }
                 Interpose.log("Restored -[\(`class`).\(selector)] IMP: \(self.strategy.originalIMP!)")
             } else {
@@ -198,13 +187,13 @@ extension Interpose {
     }
 }
 
-#if DEBUG
-extension Interpose.ObjectHook: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        return "\(selector) of \(object) -> \(String(describing: original))"
-    }
-}
-#endif
+//#if DEBUG
+//extension Interpose.ObjectHook: CustomDebugStringConvertible {
+//    public var debugDescription: String {
+//        return "\(selector) of \(object) -> \(String(describing: original))"
+//    }
+//}
+//#endif
 
 final class ObjectHookStrategy: HookStrategy {
     
@@ -224,6 +213,16 @@ final class ObjectHookStrategy: HookStrategy {
     let selector: Selector
     let replacementIMP: IMP
     var originalIMP: IMP?
+    
+    /// Subclass that we create on the fly
+    var interposeSubclass: InterposeSubclass?
+    
+    // Logic switch to use super builder
+    let generatesSuperIMP = InterposeSubclass.supportsSuperTrampolines
+    
+    var dynamicSubclass: AnyClass {
+        interposeSubclass!.dynamicClass
+    }
     
 }
 
