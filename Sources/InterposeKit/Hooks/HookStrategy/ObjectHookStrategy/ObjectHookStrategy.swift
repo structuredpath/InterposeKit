@@ -202,15 +202,7 @@ final class ObjectHookStrategy: HookStrategy {
 }
 
 extension ObjectHookStrategy: CustomDebugStringConvertible {
-    var debugDescription: String {
-        ""
+    internal var debugDescription: String {
+        "\(self.selector) of \(self.object) → \(String(describing: self.originalIMP))"
     }
 }
-
-//#if DEBUG
-//extension Interpose.ObjectHook: CustomDebugStringConvertible {
-//    public var debugDescription: String {
-//        return "\(selector) of \(object) -> \(String(describing: original))"
-//    }
-//}
-//#endif

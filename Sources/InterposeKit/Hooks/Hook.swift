@@ -159,3 +159,9 @@ public final class Hook {
     }
     
 }
+
+extension Hook: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        self.strategy.debugDescription
+    }
+}
