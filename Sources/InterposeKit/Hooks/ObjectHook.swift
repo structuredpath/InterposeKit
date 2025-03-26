@@ -19,7 +19,7 @@ extension Interpose {
         public init<HookSignature>(
             object: AnyObject,
             selector: Selector,
-            implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+            build: HookBuilder<MethodSignature, HookSignature>
         ) throws {
             self.object = object
             
@@ -31,7 +31,7 @@ extension Interpose {
                     originalProvider: { hook.original }
                 )
                 
-                let block = implementation(hookProxy) as AnyObject
+                let block = build(hookProxy) as AnyObject
                 let replacementIMP = imp_implementationWithBlock(block)
                 
                 // Weakly store reference to hook inside the block of the IMP.

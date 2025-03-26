@@ -70,10 +70,10 @@ final public class Interpose {
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+        _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try prepareHook(selector, methodSignature: methodSignature,
-                                   hookSignature: hookSignature, implementation)
+                                   hookSignature: hookSignature, build)
         try hook.apply()
         return hook
     }
@@ -84,13 +84,13 @@ final public class Interpose {
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+        _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         var hook: Hook
         if let object = self.object {
-            hook = try ObjectHook(object: object, selector: selector, implementation: implementation)
+            hook = try ObjectHook(object: object, selector: selector, build: build)
         } else {
-            hook = try Hook(class: `class`, selector: selector, implementation: implementation)
+            hook = try Hook(class: `class`, selector: selector, build: build)
         }
         hooks.append(hook)
         return hook
