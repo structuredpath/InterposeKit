@@ -2,9 +2,9 @@ import Foundation
 
 extension Interpose {
     /// A hook to an instance method and stores both the original and new implementation.
-    final public class ClassHook<MethodSignature, HookSignature>: TypedHook<MethodSignature, HookSignature> {
+    final public class ClassHook<MethodSignature>: TypedHook<MethodSignature> {
         
-        public init(
+        public init<HookSignature>(
             `class`: AnyClass,
             selector: Selector,
             implementation: HookImplementationBuilder<MethodSignature, HookSignature>

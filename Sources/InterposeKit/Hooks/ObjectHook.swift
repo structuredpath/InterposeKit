@@ -4,7 +4,7 @@ extension Interpose {
 
     /// A hook to an instance method of a single object, stores both the original and new implementation.
     /// Think about: Multiple hooks for one object
-    final public class ObjectHook<MethodSignature, HookSignature>: TypedHook<MethodSignature, HookSignature> {
+    final public class ObjectHook<MethodSignature>: TypedHook<MethodSignature> {
 
         /// The object that is being hooked.
         public let object: AnyObject
@@ -16,7 +16,7 @@ extension Interpose {
         let generatesSuperIMP = InterposeSubclass.supportsSuperTrampolines
 
         /// Initialize a new hook to interpose an instance method.
-        public init(
+        public init<HookSignature>(
             object: AnyObject,
             selector: Selector,
             implementation: HookImplementationBuilder<MethodSignature, HookSignature>
