@@ -35,7 +35,7 @@ extension NSObject {
         hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        let hook = try Interpose.ClassHook(
+        let hook = try Hook(
             class: self as AnyClass,
             selector: selector,
             implementation: implementation

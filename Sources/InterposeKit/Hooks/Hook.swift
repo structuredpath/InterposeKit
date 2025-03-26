@@ -1,9 +1,65 @@
 import Foundation
 
 // TODO: Make final
+// TODO: Make strategy private
+// TODO: Make main init private
 
 /// A runtime hook that interposes a single instance method on a class or object.
 public class Hook {
+    
+    // ============================================================================ //
+    // MARK: Initialization
+    // ============================================================================ //
+    
+    internal convenience init<MethodSignature, HookSignature>(
+        `class`: AnyClass,
+        selector: Selector,
+        implementation: HookImplementationBuilder<MethodSignature, HookSignature>
+    ) throws {
+        let strategyProvider: (Hook) -> HookStrategy = { hook in
+            let hookProxy = HookProxy(
+                selector: selector,
+                originalProvider: {
+                    unsafeBitCast(
+                        hook.strategy.originalIMP,
+                        to: MethodSignature.self
+                    )
+                }
+            )
+            
+            let replacementIMP = imp_implementationWithBlock(implementation(hookProxy))
+            
+            return ClassHookStrategy(
+                class: `class`,
+                selector: selector,
+                replacementIMP: replacementIMP
+            )
+        }
+        
+        try self.init(
+            class: `class`,
+            selector: selector,
+            strategyProvider: strategyProvider
+        )
+    }
+    
+    init(
+        `class`: AnyClass,
+        selector: Selector,
+        strategyProvider: (Hook) -> HookStrategy
+    ) throws {
+        self.selector = selector
+        self.class = `class`
+        
+        // Check if method exists
+        try validate()
+        
+        self._strategy = strategyProvider(self)
+    }
+    
+    // ============================================================================ //
+    // MARK: ...
+    // ============================================================================ //
     
     /// The class whose instance method is being interposed.
     public let `class`: AnyClass
@@ -17,15 +73,7 @@ public class Hook {
     private var _strategy: HookStrategy!
     var strategy: HookStrategy { _strategy }
 
-    init(`class`: AnyClass, selector: Selector, strategyProvider: (Hook) -> HookStrategy) throws {
-        self.selector = selector
-        self.class = `class`
-
-        // Check if method exists
-        try validate()
-        
-        self._strategy = strategyProvider(self)
-    }
+    
 
     func replaceImplementation() throws {
         if let strategy = self.strategy as? ClassHookStrategy {
