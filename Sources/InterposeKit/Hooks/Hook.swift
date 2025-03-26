@@ -118,17 +118,6 @@ public final class Hook {
         }
     }
     
-    /// Validate that the selector exists on the active class.
-    @discardableResult func validate(expectedState: HookState = .pending) throws -> Method {
-        guard let method = class_getInstanceMethod(`class`, selector) else {
-            throw InterposeError.methodNotFound(`class`, selector)
-        }
-        guard state == expectedState else {
-            throw InterposeError.invalidState(expectedState: expectedState)
-        }
-        return method
-    }
-
     private func execute(newState: HookState, task: () throws -> Void) throws {
         do {
             try task()
