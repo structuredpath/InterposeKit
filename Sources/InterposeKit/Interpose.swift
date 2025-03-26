@@ -86,7 +86,7 @@ final public class Interpose {
         hookSignature: HookSignature.Type,
         _ implementation: HookImplementationBuilder<MethodSignature, HookSignature>
     ) throws -> some Hook {
-        var hook: TypedHook<MethodSignature>
+        var hook: TypedHook
         if let object = self.object {
             hook = try ObjectHook(object: object, selector: selector, implementation: implementation)
         } else {
