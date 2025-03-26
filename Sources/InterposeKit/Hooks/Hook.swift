@@ -1,4 +1,4 @@
-import Foundation
+import ObjectiveC
 
 /// A runtime hook that interposes a single instance method on a class or object.
 public final class Hook {
@@ -39,7 +39,7 @@ public final class Hook {
         func makeStrategy(_ hook: Hook) throws -> HookStrategy {
             let hookProxy = HookProxy(
                 selector: selector,
-                originalProvider: {
+                getOriginal: {
                     unsafeBitCast(
                         self.originalIMP,
                         to: MethodSignature.self
@@ -167,6 +167,51 @@ extension Hook {
             Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
         }
     }
+}
+
+public typealias HookBuilder<MethodSignature, HookSignature> = (HookProxy<MethodSignature>) -> HookSignature
+
+public final class HookProxy<MethodSignature> {
+    
+    internal init(
+        selector: Selector,
+        getOriginal: @escaping () -> MethodSignature
+    ) {
+        self.selector = selector
+        self._getOriginal = getOriginal
+    }
+    
+    public let selector: Selector
+    
+    private let _getOriginal: () -> MethodSignature
+    
+    public var original: MethodSignature {
+        self._getOriginal()
+    }
+    
+}
+
+public enum HookScope {
+    
+    /// The scope that targets all instances of the class.
+    case `class`
+    
+    /// The scope that targets a specific instance of the class.
+    case object(AnyObject)
+    
+}
+
+public enum HookState: Equatable {
+    
+    /// The hook is ready to be applied.
+    case pending
+    
+    /// The hook has been successfully applied.
+    case active
+    
+    /// The hook failed to apply.
+    case failed
+    
 }
 
 fileprivate enum HookTarget {
