@@ -78,7 +78,7 @@ public class AnyHook: Hook {
 }
 
 /// Hook baseclass with generic signatures.
-public class TypedHook<MethodSignature, HookSignature>: AnyHook {
+public class TypedHook<MethodSignature>: AnyHook {
     
     override func replaceImplementation() throws {
         if let strategy = self.strategy as? ClassHookStrategy<MethodSignature> {
