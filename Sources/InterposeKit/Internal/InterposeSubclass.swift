@@ -32,11 +32,10 @@ class InterposeSubclass {
     /// If we make a dynamic subclass over KVO, invalidating the token crashes in cache_getImp.
     init(object: AnyObject) throws {
         self.object = object
-        dynamicClass = type(of: object) // satisfy set to something
-        dynamicClass = try getExistingSubclass() ?? createSubclass()
+        self.dynamicClass = try Self.getExistingSubclass(object: object) ?? Self.createSubclass(object: object)
     }
 
-    private func createSubclass() throws -> AnyClass {
+    private static func createSubclass(object: AnyObject) throws -> AnyClass {
         let perceivedClass: AnyClass = type(of: object)
         let actualClass: AnyClass = object_getClass(object)!
 
@@ -68,7 +67,7 @@ class InterposeSubclass {
     }
 
     /// We need to reuse a dynamic subclass if the object already has one.
-    private func getExistingSubclass() -> AnyClass? {
+    private static func getExistingSubclass(object: AnyObject) -> AnyClass? {
         let actualClass: AnyClass = object_getClass(object)!
         if NSStringFromClass(actualClass).hasPrefix(Constants.subclassSuffix) {
             return actualClass
@@ -76,7 +75,7 @@ class InterposeSubclass {
         return nil
     }
 
-    private func replaceGetClass(in class: AnyClass, decoy perceivedClass: AnyClass) {
+    private static func replaceGetClass(in class: AnyClass, decoy perceivedClass: AnyClass) {
         let getClass: @convention(block) (AnyObject) -> AnyClass = { _ in
             perceivedClass
         }
