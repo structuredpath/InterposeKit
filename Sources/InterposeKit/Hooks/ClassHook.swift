@@ -2,24 +2,26 @@ import Foundation
 
 extension Interpose {
     /// A hook to an instance method and stores both the original and new implementation.
-    final public class ClassHook<MethodSignature>: TypedHook<MethodSignature> {
+    final public class ClassHook: TypedHook {
         
-        public init<HookSignature>(
+        public init<MethodSignature, HookSignature>(
             `class`: AnyClass,
             selector: Selector,
             implementation: HookImplementationBuilder<MethodSignature, HookSignature>
         ) throws {
-            let strategyProvider: (AnyHook) -> _HookStrategy = { hook in
+            let strategyProvider: (AnyHook) -> HookStrategy = { hook in
                 let hook = hook as! Self
                 
                 let hookProxy = HookProxy(
                     selector: selector,
-                    originalProvider: { hook.original }
+                    originalProvider: {
+                        unsafeBitCast(hook.strategy.originalIMP, to: MethodSignature.self)
+                    }
                 )
                 
                 let replacementIMP = imp_implementationWithBlock(implementation(hookProxy))
                 
-                return ClassHookStrategy<MethodSignature>(
+                return ClassHookStrategy(
                     class: `class`,
                     selector: selector,
                     replacementIMP: replacementIMP
@@ -36,7 +38,7 @@ extension Interpose {
     }
 }
 
-final class ClassHookStrategy<MethodSignature>: HookStrategy {
+final class ClassHookStrategy: HookStrategy {
     
     init(
         `class`: AnyClass,
@@ -94,10 +96,6 @@ final class ClassHookStrategy<MethodSignature>: HookStrategy {
         }
         
         Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(originalIMP)")
-    }
-    
-    var original: MethodSignature {
-        unsafeBitCast(self.originalIMP, to: MethodSignature.self)
     }
     
 }

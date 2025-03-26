@@ -11,10 +11,10 @@ public class AnyHook: Hook {
     /// The current state of the hook.
     public internal(set) var state = HookState.pending
 
-    private var _strategy: _HookStrategy!
-    var strategy: _HookStrategy { _strategy }
+    private var _strategy: HookStrategy!
+    var strategy: HookStrategy { _strategy }
 
-    init(`class`: AnyClass, selector: Selector, strategyProvider: (AnyHook) -> _HookStrategy) throws {
+    init(`class`: AnyClass, selector: Selector, strategyProvider: (AnyHook) -> HookStrategy) throws {
         self.selector = selector
         self.class = `class`
 
@@ -78,10 +78,10 @@ public class AnyHook: Hook {
 }
 
 /// Hook baseclass with generic signatures.
-public class TypedHook<MethodSignature>: AnyHook {
+public class TypedHook: AnyHook {
     
     override func replaceImplementation() throws {
-        if let strategy = self.strategy as? ClassHookStrategy<MethodSignature> {
+        if let strategy = self.strategy as? ClassHookStrategy {
             return try strategy.replaceImplementation()
         } else {
             preconditionFailure("Not implemented")
@@ -89,7 +89,7 @@ public class TypedHook<MethodSignature>: AnyHook {
     }
     
     override func resetImplementation() throws {
-        if let strategy = self.strategy as? ClassHookStrategy<MethodSignature> {
+        if let strategy = self.strategy as? ClassHookStrategy {
             return try strategy.resetImplementation()
         } else {
             preconditionFailure("Not implemented")
@@ -97,9 +97,10 @@ public class TypedHook<MethodSignature>: AnyHook {
     }
     
     /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
-    public var original: MethodSignature {
-        if let strategy = self.strategy as? ClassHookStrategy<MethodSignature> {
-            return strategy.original
+    
+    public var originalIMP: IMP? {
+        if let strategy = self.strategy as? ClassHookStrategy {
+            return strategy.originalIMP
         } else {
             preconditionFailure("Not implemented")
         }

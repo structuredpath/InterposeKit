@@ -4,7 +4,7 @@ extension Interpose {
 
     /// A hook to an instance method of a single object, stores both the original and new implementation.
     /// Think about: Multiple hooks for one object
-    final public class ObjectHook<MethodSignature>: TypedHook<MethodSignature> {
+    final public class ObjectHook<MethodSignature>: TypedHook {
 
         /// The object that is being hooked.
         public let object: AnyObject
@@ -23,7 +23,7 @@ extension Interpose {
         ) throws {
             self.object = object
             
-            let strategyProvider: (AnyHook) -> any _HookStrategy = { hook in
+            let strategyProvider: (AnyHook) -> any HookStrategy = { hook in
                 let hook = hook as! Self
                 
                 let hookProxy = HookProxy(
@@ -54,7 +54,7 @@ extension Interpose {
         //    }
 
         /// The original implementation of the hook. Might be looked up at runtime. Do not cache this.
-        public override var original: MethodSignature {
+        public var original: MethodSignature {
             // If we switched implementations, return stored.
             if let savedOrigIMP = self.strategy.originalIMP {
                 return unsafeBitCast(savedOrigIMP, to: MethodSignature.self)
