@@ -14,26 +14,11 @@ public final class Hook {
         selector: Selector,
         build: HookBuilder<MethodSignature, HookSignature>
     ) throws {
-        try self.init { hook in
-            let hookProxy = HookProxy(
-                selector: selector,
-                originalProvider: {
-                    unsafeBitCast(
-                        hook.originalIMP,
-                        to: MethodSignature.self
-                    )
-                }
-            )
-            
-            let hookBlock = build(hookProxy)
-            let hookIMP = imp_implementationWithBlock(hookBlock)
-            
-            return try ClassHookStrategy(
-                class: `class`,
-                selector: selector,
-                hookIMP: hookIMP
-            )
-        }
+        try self.init(
+            target: .class(`class`),
+            selector: selector,
+            build: build
+        )
     }
     
     internal convenience init<MethodSignature, HookSignature>(
@@ -41,12 +26,24 @@ public final class Hook {
         selector: Selector,
         build: HookBuilder<MethodSignature, HookSignature>
     ) throws {
-        try self.init { hook in
+        try self.init(
+            target: .object(object),
+            selector: selector,
+            build: build
+        )
+    }
+    
+    private init<MethodSignature, HookSignature>(
+        target: HookTarget,
+        selector: Selector,
+        build: HookBuilder<MethodSignature, HookSignature>
+    ) throws {
+        func makeStrategy(_ hook: Hook) throws -> HookStrategy {
             let hookProxy = HookProxy(
                 selector: selector,
                 originalProvider: {
                     unsafeBitCast(
-                        hook.originalIMP,
+                        self.originalIMP,
                         to: MethodSignature.self
                     )
                 }
@@ -55,16 +52,23 @@ public final class Hook {
             let hookBlock = build(hookProxy)
             let hookIMP = imp_implementationWithBlock(hookBlock)
             
-            return try ObjectHookStrategy(
-                object: object,
-                selector: selector,
-                hookIMP: hookIMP
-            )
+            switch target {
+            case .class(let `class`):
+                return try ClassHookStrategy(
+                    class: `class`,
+                    selector: selector,
+                    hookIMP: hookIMP
+                )
+            case .object(let object):
+                return try ObjectHookStrategy(
+                    object: object,
+                    selector: selector,
+                    hookIMP: hookIMP
+                )
+            }
         }
-    }
-    
-    private init(strategyProvider: (Hook) throws -> HookStrategy) rethrows {
-        self._strategy = try strategyProvider(self)
+        
+        self._strategy = try makeStrategy(self)
     }
     
     // ============================================================================ //
@@ -154,4 +158,9 @@ extension Hook: CustomDebugStringConvertible {
     public var debugDescription: String {
         self.strategy.debugDescription
     }
+}
+
+fileprivate enum HookTarget {
+    case `class`(AnyClass)
+    case object(AnyObject)
 }
