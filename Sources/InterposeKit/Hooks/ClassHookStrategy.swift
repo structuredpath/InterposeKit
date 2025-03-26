@@ -15,7 +15,7 @@ final class ClassHookStrategy: HookStrategy {
     let `class`: AnyClass
     let selector: Selector
     let replacementIMP: IMP
-    var originalIMP: IMP?
+    private(set) var originalIMP: IMP?
     
     func replaceImplementation() throws {
         guard let method = class_getInstanceMethod(self.class, self.selector) else {

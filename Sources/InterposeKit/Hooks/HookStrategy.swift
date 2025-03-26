@@ -9,18 +9,3 @@ protocol HookStrategy: AnyObject, CustomDebugStringConvertible {
     var originalIMP: IMP? { get }
     
 }
-
-final class DummyHookStrategy<MethodSignature>: HookStrategy {
-    
-    init(replacementIMP: IMP) {
-        self.replacementIMP = replacementIMP
-    }
-    
-    let replacementIMP: IMP
-    var originalIMP: IMP?
-    
-}
-
-extension DummyHookStrategy: CustomDebugStringConvertible {
-    var debugDescription: String { "" }
-}
