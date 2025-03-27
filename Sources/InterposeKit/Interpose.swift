@@ -24,11 +24,6 @@ final public class Interpose {
         return nil
     }
 
-    // This is based on observation, there is no documented way
-    private func isKVORuntimeGeneratedClass(_ klass: AnyClass) -> Bool {
-        NSStringFromClass(klass).hasPrefix("NSKVO")
-    }
-
     /// Initializes an instance of Interpose for a specific class.
     /// If `builder` is present, `apply()` is automatically called.
     public init(_ `class`: AnyClass, builder: ((Interpose) throws -> Void)? = nil) throws {
@@ -47,7 +42,7 @@ final public class Interpose {
         self.class = type(of: object)
 
         if let actualClass = checkObjectPosingAsDifferentClass(object) {
-            if isKVORuntimeGeneratedClass(actualClass) {
+            if object.isKeyValueObserved && NSStringFromClass(actualClass).contains("NSKVONotifying") {
                 throw InterposeError.keyValueObservationDetected(object)
             } else {
                 throw InterposeError.objectPosingAsDifferentClass(object, actualClass: actualClass)
