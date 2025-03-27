@@ -7,18 +7,6 @@ class InterposeSubclass {
         static let subclassSuffix = "InterposeKit_"
     }
 
-    enum ObjCSelector {
-        static let getClass = Selector((("class")))
-    }
-
-    enum ObjCMethodEncoding {
-        static let getClass = extract("#@:")
-
-        private static func extract(_ string: StaticString) -> UnsafePointer<CChar> {
-            return UnsafeRawPointer(string.utf8Start).assumingMemoryBound(to: CChar.self)
-        }
-    }
-
     /// The object that is being hooked.
     let object: AnyObject
 
@@ -50,7 +38,7 @@ class InterposeSubclass {
                 return existingClass
             } else {
                 guard let subclass: AnyClass = objc_allocateClassPair(actualClass, cString, 0) else { return nil }
-                replaceGetClass(in: subclass, decoy: perceivedClass)
+                class_setPerceivedClass(for: subclass, to: perceivedClass)
                 objc_registerClassPair(subclass)
                 return subclass
             }
@@ -73,15 +61,6 @@ class InterposeSubclass {
             return actualClass
         }
         return nil
-    }
-
-    private static func replaceGetClass(in class: AnyClass, decoy perceivedClass: AnyClass) {
-        let getClass: @convention(block) (AnyObject) -> AnyClass = { _ in
-            perceivedClass
-        }
-        let impl = imp_implementationWithBlock(getClass as Any)
-        _ = class_replaceMethod(`class`, ObjCSelector.getClass, impl, ObjCMethodEncoding.getClass)
-        _ = class_replaceMethod(object_getClass(`class`), ObjCSelector.getClass, impl, ObjCMethodEncoding.getClass)
     }
 
     class var supportsSuperTrampolines: Bool {

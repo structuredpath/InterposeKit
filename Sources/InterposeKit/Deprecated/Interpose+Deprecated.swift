@@ -1,4 +1,4 @@
-import Foundation
+import ObjectiveC
 
 extension Interpose {
     
@@ -11,7 +11,7 @@ extension Interpose {
         _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         try self.hook(
-            NSSelectorFromString(selectorName),
+            Selector(selectorName),
             methodSignature: methodSignature,
             hookSignature: hookSignature,
             build
