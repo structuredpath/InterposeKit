@@ -18,7 +18,7 @@ extension NSObject {
         )
     }
     
-    @available(*, deprecated, renamed: "addHook(for:methodSignature:hookSignature:build:)")
+    @available(*, deprecated, renamed: "applyHook(for:methodSignature:hookSignature:build:)")
     @discardableResult
     public func hook<MethodSignature, HookSignature> (
         _ selector: Selector,
