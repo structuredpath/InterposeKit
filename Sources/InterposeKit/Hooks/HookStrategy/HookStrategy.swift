@@ -49,7 +49,12 @@ extension HookStrategy {
             return originalIMP
         }
         
-        fatalError()
+        fatalError(
+            """
+            No original implementation found for selector \(self.selector) on \(self.class). 
+            This likely  indicates a corrupted or misconfigured class.
+            """
+        )
     }
     
     /// Dynamically resolves the current implementation of the hooked method by walking the class

@@ -128,11 +128,14 @@ public final class Hook {
     // MARK: Original Implementation
     // ============================================================================ //
     
-    // TODO: Make originalIMP private
-    
-    /// The effective original implementation of the hook. Might be looked up at runtime.
-    /// Do not cache this.
-    internal var originalIMP: IMP? {
+    /// The effective original implementation of the method being hooked.
+    ///
+    /// Resolved via the active strategy. If the hook has been applied, it returns a stored
+    /// original implementation. Otherwise, it performs a dynamic lookup at runtime.
+    ///
+    /// Provided to the hook builder via a proxy to enable calls to the original implementation.
+    /// This value is dynamic and must not be cached.
+    internal var originalIMP: IMP {
         self.strategy.originalIMP
     }
     
