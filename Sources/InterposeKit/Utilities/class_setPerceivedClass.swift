@@ -1,9 +1,12 @@
 import ObjectiveC
 
-/// Replaces the `class` method on a class and its metaclass to return a perceived class.
+/// Overrides the `class` method on a class and its metaclass to return a perceived class.
 ///
-/// This causes both instance-level and class-level calls to `[object class]` or `[Class class]`
-/// to return the given `perceivedClass`, effectively making the target class pose as another.
+/// This affects both instance-level and class-level calls to `[object class]` or `[Class class]`,
+/// making the object appear as if it is an instance of `perceivedClass`.
+///
+/// This does **not** change the actual `isa` pointer or affect dynamic dispatch. It simply
+/// overrides how the object and class **report** their type.
 ///
 /// - Parameters:
 ///   - targetClass: The class whose `class` method should be overridden.
