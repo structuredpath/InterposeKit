@@ -54,7 +54,7 @@ extension Interpose {
 
         func tryExecute() throws -> Bool {
             guard let `class` = NSClassFromString(className), let builder = self.builder else { return false }
-            let interposer = try Interpose(`class`)
+            let interposer = Interpose(`class`)
             try builder(interposer)
             if let completion = self.completion {
                 completion()

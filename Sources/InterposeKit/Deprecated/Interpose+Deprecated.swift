@@ -2,6 +2,14 @@ import ObjectiveC
 
 extension Interpose {
     
+    @available(*, unavailable, message: "Use 'init(_ class: AnyClass)' followed by 'applyHook(…)' instead.")
+    public convenience init(
+        _ class: AnyClass,
+        builder: (Interpose) throws -> Void
+    ) throws {
+        fatalError("Interpose(class:builder:) is unavailable.")
+    }
+    
     @available(*, deprecated, message: "Use 'hook(_:methodSignature:hookSignature:_:)' instead and pass materialized selector.")
     @discardableResult
     public func hook<MethodSignature, HookSignature>(
@@ -18,7 +26,7 @@ extension Interpose {
         )
     }
     
-    @available(*, unavailable, message: "'apply()' is no longer supported. Use 'applyHook(...)' instead to apply individual hooks.")
+    @available(*, unavailable, message: "'apply()' is no longer supported. Use 'applyHook(…)' instead to apply individual hooks.")
     @discardableResult
     public func apply(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
         fatalError("Interpose.apply() is unavailable.")

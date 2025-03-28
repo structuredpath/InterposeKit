@@ -12,7 +12,7 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi)
 
         // Functions need to be `@objc dynamic` to be hookable.
-        let interposer = try Interpose(TestClass.self)
+        let interposer = Interpose(TestClass.self)
         let hook = try interposer.hook(
             #selector(TestClass.sayHi),
             methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
@@ -47,7 +47,7 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi + testSubclass)
 
         // Swizzle test class
-        let interposer = try Interpose(TestClass.self)
+        let interposer = Interpose(TestClass.self)
         let hook = try interposer.hook(
             #selector(TestClass.sayHi),
             methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
@@ -113,7 +113,7 @@ final class InterposeKitTests: InterposeKitTestCase {
             }
 
             // Swizzle test class
-            let interposer = try Interpose(TestClass.self)
+            let interposer = Interpose(TestClass.self)
             let hook = try interposer.prepareHook(
                 #selector(TestClass.doNothing),
                 methodSignature: (@convention(c) (AnyObject, Selector) -> Void).self,

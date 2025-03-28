@@ -84,7 +84,7 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.returnInt(), returnIntDefault + returnIntOverrideOffset)
 
         // Interpose on TestClass itself!
-        let classInterposer = try Interpose(TestClass.self)
+        let classInterposer = Interpose(TestClass.self)
         let classHook = try classInterposer.hook(
             #selector(TestClass.returnInt),
             methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
