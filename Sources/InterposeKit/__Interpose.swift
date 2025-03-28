@@ -10,7 +10,7 @@ public final class __Interpose {
         self.target = .class(`class`)
     }
     
-    public init(object: AnyObject) {
+    public init(object: NSObject) {
         self.target = .object(object)
     }
     

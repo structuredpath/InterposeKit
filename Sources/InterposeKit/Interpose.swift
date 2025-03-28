@@ -11,18 +11,7 @@ final public class Interpose {
     public private(set) var hooks: [Hook] = []
 
     /// If Interposing is object-based, this is set.
-    public let object: AnyObject?
-
-    // Checks if a object is posing as a different class
-    // via implementing 'class' and returning something else.
-    private func checkObjectPosingAsDifferentClass(_ object: AnyObject) -> AnyClass? {
-        let perceivedClass: AnyClass = type(of: object)
-        let actualClass: AnyClass = object_getClass(object)!
-        if actualClass != perceivedClass {
-            return actualClass
-        }
-        return nil
-    }
+    public let object: NSObject?
 
     /// Initializes an instance of Interpose for a specific class.
     /// If `builder` is present, `apply()` is automatically called.
@@ -40,14 +29,6 @@ final public class Interpose {
     public init(_ object: NSObject, builder: ((Interpose) throws -> Void)? = nil) throws {
         self.object = object
         self.class = type(of: object)
-
-        if let actualClass = checkObjectPosingAsDifferentClass(object) {
-            if object_isKVOActive(object) {
-                throw InterposeError.keyValueObservationDetected(object)
-            } else {
-                throw InterposeError.objectPosingAsDifferentClass(object, actualClass: actualClass)
-            }
-        }
 
         // Only apply if a builder is present
         if let builder = builder {

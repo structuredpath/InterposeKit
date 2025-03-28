@@ -209,5 +209,5 @@ public enum HookState: Equatable {
 
 internal enum HookTarget {
     case `class`(AnyClass)
-    case object(AnyObject)
+    case object(NSObject)
 }
