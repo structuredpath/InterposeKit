@@ -14,21 +14,15 @@ final public class Interpose {
     public let object: NSObject?
 
     /// Initializes an instance of Interpose for a specific class.
-    /// If `builder` is present, `apply()` is automatically called.
     public init(_ `class`: AnyClass) {
         self.class = `class`
         self.object = nil
     }
 
     /// Initialize with a single object to interpose.
-    public init(_ object: NSObject, builder: ((Interpose) throws -> Void)? = nil) throws {
+    public init(_ object: NSObject) throws {
         self.object = object
         self.class = type(of: object)
-
-        // Only apply if a builder is present
-        if let builder = builder {
-            try _apply(builder)
-        }
     }
 
     deinit {
@@ -65,36 +59,6 @@ final public class Interpose {
         }
         hooks.append(hook)
         return hook
-    }
-
-    /// Apply all stored hooks.
-    @discardableResult private func _apply(_ hook: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
-        try execute(hook) { try $0.apply() }
-    }
-
-    /// Revert all stored hooks.
-    @discardableResult private func _revert(_ hook: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
-        try execute(hook, expectedState: .active) { try $0.revert() }
-    }
-
-    private func execute(_ task: ((Interpose) throws -> Void)? = nil,
-                         expectedState: HookState = .pending,
-                         executor: ((Hook) throws -> Void)) throws -> Interpose {
-        // Run pre-apply code first
-        if let task = task {
-            try task(self)
-        }
-        
-        // Validate all tasks, stop if anything is not valid
-        for hook in self.hooks {
-            if hook.state != expectedState {
-                throw InterposeError.invalidState(expectedState: expectedState)
-            }
-        }
-        
-        // Execute all tasks
-        try hooks.forEach(executor)
-        return self
     }
 }
 
