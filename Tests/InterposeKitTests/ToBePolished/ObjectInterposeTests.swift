@@ -84,15 +84,14 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.returnInt(), returnIntDefault + returnIntOverrideOffset)
 
         // Interpose on TestClass itself!
-        let classInterposer = try Interpose(TestClass.self) {
-            try $0.prepareHook(
-                #selector(TestClass.returnInt),
-                methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-                hookSignature: (@convention(block) (AnyObject) -> Int).self
-            ) { hook in
-                return {
-                    hook.original($0, hook.selector) * returnIntClassMultiplier
-                }
+        let classInterposer = try Interpose(TestClass.self)
+        let classHook = try classInterposer.hook(
+            #selector(TestClass.returnInt),
+            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (AnyObject) -> Int).self
+        ) { hook in
+            return {
+                hook.original($0, hook.selector) * returnIntClassMultiplier
             }
         }
 
@@ -104,7 +103,7 @@ final class ObjectInterposeTests: InterposeKitTestCase {
 
         try hook.revert()
         XCTAssertEqual(testObj.returnInt(), returnIntDefault * returnIntClassMultiplier)
-        try classInterposer.revert()
+        try classHook.revert()
         XCTAssertEqual(testObj.returnInt(), returnIntDefault)
     }
 
