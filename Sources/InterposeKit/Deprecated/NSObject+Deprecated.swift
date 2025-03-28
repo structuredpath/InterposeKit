@@ -52,7 +52,7 @@ extension NSObject {
         _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try Hook(
-            class: self as AnyClass,
+            target: .class(self),
             selector: selector,
             build: build
         )

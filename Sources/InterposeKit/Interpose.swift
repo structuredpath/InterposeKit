@@ -83,9 +83,9 @@ final public class Interpose {
     ) throws -> Hook {
         var hook: Hook
         if let object = self.object {
-            hook = try Hook(object: object, selector: selector, build: build)
+            hook = try Hook(target: .object(object), selector: selector, build: build)
         } else {
-            hook = try Hook(class: `class`, selector: selector, build: build)
+            hook = try Hook(target: .class(`class`), selector: selector, build: build)
         }
         hooks.append(hook)
         return hook
