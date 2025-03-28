@@ -15,14 +15,9 @@ final public class Interpose {
 
     /// Initializes an instance of Interpose for a specific class.
     /// If `builder` is present, `apply()` is automatically called.
-    public init(_ `class`: AnyClass, builder: ((Interpose) throws -> Void)? = nil) throws {
+    public init(_ `class`: AnyClass) {
         self.class = `class`
         self.object = nil
-
-        // Only apply if a builder is present
-        if let builder = builder {
-            try _apply(builder)
-        }
     }
 
     /// Initialize with a single object to interpose.

@@ -10,7 +10,7 @@ fileprivate class ExampleSubclass: ExampleClass {}
 final class HookTests: InterposeKitTestCase {
     
     func testStates_success() throws {
-        let interposer = try Interpose(ExampleClass.self)
+        let interposer = Interpose(ExampleClass.self)
         
         let hook = try interposer.prepareHook(
             #selector(ExampleClass.foo),
@@ -30,7 +30,7 @@ final class HookTests: InterposeKitTestCase {
     
     func testStates_failure() throws {
         // Interpose on a subclass that inherits but does not implement `foo`.
-        let interposer = try Interpose(ExampleSubclass.self)
+        let interposer = Interpose(ExampleSubclass.self)
         
         // We can prepare a hook, as the method is accessible from the subclass.
         let hook = try interposer.prepareHook(
