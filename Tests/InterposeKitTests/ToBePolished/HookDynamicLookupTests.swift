@@ -18,7 +18,7 @@ class HookDynamicLookupTests: XCTestCase {
         // Create an ObjectHook for the 'greet(name:)' method.
         // Note: We don't explicitly set strategy.originalIMP, so the dynamic lookup path will be used.
         let hook = try Hook(
-            object: object,
+            target: .object(object),
             selector: #selector(ExampleClass.greet(name:)),
             build: { (hook: HookProxy<MethodSignature>) -> HookSignature in
                 return { `self`, name in

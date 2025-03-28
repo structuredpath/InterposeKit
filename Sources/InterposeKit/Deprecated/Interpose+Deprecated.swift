@@ -18,4 +18,16 @@ extension Interpose {
         )
     }
     
+    @available(*, unavailable, message: "'apply()' is no longer supported. Use 'applyHook(...)' instead to apply individual hooks.")
+    @discardableResult
+    public func apply(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
+        fatalError("Interpose.apply() is unavailable.")
+    }
+    
+    @available(*, unavailable, message: "'revert()' is no longer supported. Keep a reference to the individual hooks and call 'revert()' on them.")
+    @discardableResult
+    public func revert(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
+        fatalError("Interpose.revert() is unavailable.")
+    }
+        
 }
