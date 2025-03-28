@@ -31,14 +31,18 @@ final public class Interpose {
 
     /// Hook an `@objc dynamic` instance method via selector  on the current class.
     @discardableResult
-    public func hook<MethodSignature, HookSignature> (
-        _ selector: Selector,
+    public func applyHook<MethodSignature, HookSignature> (
+        for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         _ build: HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        let hook = try prepareHook(selector, methodSignature: methodSignature,
-                                   hookSignature: hookSignature, build)
+        let hook = try self.prepareHook(
+            for: selector,
+            methodSignature: methodSignature,
+            hookSignature: hookSignature,
+            build
+        )
         try hook.apply()
         return hook
     }
@@ -46,7 +50,7 @@ final public class Interpose {
     /// Prepares a hook, but does not call apply immediately.
     @discardableResult
     public func prepareHook<MethodSignature, HookSignature> (
-        _ selector: Selector,
+        for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         _ build: HookBuilder<MethodSignature, HookSignature>

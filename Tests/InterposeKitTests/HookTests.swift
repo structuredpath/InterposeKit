@@ -13,7 +13,7 @@ final class HookTests: InterposeKitTestCase {
         let interposer = Interpose(ExampleClass.self)
         
         let hook = try interposer.prepareHook(
-            #selector(ExampleClass.foo),
+            for: #selector(ExampleClass.foo),
             methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
             hookSignature: (@convention(block) (NSObject) -> Void).self
         ) { hook in
@@ -34,7 +34,7 @@ final class HookTests: InterposeKitTestCase {
         
         // We can prepare a hook, as the method is accessible from the subclass.
         let hook = try interposer.prepareHook(
-            #selector(ExampleClass.foo),
+            for: #selector(ExampleClass.foo),
             methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
             hookSignature: (@convention(block) (NSObject) -> Void).self
         ) { hook in

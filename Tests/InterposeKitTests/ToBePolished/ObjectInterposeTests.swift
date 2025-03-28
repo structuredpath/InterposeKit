@@ -85,8 +85,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
 
         // Interpose on TestClass itself!
         let classInterposer = Interpose(TestClass.self)
-        let classHook = try classInterposer.hook(
-            #selector(TestClass.returnInt),
+        let classHook = try classInterposer.applyHook(
+            for: #selector(TestClass.returnInt),
             methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
             hookSignature: (@convention(block) (AnyObject) -> Int).self
         ) { hook in
