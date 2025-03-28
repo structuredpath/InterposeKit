@@ -7,31 +7,7 @@ public final class Hook {
     // MARK: Initialization
     // ============================================================================ //
     
-    internal convenience init<MethodSignature, HookSignature>(
-        `class`: AnyClass,
-        selector: Selector,
-        build: HookBuilder<MethodSignature, HookSignature>
-    ) throws {
-        try self.init(
-            target: .class(`class`),
-            selector: selector,
-            build: build
-        )
-    }
-    
-    internal convenience init<MethodSignature, HookSignature>(
-        object: AnyObject,
-        selector: Selector,
-        build: HookBuilder<MethodSignature, HookSignature>
-    ) throws {
-        try self.init(
-            target: .object(object),
-            selector: selector,
-            build: build
-        )
-    }
-    
-    private init<MethodSignature, HookSignature>(
+    internal init<MethodSignature, HookSignature>(
         target: HookTarget,
         selector: Selector,
         build: HookBuilder<MethodSignature, HookSignature>
@@ -231,7 +207,7 @@ public enum HookState: Equatable {
     
 }
 
-fileprivate enum HookTarget {
+internal enum HookTarget {
     case `class`(AnyClass)
     case object(AnyObject)
 }
