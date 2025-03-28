@@ -42,7 +42,7 @@ final public class Interpose {
         self.class = type(of: object)
 
         if let actualClass = checkObjectPosingAsDifferentClass(object) {
-            if object.isKeyValueObserved && NSStringFromClass(actualClass).contains("NSKVONotifying") {
+            if object_isKVOActive(object) {
                 throw InterposeError.keyValueObservationDetected(object)
             } else {
                 throw InterposeError.objectPosingAsDifferentClass(object, actualClass: actualClass)
