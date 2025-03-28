@@ -32,7 +32,16 @@ final class KVOTests: InterposeKitTestCase {
             testObj.age = 2
             XCTAssertEqual(testObj.age, 2)
             // Hooking is expected to fail
-            XCTAssertThrowsError(try Interpose(testObj), expected: InterposeError.keyValueObservationDetected(testObj))
+            XCTAssertThrowsError(
+                try Interpose(testObj).prepareHook(
+                    #selector(getter: TestClass.age),
+                    methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
+                    hookSignature: (@convention(block) (AnyObject) -> Int).self
+                ) { _ in
+                    return { _ in 3 }
+                },
+                expected: InterposeError.keyValueObservationDetected(testObj)
+            )
             XCTAssertEqual(testObj.age, 2)
         }
 

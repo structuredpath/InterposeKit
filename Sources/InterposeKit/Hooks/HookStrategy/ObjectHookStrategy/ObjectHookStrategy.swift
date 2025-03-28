@@ -3,7 +3,7 @@ import Foundation
 final class ObjectHookStrategy: HookStrategy {
     
     init(
-        object: AnyObject,
+        object: NSObject,
         selector: Selector,
         hookIMP: IMP
     ) throws {
@@ -13,6 +13,13 @@ final class ObjectHookStrategy: HookStrategy {
         self.hookIMP = hookIMP
 
         try self.validate()
+        
+        if let _ = checkObjectPosingAsDifferentClass(object) {
+            if object_isKVOActive(object) {
+                throw InterposeError.keyValueObservationDetected(object)
+            }
+            // TODO: Handle the case where the object is posing as different class but not the interpose subclass
+        }
         
         ObjectHookRegistry.register(self.handle, for: hookIMP)
     }
@@ -146,6 +153,17 @@ final class ObjectHookStrategy: HookStrategy {
         //
         // objc_disposeClassPair(dynamicSubclass)
         // self.dynamicSubclass = nil
+    }
+    
+    // Checks if a object is posing as a different class
+    // via implementing 'class' and returning something else.
+    private func checkObjectPosingAsDifferentClass(_ object: AnyObject) -> AnyClass? {
+        let perceivedClass: AnyClass = type(of: object)
+        let actualClass: AnyClass = object_getClass(object)!
+        if actualClass != perceivedClass {
+            return actualClass
+        }
+        return nil
     }
     
     /// Traverses the object hook chain to find the handle to the parent of this hook, starting
