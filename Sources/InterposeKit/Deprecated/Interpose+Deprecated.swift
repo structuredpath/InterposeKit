@@ -7,7 +7,15 @@ extension Interpose {
         _ class: AnyClass,
         builder: (Interpose) throws -> Void
     ) throws {
-        fatalError("Interpose(class:builder:) is unavailable.")
+        fatalError("Interpose(_:builder:) is unavailable.")
+    }
+    
+    @available(*, unavailable, message: "Use 'init(_ object: NSObject)' followed by 'applyHook(…)' instead.")
+    public convenience init(
+        _ object: NSObject,
+        builder: (Interpose) throws -> Void
+    ) throws {
+        fatalError("Interpose(_:builder:) is unavailable.")
     }
     
     @available(*, deprecated, message: "Use 'hook(_:methodSignature:hookSignature:_:)' instead and pass materialized selector.")
