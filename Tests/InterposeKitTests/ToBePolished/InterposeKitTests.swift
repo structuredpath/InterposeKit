@@ -12,34 +12,33 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi)
 
         // Functions need to be `@objc dynamic` to be hookable.
-        let interposer = try Interpose(TestClass.self) {
-            try $0.prepareHook(
-                #selector(TestClass.sayHi),
-                methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-                hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
-                    // You're free to skip calling the original implementation.
-                    print("Before Interposing \(bSelf)")
-                    let string = store.original(bSelf, store.selector)
-                    print("After Interposing \(bSelf)")
-
-                    return string + testString
-                    }
+        let interposer = try Interpose(TestClass.self)
+        let hook = try interposer.hook(
+            #selector(TestClass.sayHi),
+            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
+                // You're free to skip calling the original implementation.
+                print("Before Interposing \(bSelf)")
+                let string = store.original(bSelf, store.selector)
+                print("After Interposing \(bSelf)")
+                
+                return string + testString
             }
-        }
+            }
         print(TestClass().sayHi())
 
         // Test various apply/revert's
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
-        try interposer.revert()
+        try hook.revert()
         XCTAssertEqual(testObj.sayHi(), testClassHi)
-        try interposer.apply()
+        try hook.apply()
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
-        XCTAssertThrowsError(try interposer.apply())
-        XCTAssertThrowsError(try interposer.apply())
-        try interposer.revert()
-        XCTAssertThrowsError(try interposer.revert())
-        try interposer.apply()
-        try interposer.revert()
+        try hook.apply() // noop
+        try hook.apply() // noop
+        try hook.revert()
+        try hook.revert() // noop
+        try hook.apply()
+        try hook.revert()
         XCTAssertEqual(testObj.sayHi(), testClassHi)
     }
 
@@ -48,20 +47,19 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi + testSubclass)
 
         // Swizzle test class
-        let interposed = try Interpose(TestClass.self) {
-            try $0.prepareHook(
-                #selector(TestClass.sayHi),
-                methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-                hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
-                    return store.original(bSelf, store.selector) + testString
-                    }
+        let interposer = try Interpose(TestClass.self)
+        let hook = try interposer.hook(
+            #selector(TestClass.sayHi),
+            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
+                return store.original(bSelf, store.selector) + testString
             }
-        }
+            }
 
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString + testSubclass)
-        try interposed.revert()
+        try hook.revert()
         XCTAssertEqual(testObj.sayHi(), testClassHi + testSubclass)
-        try interposed.apply()
+        try hook.apply()
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString + testSubclass)
 
         // Swizzle subclass, automatically applys
@@ -74,7 +72,7 @@ final class InterposeKitTests: InterposeKitTestCase {
         }
 
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString + testSubclass + testString)
-        try interposed.revert()
+        try hook.revert()
         XCTAssertEqual(testObj.sayHi(), testClassHi + testSubclass + testString)
         try interposedSubclass.revert()
         XCTAssertEqual(testObj.sayHi(), testClassHi + testSubclass)
@@ -115,17 +113,17 @@ final class InterposeKitTests: InterposeKitTestCase {
             }
 
             // Swizzle test class
-            let interposer = try Interpose(TestClass.self) {
-                try $0.prepareHook(
-                    #selector(TestClass.doNothing),
-                    methodSignature: (@convention(c) (AnyObject, Selector) -> Void).self,
-                    hookSignature: (@convention(block) (AnyObject) -> Void).self) { store in { bSelf in
-                        tracker.keep()
-                        return store.original(bSelf, store.selector)
-                        }
+            let interposer = try Interpose(TestClass.self)
+            let hook = try interposer.prepareHook(
+                #selector(TestClass.doNothing),
+                methodSignature: (@convention(c) (AnyObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (AnyObject) -> Void).self) { store in { bSelf in
+                    tracker.keep()
+                    return store.original(bSelf, store.selector)
                 }
-            }
-            try interposer.revert()
+                }
+            
+            try hook.revert()
         }
 
         // Verify that the block was deallocated

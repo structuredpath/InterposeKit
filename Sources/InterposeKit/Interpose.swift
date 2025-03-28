@@ -32,7 +32,7 @@ final public class Interpose {
 
         // Only apply if a builder is present
         if let builder = builder {
-            try apply(builder)
+            try _apply(builder)
         }
     }
 
@@ -51,7 +51,7 @@ final public class Interpose {
 
         // Only apply if a builder is present
         if let builder = builder {
-            try apply(builder)
+            try _apply(builder)
         }
     }
 
@@ -92,12 +92,12 @@ final public class Interpose {
     }
 
     /// Apply all stored hooks.
-    @discardableResult public func apply(_ hook: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
+    @discardableResult private func _apply(_ hook: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
         try execute(hook) { try $0.apply() }
     }
 
     /// Revert all stored hooks.
-    @discardableResult public func revert(_ hook: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
+    @discardableResult private func _revert(_ hook: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
         try execute(hook, expectedState: .active) { try $0.revert() }
     }
 
