@@ -1,6 +1,6 @@
+@testable import InterposeKit
 import Foundation
 import XCTest
-@testable import InterposeKit
 
 final class KVOTests: InterposeKitTestCase {
 
@@ -37,12 +37,12 @@ final class KVOTests: InterposeKitTestCase {
         }
 
         // Hook without KVO!
-        let hook = try testObj.hook(
-            #selector(getter: TestClass.age),
+        let hook = try testObj.applyHook(
+            for: #selector(getter: TestClass.age),
             methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject) -> Int).self) { _ in { _ in
-                    return 3
-                }
+            hookSignature: (@convention(block) (AnyObject) -> Int).self
+        ) { _ in
+            return { _ in 3 }
         }
         XCTAssertEqual(testObj.age, 3)
         try hook.revert()
