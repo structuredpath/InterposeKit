@@ -8,7 +8,7 @@ final class ClassMethodInterposeTests: InterposeKitTestCase {
         
         XCTAssertThrowsError(
             try interposer.prepareHook(
-                #selector(getter: TestClass.staticInt),
+                for: #selector(getter: TestClass.staticInt),
                 methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
                 hookSignature: (@convention(block) (AnyObject) -> Int).self
             ) { hook in

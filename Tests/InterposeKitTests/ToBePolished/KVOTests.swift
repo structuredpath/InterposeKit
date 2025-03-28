@@ -34,7 +34,7 @@ final class KVOTests: InterposeKitTestCase {
             // Hooking is expected to fail
             XCTAssertThrowsError(
                 try Interpose(testObj).prepareHook(
-                    #selector(getter: TestClass.age),
+                    for: #selector(getter: TestClass.age),
                     methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
                     hookSignature: (@convention(block) (AnyObject) -> Int).self
                 ) { _ in
