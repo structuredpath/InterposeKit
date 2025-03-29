@@ -9,8 +9,8 @@ final class ClassMethodInterposeTests: InterposeKitTestCase {
         XCTAssertThrowsError(
             try interposer.prepareHook(
                 for: #selector(getter: TestClass.staticInt),
-                methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-                hookSignature: (@convention(block) (AnyObject) -> Int).self
+                methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+                hookSignature: (@convention(block) (NSObject) -> Int).self
             ) { hook in
                 return { _ in 73 }
             },

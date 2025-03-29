@@ -39,7 +39,7 @@ extension Interpose {
         _ selectorName: String,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ build: HookBuilder<MethodSignature, HookSignature>
+        _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         try self.hook(
             Selector(selectorName),
@@ -60,7 +60,7 @@ extension Interpose {
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ build: HookBuilder<MethodSignature, HookSignature>
+        _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         try self.applyHook(
             for: selector,
@@ -81,7 +81,7 @@ extension Interpose {
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ build: HookBuilder<MethodSignature, HookSignature>
+        _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         try self.prepareHook(
             for: selector,

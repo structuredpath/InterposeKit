@@ -15,8 +15,8 @@ final class InterposeKitTests: InterposeKitTestCase {
         let interposer = Interpose(TestClass.self)
         let hook = try interposer.applyHook(
             for: #selector(TestClass.sayHi),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
+            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (NSObject) -> String).self) { store in { bSelf in
                 // You're free to skip calling the original implementation.
                 print("Before Interposing \(bSelf)")
                 let string = store.original(bSelf, store.selector)
@@ -50,8 +50,8 @@ final class InterposeKitTests: InterposeKitTestCase {
         let interposer = Interpose(TestClass.self)
         let hook = try interposer.applyHook(
             for: #selector(TestClass.sayHi),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
+            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (NSObject) -> String).self) { store in { bSelf in
                 return store.original(bSelf, store.selector) + testString
             }
             }
@@ -65,8 +65,8 @@ final class InterposeKitTests: InterposeKitTestCase {
         // Swizzle subclass, automatically applys
         let interposedSubclass = try Interpose(TestSubclass.self).applyHook(
             for: #selector(TestSubclass.sayHi),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self) { store in { bSelf in
+            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (NSObject) -> String).self) { store in { bSelf in
                 return store.original(bSelf, store.selector) + testString
                 }
         }
@@ -89,8 +89,8 @@ final class InterposeKitTests: InterposeKitTestCase {
             // Swizzle test class
             let interposer = try Interpose(TestClass.self).applyHook(
                 for: #selector(TestClass.doNothing),
-                methodSignature: (@convention(c) (AnyObject, Selector) -> Void).self,
-                hookSignature: (@convention(block) (AnyObject) -> Void).self) { store in { bSelf in
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self) { store in { bSelf in
                     tracker.keep()
                     return store.original(bSelf, store.selector)
                     }
@@ -104,7 +104,7 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertFalse(deallocated)
     }
 
-    func testRevertedCleanup() throws {
+    func testRevertedCleanup_class() throws {
         var deallocated = false
 
         try autoreleasepool {
@@ -114,18 +114,48 @@ final class InterposeKitTests: InterposeKitTestCase {
 
             // Swizzle test class
             let interposer = Interpose(TestClass.self)
-            let hook = try interposer.prepareHook(
+            let hook = try interposer.applyHook(
                 for: #selector(TestClass.doNothing),
-                methodSignature: (@convention(c) (AnyObject, Selector) -> Void).self,
-                hookSignature: (@convention(block) (AnyObject) -> Void).self) { store in { bSelf in
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in
                     tracker.keep()
-                    return store.original(bSelf, store.selector)
+                    return hook.original(self, hook.selector)
                 }
-                }
+            }
             
             try hook.revert()
         }
 
+        // Verify that the block was deallocated
+        XCTAssertTrue(deallocated)
+    }
+    
+    func testRevertedCleanup_object() throws {
+        var deallocated = false
+        
+        try autoreleasepool {
+            let tracker = LifetimeTracker {
+                deallocated = true
+            }
+            
+            let object = TestClass()
+            let interposer = try Interpose(object)
+            let hook = try interposer.applyHook(
+                for: #selector(TestClass.doNothing),
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in
+                    tracker.keep()
+                    return hook.original(self, hook.selector)
+                }
+            }
+            
+            try hook.revert()
+        }
+        
         // Verify that the block was deallocated
         XCTAssertTrue(deallocated)
     }
@@ -138,7 +168,7 @@ final class InterposeKitTests: InterposeKitTestCase {
                 deallocated = true
             }
 
-            let block: @convention(block) (AnyObject) -> Void = { _ in
+            let block: @convention(block) (NSObject) -> Void = { _ in
                 // retain `tracker` inside a block
                 tracker.keep()
             }

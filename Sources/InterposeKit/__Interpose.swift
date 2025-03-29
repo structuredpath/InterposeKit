@@ -30,7 +30,7 @@ public final class __Interpose {
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        build: HookBuilder<MethodSignature, HookSignature>
+        build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         return try Hook(
             target: self.target,
@@ -45,7 +45,7 @@ public final class __Interpose {
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        build: HookBuilder<MethodSignature, HookSignature>
+        build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try Hook(
             target: self.target,

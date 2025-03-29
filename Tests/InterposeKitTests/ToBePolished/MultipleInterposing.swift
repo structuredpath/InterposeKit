@@ -15,8 +15,8 @@ final class MultipleInterposingTests: InterposeKitTestCase {
         let interposer = try Interpose(testObj)
         let hook = try interposer.applyHook(
             for: #selector(TestClass.sayHi),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (NSObject) -> String).self
         ) { store in
             { bSelf in
                 return store.original(bSelf, store.selector) + testString
@@ -28,8 +28,8 @@ final class MultipleInterposingTests: InterposeKitTestCase {
 
         try testObj.applyHook(
             for: #selector(TestClass.sayHi),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (NSObject) -> String).self
         ) { hook in
             return { `self` in
                 return hook.original(self, hook.selector) + testString2
@@ -48,8 +48,8 @@ final class MultipleInterposingTests: InterposeKitTestCase {
         let interpose = try Interpose(testObj)
         let hook1 = try interpose.applyHook(
             for: #selector(getter: TestClass.age),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject) -> Int).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { _ in
             { _ in
                 return 3
@@ -59,8 +59,8 @@ final class MultipleInterposingTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.age, 3)
 
         let hook2 = try interpose.applyHook(for: #selector(getter: TestClass.age),
-                                       methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-                                       hookSignature: (@convention(block) (AnyObject) -> Int).self) { _ in { _ in
+                                       methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+                                       hookSignature: (@convention(block) (NSObject) -> Int).self) { _ in { _ in
             return 5
         }
         }

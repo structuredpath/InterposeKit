@@ -5,28 +5,20 @@ internal protocol HookStrategy: AnyObject, CustomDebugStringConvertible {
     var `class`: AnyClass { get }
     var scope: HookScope { get }
     var selector: Selector { get }
-    
-    /// The implementation used to interpose the method, created during hook setup and used
-    /// to replace the original implementation while the hook is applied.
-    var hookIMP: IMP { get }
-    
-    /// The original implementation captured when the hook is applied, restored when the hook
-    /// is reverted.
-    var storedOriginalIMP: IMP? { get }
+
+    /// Validates the target and throws if invalid.
+    func validate() throws
     
     func replaceImplementation() throws
     func restoreImplementation() throws
     
-}
-
-extension HookStrategy {
+    /// The current implementation used to interpose the method, created lazily when applying
+    /// the hook and removed when the hook is reverted.
+    var appliedHookIMP: IMP? { get }
     
-    /// Validates that the target method exists on the class, throwing if not found.
-    internal func validate() throws {
-        guard class_getInstanceMethod(self.class, self.selector) != nil else {
-            throw InterposeError.methodNotFound(self.class, self.selector)
-        }
-    }
+    /// The original implementation captured when the hook is applied, restored when the hook
+    /// is reverted.
+    var storedOriginalIMP: IMP? { get }
     
 }
 

@@ -13,8 +13,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
 
         let hook = try testObj.applyHook(
             for: #selector(TestClass.sayHi),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (AnyObject) -> String).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
+            hookSignature: (@convention(block) (NSObject) -> String).self
         ) { hook in
             return { `self` in
                 print("Before Interposing \(self)")
@@ -42,8 +42,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
 
         let hook = try testObj.applyHook(
             for: #selector(TestClass.returnInt),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject) -> Int).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
             return { `self` in
                 let int = hook.original(self, hook.selector)
@@ -73,8 +73,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         // Functions need to be `@objc dynamic` to be hookable.
         let hook = try testObj.applyHook(
             for: #selector(TestClass.returnInt),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject) -> Int).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
             return { `self` in
                 // You're free to skip calling the original implementation.
@@ -87,8 +87,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         let classInterposer = Interpose(TestClass.self)
         let classHook = try classInterposer.applyHook(
             for: #selector(TestClass.returnInt),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject) -> Int).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
             return {
                 hook.original($0, hook.selector) * returnIntClassMultiplier
@@ -114,8 +114,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         // Functions need to be `@objc dynamic` to be hookable.
         let hook = try testObj.applyHook(
             for: #selector(TestClass.calculate),
-            methodSignature: (@convention(c) (AnyObject, Selector, Int, Int, Int) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject, Int, Int, Int) -> Int).self
+            methodSignature: (@convention(c) (NSObject, Selector, Int, Int, Int) -> Int).self,
+            hookSignature: (@convention(block) (NSObject, Int, Int, Int) -> Int).self
         ) { hook in
             return {
                 let orig = hook.original($0, hook.selector, $1, $2, $3)
@@ -135,8 +135,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         // Functions need to be `@objc dynamic` to be hookable.
         let hook = try testObj.applyHook(
             for: #selector(TestClass.calculate2),
-            methodSignature: (@convention(c) (AnyObject, Selector, Int, Int, Int, Int, Int, Int) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject, Int, Int, Int, Int, Int, Int) -> Int).self
+            methodSignature: (@convention(c) (NSObject, Selector, Int, Int, Int, Int, Int, Int) -> Int).self,
+            hookSignature: (@convention(block) (NSObject, Int, Int, Int, Int, Int, Int) -> Int).self
         ) { hook in
             return {
                 // You're free to skip calling the original implementation.
@@ -157,8 +157,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
         // Functions need to be `@objc dynamic` to be hookable.
         let hook = try testObj.applyHook(
             for: #selector(TestClass.doubleString),
-            methodSignature: (@convention(c) (AnyObject, Selector, String) -> String).self,
-            hookSignature: (@convention(block) (AnyObject, String) -> String).self
+            methodSignature: (@convention(c) (NSObject, Selector, String) -> String).self,
+            hookSignature: (@convention(block) (NSObject, String) -> String).self
         ) { hook in
             return { `self`, parameter in
                 hook.original(self, hook.selector, parameter) + str
@@ -237,8 +237,8 @@ final class ObjectInterposeTests: InterposeKitTestCase {
 //
 //        // Functions need to be `@objc dynamic` to be hookable.
 //        let hook = try testObj.hook(#selector(TestClass.invert3DTransform)) { (store: TypedHook
-//            <@convention(c)(AnyObject, Selector, CATransform3D) -> CATransform3D,
-//            @convention(block) (AnyObject, CATransform3D) -> CATransform3D>) in {
+//            <@convention(c)(NSObject, Selector, CATransform3D) -> CATransform3D,
+//            @convention(block) (NSObject, CATransform3D) -> CATransform3D>) in {
 //                let matrix = store.original($0, store.selector, $1)
 //                return transformMatrix(matrix)
 //            }
