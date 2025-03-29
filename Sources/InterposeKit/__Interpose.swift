@@ -1,55 +1,75 @@
 import ObjectiveC
 
-public final class __Interpose {
-
-    // ============================================================================ //
-    // MARK: Initialization
-    // ============================================================================ //
-    
-    public init(class: AnyClass) {
-        self.target = .class(`class`)
-    }
-    
-    public init(object: NSObject) {
-        self.target = .object(object)
-    }
+extension Interpose {
     
     // ============================================================================ //
-    // MARK: Configuration
+    // MARK: Class Hooks
     // ============================================================================ //
     
-    /// The target of the hooks created via this factory.
-    private let target: HookTarget
-    
-    // ============================================================================ //
-    // MARK: Hook Creation
-    // ============================================================================ //
-    
-    /// Creates and returns a hook in pending state.
-    public func prepareHook<MethodSignature, HookSignature>(
+    public static func prepareHook<MethodSignature, HookSignature>(
+        on `class`: AnyClass,
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        return try Hook(
-            target: self.target,
+        try Hook(
+            target: .class(`class`),
             selector: selector,
             build: build
         )
     }
     
-    /// Creates a hook, applies it, and returns it in one go.
     @discardableResult
-    public func applyHook<MethodSignature, HookSignature>(
+    public static func applyHook<MethodSignature, HookSignature>(
+        on `class`: AnyClass,
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        let hook = try Hook(
-            target: self.target,
+        let hook = try prepareHook(
+            on: `class`,
+            for: selector,
+            methodSignature: methodSignature,
+            hookSignature: hookSignature,
+            build: build
+        )
+        try hook.apply()
+        return hook
+    }
+    
+    // ============================================================================ //
+    // MARK: Object Hooks
+    // ============================================================================ //
+    
+    public static func prepareHook<MethodSignature, HookSignature>(
+        on object: NSObject,
+        for selector: Selector,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
+        build: @escaping HookBuilder<MethodSignature, HookSignature>
+    ) throws -> Hook {
+        try Hook(
+            target: .object(object),
             selector: selector,
+            build: build
+        )
+    }
+    
+    @discardableResult
+    public static func applyHook<MethodSignature, HookSignature>(
+        on object: NSObject,
+        for selector: Selector,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
+        build: @escaping HookBuilder<MethodSignature, HookSignature>
+    ) throws -> Hook {
+        let hook = try prepareHook(
+            on: object,
+            for: selector,
+            methodSignature: methodSignature,
+            hookSignature: hookSignature,
             build: build
         )
         try hook.apply()

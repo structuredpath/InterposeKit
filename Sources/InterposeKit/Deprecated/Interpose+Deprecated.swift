@@ -4,34 +4,42 @@ extension Interpose {
     
     @available(
         *,
-        unavailable,
-        message: "Use 'init(_ class: AnyClass)' followed by 'applyHook(…)' instead."
+         unavailable,
+         message: """
+        The builder-based initializer pattern is no longer supported. Use the static method \
+        'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' for immediate \
+        installation, or 'Interpose.prepareHook(…)' for manual control.
+        """
     )
     public convenience init(
         _ class: AnyClass,
         builder: (Interpose) throws -> Void
     ) throws {
-        Interpose.fail("Interpose(_:builder:) is unavailable.")
+        Interpose.fail("Unavailable API")
     }
     
     @available(
         *,
-        unavailable,
-        message: "Use 'init(_ object: NSObject)' followed by 'applyHook(…)' instead."
+         unavailable,
+         message: """
+        The builder-based initializer pattern is no longer supported. Use the static method \
+        'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' for immediate \
+        installation, or 'Interpose.prepareHook(…)' for manual control.
+        """
     )
     public convenience init(
         _ object: NSObject,
-        builder: (Interpose) throws -> Void
+        builder: ((Interpose) throws -> Void)? = nil
     ) throws {
-        Interpose.fail("Interpose(_:builder:) is unavailable.")
+        Interpose.fail("Unavailable API")
     }
     
     @available(
         *,
-        deprecated,
-        message: """
-        Use 'applyHook(for:methodSignature:hookSignature:_:)' instead and pass a materialized \
-        selector.
+         unavailable,
+         message: """
+        Instance method 'hook(_:methodSignature:hookSignature:_:)' is no longer supported. \
+        Use 'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' instead.
         """
     )
     @discardableResult
@@ -41,79 +49,68 @@ extension Interpose {
         hookSignature: HookSignature.Type,
         _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        try self.hook(
-            Selector(selectorName),
-            methodSignature: methodSignature,
-            hookSignature: hookSignature,
-            build
-        )
+        Interpose.fail("Unavailable API")
     }
     
     @available(
         *,
-        deprecated,
-        renamed: "applyHook(for:methodSignature:hookSignature:_:)",
-        message: "Use 'applyHook(for:methodSignature:hookSignature:_:)' instead."
+         unavailable,
+         message: """
+        Instance method 'hook(_:methodSignature:hookSignature:_:)' is no longer supported. \
+        Use 'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' instead.
+        """
     )
     @discardableResult
-    public func hook<MethodSignature, HookSignature> (
+    public func hook<MethodSignature, HookSignature>(
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        try self.applyHook(
-            for: selector,
-            methodSignature: methodSignature,
-            hookSignature: hookSignature,
-            build
-        )
+        Interpose.fail("Unavailable API")
     }
     
     @available(
         *,
-        deprecated,
-        renamed: "prepareHook(for:methodSignature:hookSignature:_:)",
-        message: "Use 'prepareHook(for:methodSignature:hookSignature:_:)' instead."
+         unavailable,
+         message: """
+        Instance method 'prepareHook(_:methodSignature:hookSignature:_:)' is no longer supported. \
+        Use 'Interpose.prepareHook(on:for:methodSignature:hookSignature:build:)' instead.
+        """
     )
-    @discardableResult
-    public func prepareHook<MethodSignature, HookSignature> (
+    public func prepareHook<MethodSignature, HookSignature>(
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        try self.prepareHook(
-            for: selector,
-            methodSignature: methodSignature,
-            hookSignature: hookSignature,
-            build
-        )
+        Interpose.fail("Unavailable API")
     }
     
     @available(
         *,
-        unavailable,
-        message: """
-        'apply()' is no longer supported. Use 'applyHook(…)' instead to apply individual hooks.
+         unavailable,
+         message: """
+        'apply()' is no longer supported. Use 'Interpose.applyHook(…)' to apply individual hooks \
+        directly using the new static API.
         """
     )
     @discardableResult
     public func apply(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
-        Interpose.fail("Interpose.apply() is unavailable.")
+        Interpose.fail("Unavailable API")
     }
     
     @available(
         *,
-        unavailable,
-        message: """
-        'revert()' is no longer supported. Keep a reference to the individual hooks and call \
-        'revert()' on them.
+         unavailable,
+         message: """
+        'revert()' is no longer supported. Keep a reference to each individual hook and call \
+        'revert()' on them directly.
         """
     )
     @discardableResult
     public func revert(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
-        Interpose.fail("Interpose.revert() is unavailable.")
+        Interpose.fail("Unavailable API")
     }
-        
+    
 }

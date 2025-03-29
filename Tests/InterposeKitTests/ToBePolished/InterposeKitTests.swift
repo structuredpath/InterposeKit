@@ -12,8 +12,8 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi)
 
         // Functions need to be `@objc dynamic` to be hookable.
-        let interposer = Interpose(TestClass.self)
-        let hook = try interposer.applyHook(
+        let hook = try Interpose.applyHook(
+            on: TestClass.self,
             for: #selector(TestClass.sayHi),
             methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
             hookSignature: (@convention(block) (NSObject) -> String).self) { store in { bSelf in
@@ -47,8 +47,8 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi + testSubclass)
 
         // Swizzle test class
-        let interposer = Interpose(TestClass.self)
-        let hook = try interposer.applyHook(
+        let hook = try Interpose.applyHook(
+            on: TestClass.self,
             for: #selector(TestClass.sayHi),
             methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
             hookSignature: (@convention(block) (NSObject) -> String).self) { store in { bSelf in
@@ -63,7 +63,8 @@ final class InterposeKitTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.sayHi(), testClassHi + testString + testSubclass)
 
         // Swizzle subclass, automatically applys
-        let interposedSubclass = try Interpose(TestSubclass.self).applyHook(
+        let interposedSubclass = try Interpose.applyHook(
+            on: TestSubclass.self,
             for: #selector(TestSubclass.sayHi),
             methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
             hookSignature: (@convention(block) (NSObject) -> String).self) { store in { bSelf in
@@ -87,7 +88,8 @@ final class InterposeKitTests: InterposeKitTestCase {
             }
 
             // Swizzle test class
-            let interposer = try Interpose(TestClass.self).applyHook(
+            let interposer = try Interpose.applyHook(
+                on: TestClass.self,
                 for: #selector(TestClass.doNothing),
                 methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
                 hookSignature: (@convention(block) (NSObject) -> Void).self) { store in { bSelf in
@@ -113,8 +115,8 @@ final class InterposeKitTests: InterposeKitTestCase {
             }
 
             // Swizzle test class
-            let interposer = Interpose(TestClass.self)
-            let hook = try interposer.applyHook(
+            let hook = try Interpose.applyHook(
+                on: TestClass.self,
                 for: #selector(TestClass.doNothing),
                 methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
                 hookSignature: (@convention(block) (NSObject) -> Void).self
@@ -141,8 +143,8 @@ final class InterposeKitTests: InterposeKitTestCase {
             }
             
             let object = TestClass()
-            let interposer = try Interpose(object)
-            let hook = try interposer.applyHook(
+            let hook = try Interpose.applyHook(
+                on: object,
                 for: #selector(TestClass.doNothing),
                 methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
                 hookSignature: (@convention(block) (NSObject) -> Void).self
