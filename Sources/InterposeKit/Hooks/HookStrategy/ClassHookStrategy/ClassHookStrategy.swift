@@ -61,7 +61,7 @@ final class ClassHookStrategy: HookStrategy {
         
         guard let originalIMP = self.storedOriginalIMP else {
             // Ignore? Throw error?
-            fatalError("The original implementation should be loaded when resetting")
+            Interpose.fail("The original implementation should be loaded when resetting")
         }
         
         let previousIMP = class_replaceMethod(

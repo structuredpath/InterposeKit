@@ -8,7 +8,7 @@ internal enum ObjectHookRegistry {
         for imp: IMP
     ) {
         guard let block = imp_getBlock(imp) else {
-            fatalError("IMP does not point to a block.")
+            Interpose.fail("IMP does not point to a block.")
         }
         
         objc_setAssociatedObject(

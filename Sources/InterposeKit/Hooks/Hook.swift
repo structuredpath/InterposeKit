@@ -19,10 +19,10 @@ public final class Hook {
                 // happens when installing implementation from within the strategy, which is
                 // triggered from a live hook instance.
                 guard let hook else {
-                    fatalError(
+                    Interpose.fail(
                         """
-                        [InterposeKit] Internal inconsistency: Hook instance was deallocated \ 
-                        before the hook implementation could be created.
+                        Internal inconsistency: Hook instance was deallocated before the hook \
+                        implementation could be created.
                         """
                     )
                 }

@@ -63,13 +63,15 @@ final public class Interpose {
 // MARK: Logging
 
 extension Interpose {
-    /// Logging uses print and is minimal.
     public static var isLoggingEnabled = false
 
-    /// Simple log wrapper for print.
-    class func log(_ object: Any) {
+    static func log(_ object: Any) {
         if isLoggingEnabled {
             print("[InterposeKit] \(object)")
         }
+    }
+    
+    static func fail(_ message: String) -> Never {
+        fatalError("[InterposeKit] \(message)")
     }
 }
