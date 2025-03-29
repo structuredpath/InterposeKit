@@ -43,7 +43,7 @@ extension HookStrategy {
         
         fatalError(
             """
-            No original implementation found for selector \(self.selector) on \(self.class). 
+            No original implementation found for selector \(self.selector) on \(self.class). \
             This likely  indicates a corrupted or misconfigured class.
             """
         )
