@@ -10,39 +10,55 @@ public final class Hook {
     internal init<MethodSignature, HookSignature>(
         target: HookTarget,
         selector: Selector,
-        build: HookBuilder<MethodSignature, HookSignature>
+        build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws {
-        func makeStrategy(_ hook: Hook) throws -> HookStrategy {
-            let hookProxy = HookProxy(
-                selector: selector,
-                getOriginal: {
-                    unsafeBitCast(
-                        self.originalIMP,
-                        to: MethodSignature.self
+        self.makeStrategy = { hook in
+            let makeHookIMP: () -> IMP = { [weak hook] in
+                
+                // Hook should never be deallocated when invoking `makeHookIMP()`, as this only
+                // happens when installing implementation from within the strategy, which is
+                // triggered from a live hook instance.
+                guard let hook else {
+                    fatalError(
+                        """
+                        [InterposeKit] Internal inconsistency: Hook instance was deallocated \ 
+                        before the hook implementation could be created.
+                        """
                     )
                 }
-            )
-            
-            let hookBlock = build(hookProxy)
-            let hookIMP = imp_implementationWithBlock(hookBlock)
+                
+                let hookProxy = HookProxy(
+                    selector: selector,
+                    getOriginal: {
+                        unsafeBitCast(
+                            hook.originalIMP,
+                            to: MethodSignature.self
+                        )
+                    }
+                )
+                
+                let hookBlock = build(hookProxy)
+                let hookIMP = imp_implementationWithBlock(hookBlock)
+                return hookIMP
+            }
             
             switch target {
             case .class(let `class`):
-                return try ClassHookStrategy(
+                return ClassHookStrategy(
                     class: `class`,
                     selector: selector,
-                    hookIMP: hookIMP
+                    makeHookIMP: makeHookIMP
                 )
             case .object(let object):
-                return try ObjectHookStrategy(
+                return ObjectHookStrategy(
                     object: object,
                     selector: selector,
-                    hookIMP: hookIMP
+                    makeHookIMP: makeHookIMP
                 )
             }
         }
         
-        self.strategy = try makeStrategy(self)
+        try self.strategy.validate()
     }
     
     // ============================================================================ //
@@ -119,11 +135,39 @@ public final class Hook {
     // MARK: Underlying Strategy
     // ============================================================================ //
 
-    /// The active strategy used to interpose and manage the method implementation.
+    /// The strategy responsible for interposing and managing the method implementation.
     ///
-    /// This is an implicitly unwrapped optional, assigned immediately after initialization,
-    /// as constructing the strategy requires `self` to build the hook proxy.
-    private var strategy: HookStrategy!
+    /// Lazily initialized because strategy construction requires `self` to be passed into
+    /// the hook proxy when building the hook implementation.
+    private lazy var strategy: HookStrategy = { self.makeStrategy(self) }()
+    
+    /// A closure that creates the strategy powering the hook.
+    private let makeStrategy: (Hook) -> HookStrategy
+    
+    // ============================================================================ //
+    // MARK: Deinitialization
+    // ============================================================================ //
+    
+    deinit {
+        var logComponents = [String]()
+        
+        switch self.state {
+        case .pending:
+            logComponents.append("Releasing")
+        case .active:
+            logComponents.append("Keeping")
+        case .failed:
+            logComponents.append("Leaking")
+        }
+        
+        logComponents.append("-[\(self.class) \(self.selector)]")
+        
+        if let hookIMP = self.strategy.appliedHookIMP {
+            logComponents.append("IMP: \(hookIMP)")
+        }
+        
+        Interpose.log(logComponents.joined(separator: " "))
+    }
     
 }
 
@@ -133,31 +177,16 @@ extension Hook: CustomDebugStringConvertible {
     }
 }
 
-// TODO: Try to make clean-up automatic in deinit
-extension Hook {
-    public func cleanup() {
-        switch state {
-        case .pending:
-            Interpose.log("Releasing -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
-            imp_removeBlock(strategy.hookIMP)
-        case .active:
-            Interpose.log("Keeping -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
-        case .failed:
-            Interpose.log("Leaking -[\(`class`).\(selector)] IMP: \(self.strategy.hookIMP)")
-        }
-    }
-}
-
 /// A closure that builds a hook implementation block for a method.
 ///
 /// Receives a proxy to the hook, which provides access to the selector and the original
 /// implementation, and returns a block to be installed when the hook is applied.
 ///
 /// `MethodSignature` is the C function type of the original method implementation, typically
-/// in the form: `(@convention(c) (AnyObject, Selector, Params…) -> ReturnValue).self`.
+/// in the form: `(@convention(c) (NSObject, Selector, Params…) -> ReturnValue).self`.
 ///
 /// `HookSignature` is the block type used as the replacement, typically in the form:
-/// `(@convention(block) (AnyObject, Params…) -> ReturnValue).self`.
+/// `(@convention(block) (NSObject, Params…) -> ReturnValue).self`.
 public typealias HookBuilder<MethodSignature, HookSignature> = (HookProxy<MethodSignature>) -> HookSignature
 
 /// A lightweight proxy passed to a `HookBuilder`, providing access to the selector and original
@@ -190,7 +219,7 @@ public enum HookScope {
     case `class`
     
     /// The scope that targets a specific instance of the class.
-    case object(AnyObject)
+    case object(NSObject)
     
 }
 

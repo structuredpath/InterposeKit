@@ -5,22 +5,30 @@ final class ClassHookStrategy: HookStrategy {
     init(
         `class`: AnyClass,
         selector: Selector,
-        hookIMP: IMP
-    ) throws {
+        makeHookIMP: @escaping () -> IMP
+    ) {
         self.class = `class`
         self.selector = selector
-        self.hookIMP = hookIMP
-        
-        try self.validate()
+        self.makeHookIMP = makeHookIMP
     }
     
     let `class`: AnyClass
     var scope: HookScope { .class }
     let selector: Selector
-    let hookIMP: IMP
+    private let makeHookIMP: () -> IMP
+    private(set) var appliedHookIMP: IMP?
     private(set) var storedOriginalIMP: IMP?
     
+    func validate() throws {
+        guard class_getInstanceMethod(self.class, self.selector) != nil else {
+            throw InterposeError.methodNotFound(self.class, self.selector)
+        }
+    }
+    
     func replaceImplementation() throws {
+        let hookIMP = self.makeHookIMP()
+        self.appliedHookIMP = hookIMP
+        
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(self.class, self.selector)
         }
@@ -28,7 +36,7 @@ final class ClassHookStrategy: HookStrategy {
         guard let originalIMP = class_replaceMethod(
             self.class,
             self.selector,
-            self.hookIMP,
+            hookIMP,
             method_getTypeEncoding(method)
         ) else {
             throw InterposeError.nonExistingImplementation(self.class, self.selector)
@@ -36,10 +44,17 @@ final class ClassHookStrategy: HookStrategy {
         
         self.storedOriginalIMP = originalIMP
         
-        Interpose.log("Swizzled -[\(self.class).\(self.selector)] IMP: \(originalIMP) -> \(self.hookIMP)")
+        Interpose.log("Swizzled -[\(self.class).\(self.selector)] IMP: \(originalIMP) -> \(hookIMP)")
     }
     
     func restoreImplementation() throws {
+        guard let hookIMP = self.appliedHookIMP else { return }
+        
+        defer {
+            imp_removeBlock(hookIMP)
+            self.appliedHookIMP = nil
+        }
+        
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(self.class, self.selector)
         }
@@ -56,7 +71,7 @@ final class ClassHookStrategy: HookStrategy {
             method_getTypeEncoding(method)
         )
         
-        guard previousIMP == self.hookIMP else {
+        guard previousIMP == hookIMP else {
             throw InterposeError.unexpectedImplementation(self.class, self.selector, previousIMP)
         }
         

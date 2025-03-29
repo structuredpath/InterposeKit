@@ -8,7 +8,7 @@ extension NSObject {
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        implementation: HookBuilder<MethodSignature, HookSignature>
+        implementation: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         return try self.applyHook(
             for: selector,
@@ -24,7 +24,7 @@ extension NSObject {
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ build: HookBuilder<MethodSignature, HookSignature>
+        _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         precondition(
             !(self is AnyClass),
@@ -49,7 +49,7 @@ extension NSObject {
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ build: HookBuilder<MethodSignature, HookSignature>
+        _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try Hook(
             target: .class(self),

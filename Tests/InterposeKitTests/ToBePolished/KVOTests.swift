@@ -35,8 +35,8 @@ final class KVOTests: InterposeKitTestCase {
             XCTAssertThrowsError(
                 try Interpose(testObj).prepareHook(
                     for: #selector(getter: TestClass.age),
-                    methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-                    hookSignature: (@convention(block) (AnyObject) -> Int).self
+                    methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+                    hookSignature: (@convention(block) (NSObject) -> Int).self
                 ) { _ in
                     return { _ in 3 }
                 },
@@ -48,8 +48,8 @@ final class KVOTests: InterposeKitTestCase {
         // Hook without KVO!
         let hook = try testObj.applyHook(
             for: #selector(getter: TestClass.age),
-            methodSignature: (@convention(c) (AnyObject, Selector) -> Int).self,
-            hookSignature: (@convention(block) (AnyObject) -> Int).self
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { _ in
             return { _ in 3 }
         }

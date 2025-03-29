@@ -7,8 +7,6 @@ import Foundation
 final public class Interpose {
     /// Stores swizzle hooks and executes them at once.
     public let `class`: AnyClass
-    /// Lists all hooks for the current interpose class object.
-    public private(set) var hooks: [Hook] = []
 
     /// If Interposing is object-based, this is set.
     public let object: NSObject?
@@ -25,17 +23,13 @@ final public class Interpose {
         self.class = type(of: object)
     }
 
-    deinit {
-        hooks.forEach({ $0.cleanup() })
-    }
-
     /// Hook an `@objc dynamic` instance method via selector  on the current class.
     @discardableResult
     public func applyHook<MethodSignature, HookSignature> (
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ build: HookBuilder<MethodSignature, HookSignature>
+        _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try self.prepareHook(
             for: selector,
@@ -53,7 +47,7 @@ final public class Interpose {
         for selector: Selector,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
-        _ build: HookBuilder<MethodSignature, HookSignature>
+        _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         var hook: Hook
         if let object = self.object {
@@ -61,9 +55,9 @@ final public class Interpose {
         } else {
             hook = try Hook(target: .class(`class`), selector: selector, build: build)
         }
-        hooks.append(hook)
         return hook
     }
+    
 }
 
 // MARK: Logging
@@ -75,7 +69,7 @@ extension Interpose {
     /// Simple log wrapper for print.
     class func log(_ object: Any) {
         if isLoggingEnabled {
-            print("[Interposer] \(object)")
+            print("[InterposeKit] \(object)")
         }
     }
 }
