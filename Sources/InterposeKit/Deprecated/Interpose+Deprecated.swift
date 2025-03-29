@@ -11,7 +11,7 @@ extension Interpose {
         installation, or 'Interpose.prepareHook(…)' for manual control.
         """
     )
-    public convenience init(
+    public init(
         _ class: AnyClass,
         builder: (Interpose) throws -> Void
     ) throws {
@@ -27,7 +27,7 @@ extension Interpose {
         installation, or 'Interpose.prepareHook(…)' for manual control.
         """
     )
-    public convenience init(
+    public init(
         _ object: NSObject,
         builder: ((Interpose) throws -> Void)? = nil
     ) throws {
@@ -95,7 +95,6 @@ extension Interpose {
         directly using the new static API.
         """
     )
-    @discardableResult
     public func apply(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
         Interpose.fail("Unavailable API")
     }
@@ -108,7 +107,6 @@ extension Interpose {
         'revert()' on them directly.
         """
     )
-    @discardableResult
     public func revert(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
         Interpose.fail("Unavailable API")
     }
