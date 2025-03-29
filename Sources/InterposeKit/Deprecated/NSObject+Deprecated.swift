@@ -4,22 +4,6 @@ extension NSObject {
     
     @available(*, deprecated, renamed: "applyHook(for:methodSignature:hookSignature:build:)")
     @discardableResult
-    public func addHook<MethodSignature, HookSignature>(
-        for selector: Selector,
-        methodSignature: MethodSignature.Type,
-        hookSignature: HookSignature.Type,
-        implementation: @escaping HookBuilder<MethodSignature, HookSignature>
-    ) throws -> Hook {
-        return try self.applyHook(
-            for: selector,
-            methodSignature: methodSignature,
-            hookSignature: hookSignature,
-            build: implementation
-        )
-    }
-    
-    @available(*, deprecated, renamed: "applyHook(for:methodSignature:hookSignature:build:)")
-    @discardableResult
     public func hook<MethodSignature, HookSignature> (
         _ selector: Selector,
         methodSignature: MethodSignature.Type,
@@ -31,11 +15,11 @@ extension NSObject {
             "There should not be a way to cast an NSObject to AnyClass."
         )
         
-        return try self.addHook(
+        return try self.applyHook(
             for: selector,
             methodSignature: methodSignature,
             hookSignature: hookSignature,
-            implementation: build
+            build: build
         )
     }
     
