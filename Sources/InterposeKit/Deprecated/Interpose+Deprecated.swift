@@ -30,7 +30,7 @@ extension Interpose {
         *,
         deprecated,
         message: """
-        Use 'applyHook(for:methodSignature:hookSignature:_:)' instead and pass a materialized 
+        Use 'applyHook(for:methodSignature:hookSignature:_:)' instead and pass a materialized \
         selector.
         """
     )
@@ -107,7 +107,7 @@ extension Interpose {
         *,
         unavailable,
         message: """
-        'revert()' is no longer supported. Keep a reference to the individual hooks and call 
+        'revert()' is no longer supported. Keep a reference to the individual hooks and call \
         'revert()' on them.
         """
     )
