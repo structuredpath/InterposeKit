@@ -11,7 +11,7 @@ extension Interpose {
         _ class: AnyClass,
         builder: (Interpose) throws -> Void
     ) throws {
-        fatalError("Interpose(_:builder:) is unavailable.")
+        Interpose.fail("Interpose(_:builder:) is unavailable.")
     }
     
     @available(
@@ -23,7 +23,7 @@ extension Interpose {
         _ object: NSObject,
         builder: (Interpose) throws -> Void
     ) throws {
-        fatalError("Interpose(_:builder:) is unavailable.")
+        Interpose.fail("Interpose(_:builder:) is unavailable.")
     }
     
     @available(
@@ -100,7 +100,7 @@ extension Interpose {
     )
     @discardableResult
     public func apply(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
-        fatalError("Interpose.apply() is unavailable.")
+        Interpose.fail("Interpose.apply() is unavailable.")
     }
     
     @available(
@@ -113,7 +113,7 @@ extension Interpose {
     )
     @discardableResult
     public func revert(_ builder: ((Interpose) throws -> Void)? = nil) throws -> Interpose {
-        fatalError("Interpose.revert() is unavailable.")
+        Interpose.fail("Interpose.revert() is unavailable.")
     }
         
 }

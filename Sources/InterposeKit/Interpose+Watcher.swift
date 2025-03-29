@@ -97,7 +97,7 @@ private struct InterposeWatcher {
                         // We can't bubble up the throw into the C context.
                         #if DEBUG
                         // Instead of silently eating, it's better to crash in DEBUG.
-                        fatalError("Error while executing task: \(error).")
+                        Interpose.fail("Error while executing task: \(error).")
                         #endif
                     }
                     return false
