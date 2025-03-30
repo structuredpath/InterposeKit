@@ -4,9 +4,23 @@ public enum InterposeError: LocalizedError {
     
     /// No instance method found for the selector on the specified class.
     ///
-    /// This typically occurs when mistyping a stringified selector or attempting
-    /// to interpose a class method, which is not supported.
+    /// This typically occurs when mistyping a stringified selector or attempting to interpose
+    /// a class method, which is not supported.
     case methodNotFound(
+        class: AnyClass,
+        selector: Selector
+    )
+    
+    /// The method for the selector is not directly implemented on the specified class
+    /// but inherited from a superclass.
+    ///
+    /// Class-based interposing only supports instance methods implemented directly by the class
+    /// itself. This restriction ensures safe reverting via `revert()`, which cannot remove
+    /// dynamically added methods.
+    ///
+    /// To interpose this method, consider hooking the superclass that provides the implementation,
+    /// or use object-based hooking on a specific instance instead.
+    case methodNotDirectlyImplemented(
         class: AnyClass,
         selector: Selector
     )
@@ -67,6 +81,8 @@ extension InterposeError: Equatable {
         switch self {
         case .methodNotFound(let klass, let selector):
             return "Method not found: -[\(klass) \(selector)]"
+        case .methodNotDirectlyImplemented(let klass, let selector):
+            return "Method not directly implemented: -[\(klass) \(selector)]"
         case .implementationNotFound(let klass, let selector):
             return "Implementation not found: -[\(klass) \(selector)]"
         case .revertCorrupted(let klass, let selector, let IMP):

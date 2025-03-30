@@ -44,7 +44,12 @@ internal final class ClassHookStrategy: HookStrategy {
             )
         }
         
-        // TODO: Check that exact class implements method
+        guard class_implementsInstanceMethod(self.class, self.selector) else {
+            throw InterposeError.methodNotDirectlyImplemented(
+                class: self.class,
+                selector: self.selector
+            )
+        }
     }
     
     // ============================================================================ //
