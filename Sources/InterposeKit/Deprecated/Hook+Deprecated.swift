@@ -14,7 +14,7 @@ extension Hook {
         message: "Use 'apply()' returning Void. The overload returning 'Self' has been removed."
     )
     @_disfavoredOverload
-    public func apply() throws(InterposeError) -> Self {
+    public func apply() throws -> Self {
         try self.apply()
         return self
     }
@@ -25,7 +25,7 @@ extension Hook {
         message: "Use 'revert()' returning Void. The overload returning 'Self' has been removed."
     )
     @_disfavoredOverload
-    public func revert() throws(InterposeError) -> Self {
+    public func revert() throws -> Self {
         try revert()
         return self
     }

@@ -11,7 +11,7 @@ public final class Hook {
         target: HookTarget,
         selector: Selector,
         build: @escaping HookBuilder<MethodSignature, HookSignature>
-    ) throws(InterposeError) {
+    ) throws {
         self.makeStrategy = { hook in
             let makeHookIMP: () -> IMP = { [weak hook] in
                 
@@ -91,7 +91,7 @@ public final class Hook {
     // ============================================================================ //
 
     /// Applies the hook by interposing the method implementation.
-    public func apply() throws(InterposeError) {
+    public func apply() throws {
         guard self.state == .pending else { return }
         
         do {
@@ -104,7 +104,7 @@ public final class Hook {
     }
 
     /// Reverts the hook, restoring the original method implementation.
-    public func revert() throws(InterposeError) {
+    public func revert() throws {
         guard self.state == .active else { return }
         
         do {

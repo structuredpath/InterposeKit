@@ -7,10 +7,10 @@ internal protocol HookStrategy: AnyObject {
     var selector: Selector { get }
 
     /// Validates the target and throws if invalid.
-    func validate() throws(InterposeError)
+    func validate() throws
     
-    func replaceImplementation() throws(InterposeError)
-    func restoreImplementation() throws(InterposeError)
+    func replaceImplementation() throws
+    func restoreImplementation() throws
     
     /// The current implementation used to interpose the method, created lazily when applying
     /// the hook and removed when the hook is reverted.
