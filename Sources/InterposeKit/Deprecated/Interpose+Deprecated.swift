@@ -4,8 +4,8 @@ extension Interpose {
     
     @available(
         *,
-         unavailable,
-         message: """
+        unavailable,
+        message: """
         The builder-based initializer pattern is no longer supported. Use the static method \
         'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' for immediate \
         installation, or 'Interpose.prepareHook(…)' for manual control.
@@ -20,8 +20,8 @@ extension Interpose {
     
     @available(
         *,
-         unavailable,
-         message: """
+        unavailable,
+        message: """
         The builder-based initializer pattern is no longer supported. Use the static method \
         'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' for immediate \
         installation, or 'Interpose.prepareHook(…)' for manual control.
@@ -36,8 +36,8 @@ extension Interpose {
     
     @available(
         *,
-         unavailable,
-         message: """
+        unavailable,
+        message: """
         Instance method 'hook(_:methodSignature:hookSignature:_:)' is no longer supported. \
         Use 'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' instead.
         """
@@ -54,8 +54,8 @@ extension Interpose {
     
     @available(
         *,
-         unavailable,
-         message: """
+        unavailable,
+        message: """
         Instance method 'hook(_:methodSignature:hookSignature:_:)' is no longer supported. \
         Use 'Interpose.applyHook(on:for:methodSignature:hookSignature:build:)' instead.
         """
@@ -72,8 +72,8 @@ extension Interpose {
     
     @available(
         *,
-         unavailable,
-         message: """
+        unavailable,
+        message: """
         Instance method 'prepareHook(_:methodSignature:hookSignature:_:)' is no longer supported. \
         Use 'Interpose.prepareHook(on:for:methodSignature:hookSignature:build:)' instead.
         """
@@ -89,8 +89,8 @@ extension Interpose {
     
     @available(
         *,
-         unavailable,
-         message: """
+        unavailable,
+        message: """
         'apply()' is no longer supported. Use 'Interpose.applyHook(…)' to apply individual hooks \
         directly using the new static API.
         """
@@ -101,8 +101,8 @@ extension Interpose {
     
     @available(
         *,
-         unavailable,
-         message: """
+        unavailable,
+        message: """
         'revert()' is no longer supported. Keep a reference to each individual hook and call \
         'revert()' on them directly.
         """
