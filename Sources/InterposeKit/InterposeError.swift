@@ -1,16 +1,35 @@
 import Foundation
 
-/// The list of errors while hooking a method.
 public enum InterposeError: LocalizedError {
-    /// The method couldn't be found. Usually happens for when you use stringified selectors that do not exist.
-    case methodNotFound(AnyClass, Selector)
+    
+    /// No instance method found for the selector on the specified class.
+    ///
+    /// This typically occurs when mistyping a stringified selector or attempting
+    /// to interpose a class method, which is not supported.
+    case methodNotFound(
+        class: AnyClass,
+        selector: Selector
+    )
 
-    /// The implementation could not be found. Class must be in a weird state for this to happen.
-    case nonExistingImplementation(AnyClass, Selector)
-
-    /// Someone else changed the implementation; reverting removed this implementation.
-    /// This is bad, likely someone else also hooked this method. If you are in such a codebase, do not use revert.
-    case unexpectedImplementation(AnyClass, Selector, IMP?)
+    /// No implementation found for the method matching the specified selector on the class.
+    ///
+    /// This should not occur under normal conditions and may indicate an invalid or misconfigured
+    /// runtime state.
+    case implementationNotFound(
+        class: AnyClass,
+        selector: Selector
+    )
+    
+    /// The method implementation was changed externally after the hook was applied, and the revert
+    /// operation has removed that unexpected implementation.
+    ///
+    /// This typically indicates that another system modified the method after interposing.
+    /// In such cases, `Hook.revert()` is unsafe and should be avoided.
+    case revertCorrupted(
+        class: AnyClass,
+        selector: Selector,
+        imp: IMP?
+    )
 
     /// Unable to register subclass for object-based interposing.
     case failedToAllocateClassPair(class: AnyClass, subclassName: String)
@@ -44,13 +63,13 @@ extension InterposeError: Equatable {
         return lhs.errorDescription == rhs.errorDescription
     }
 
-    public var errorDescription: String? {
+    public var errorDescription: String {
         switch self {
         case .methodNotFound(let klass, let selector):
             return "Method not found: -[\(klass) \(selector)]"
-        case .nonExistingImplementation(let klass, let selector):
+        case .implementationNotFound(let klass, let selector):
             return "Implementation not found: -[\(klass) \(selector)]"
-        case .unexpectedImplementation(let klass, let selector, let IMP):
+        case .revertCorrupted(let klass, let selector, let IMP):
             return "Unexpected Implementation in -[\(klass) \(selector)]: \(String(describing: IMP))"
         case .failedToAllocateClassPair(let klass, let subclassName):
             return "Failed to allocate class pair: \(klass), \(subclassName)"
@@ -68,7 +87,7 @@ extension InterposeError: Equatable {
     }
 
     @discardableResult func log() -> InterposeError {
-        Interpose.log(self.errorDescription!)
+        Interpose.log(self.errorDescription)
         return self
     }
 }

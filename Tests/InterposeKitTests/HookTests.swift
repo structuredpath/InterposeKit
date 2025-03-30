@@ -43,9 +43,9 @@ final class HookTests: InterposeKitTestCase {
         // But applying the hook fails because the subclass has no implementation.
         XCTAssertThrowsError(
             try hook.apply(),
-            expected: InterposeError.nonExistingImplementation(
-                ExampleSubclass.self,
-                #selector(ExampleClass.foo)
+            expected: InterposeError.implementationNotFound(
+                class: ExampleSubclass.self,
+                selector: #selector(ExampleClass.foo)
             )
         )
         XCTAssertEqual(hook.state, .failed)

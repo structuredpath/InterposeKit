@@ -39,7 +39,7 @@ final class ObjectHookStrategy: HookStrategy {
     
     func validate() throws {
         guard class_getInstanceMethod(self.class, self.selector) != nil else {
-            throw InterposeError.methodNotFound(self.class, self.selector)
+            throw InterposeError.methodNotFound(class: self.class, selector: self.selector)
         }
         
         if let _ = checkObjectPosingAsDifferentClass(self.object) {
@@ -56,7 +56,7 @@ final class ObjectHookStrategy: HookStrategy {
         ObjectHookRegistry.register(self.handle, for: hookIMP)
         
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
-            throw InterposeError.methodNotFound(self.class, self.selector)
+            throw InterposeError.methodNotFound(class: self.class, selector: self.selector)
         }
         
         // Check if there's an existing subclass we can reuse.
@@ -65,7 +65,7 @@ final class ObjectHookStrategy: HookStrategy {
         
         // The implementation of the call that is hooked must exist.
         guard self.lookUpIMP() != nil else {
-            throw InterposeError.nonExistingImplementation(self.class, self.selector).log()
+            throw InterposeError.implementationNotFound(class: self.class, selector: self.selector).log()
         }
         
         //  This function searches superclasses for implementations
@@ -82,7 +82,7 @@ final class ObjectHookStrategy: HookStrategy {
             // Replace IMP (by now we guarantee that it exists)
             self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, hookIMP, encoding)
             guard self.storedOriginalIMP != nil else {
-                throw InterposeError.nonExistingImplementation(self.dynamicSubclass, self.selector)
+                throw InterposeError.implementationNotFound(class: self.dynamicSubclass, selector: self.selector)
             }
             Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
         } else {
@@ -129,7 +129,7 @@ final class ObjectHookStrategy: HookStrategy {
         }
         
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
-            throw InterposeError.methodNotFound(self.class, self.selector)
+            throw InterposeError.methodNotFound(class: self.class, selector: self.selector)
         }
         
         guard self.storedOriginalIMP != nil else {
@@ -151,7 +151,11 @@ final class ObjectHookStrategy: HookStrategy {
         if currentIMP == hookIMP {
             let previousIMP = class_replaceMethod(self.dynamicSubclass, self.selector, self.storedOriginalIMP!, method_getTypeEncoding(method))
             guard previousIMP == hookIMP else {
-                throw InterposeError.unexpectedImplementation(self.dynamicSubclass, selector, previousIMP)
+                throw InterposeError.revertCorrupted(
+                    class: self.dynamicSubclass,
+                    selector: self.selector,
+                    imp: previousIMP
+                )
             }
             Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!)")
         } else {

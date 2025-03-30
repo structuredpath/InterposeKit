@@ -44,7 +44,7 @@ extension HookStrategy {
         Interpose.fail(
             """
             No original implementation found for selector \(self.selector) on \(self.class). \
-            This likely  indicates a corrupted or misconfigured class.
+            This likely indicates a corrupted or misconfigured class.
             """
         )
     }

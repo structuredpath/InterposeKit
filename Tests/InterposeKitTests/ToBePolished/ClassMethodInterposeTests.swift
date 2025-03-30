@@ -13,7 +13,10 @@ final class ClassMethodInterposeTests: InterposeKitTestCase {
             ) { hook in
                 return { _ in 73 }
             },
-            expected: InterposeError.methodNotFound(TestClass.self, #selector(getter: TestClass.staticInt))
+            expected: InterposeError.methodNotFound(
+                class: TestClass.self,
+                selector: #selector(getter: TestClass.staticInt)
+            )
         )
     }
     
