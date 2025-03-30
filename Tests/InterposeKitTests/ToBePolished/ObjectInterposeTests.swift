@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import InterposeKit
 
-final class ObjectInterposeTests: InterposeKitTestCase {
+final class ObjectInterposeTests: XCTestCase {
 
     func testInterposeSingleObject() throws {
         let testObj = TestClass()

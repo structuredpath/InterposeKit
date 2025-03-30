@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @testable import InterposeKit
 
-final class MultipleInterposingTests: InterposeKitTestCase {
+final class MultipleInterposingTests: XCTestCase {
 
     func testInterposeSingleObjectMultipleTimes() throws {
         let testObj = TestClass()

@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-final class KVOTests: InterposeKitTestCase {
+final class KVOTests: XCTestCase {
 
     // Helper observer that wraps a token and removes it on deinit.
     class TestClassObserver {

@@ -1,7 +1,8 @@
-@testable import InterposeKit
+import InterposeKit
 import XCTest
 
 fileprivate class ExampleClass: NSObject {
+    @objc static dynamic func doSomethingStatic() {}
     @objc dynamic func doSomething() {}
     @objc dynamic var intValue: Int { 1 }
     @objc dynamic var arrayValue: [String] { ["ExampleClass"] }
@@ -13,7 +14,11 @@ fileprivate class ExampleSubclass: ExampleClass {
     }
 }
 
-final class ClassHookTests: InterposeKitTestCase {
+final class ClassHookTests: XCTestCase {
+    
+    override func setUpWithError() throws {
+        Interpose.isLoggingEnabled = true
+    }
     
     func testLifecycle_applyHook() throws {
         let hook = try Interpose.applyHook(
@@ -158,7 +163,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleSubclass"])
     }
     
-    func testValidationFailure_methodNotFound() throws {
+    func testValidationFailure_methodNotFound_nonExistent() throws {
         XCTAssertThrowsError(
             try Interpose.prepareHook(
                 on: ExampleClass.self,
@@ -171,6 +176,23 @@ final class ClassHookTests: InterposeKitTestCase {
             expected: InterposeError.methodNotFound(
                 class: ExampleClass.self,
                 selector: Selector(("doSomethingNotFound"))
+            )
+        )
+    }
+    
+    func testValidationFailure_methodNotFound_classMethod() throws {
+        XCTAssertThrowsError(
+            try Interpose.prepareHook(
+                on: ExampleClass.self,
+                for: #selector(ExampleClass.doSomethingStatic),
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in }
+            },
+            expected: InterposeError.methodNotFound(
+                class: ExampleClass.self,
+                selector: #selector(ExampleClass.doSomethingStatic)
             )
         )
     }
