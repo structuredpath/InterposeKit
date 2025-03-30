@@ -3,41 +3,6 @@ import XCTest
 
 final class InterposeKitTests: InterposeKitTestCase {
 
-    func testClassOverrideAndRevert() throws {
-        let testObj = TestClass()
-        XCTAssertEqual(testObj.sayHi(), testClassHi)
-
-        // Functions need to be `@objc dynamic` to be hookable.
-        let hook = try Interpose.applyHook(
-            on: TestClass.self,
-            for: #selector(TestClass.sayHi),
-            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (NSObject) -> String).self) { store in { bSelf in
-                // You're free to skip calling the original implementation.
-                print("Before Interposing \(bSelf)")
-                let string = store.original(bSelf, store.selector)
-                print("After Interposing \(bSelf)")
-                
-                return string + testString
-            }
-            }
-        print(TestClass().sayHi())
-
-        // Test various apply/revert's
-        XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
-        try hook.revert()
-        XCTAssertEqual(testObj.sayHi(), testClassHi)
-        try hook.apply()
-        XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
-        try hook.apply() // noop
-        try hook.apply() // noop
-        try hook.revert()
-        try hook.revert() // noop
-        try hook.apply()
-        try hook.revert()
-        XCTAssertEqual(testObj.sayHi(), testClassHi)
-    }
-
     func testSubclassOverride() throws {
         let testObj = TestSubclass()
         XCTAssertEqual(testObj.sayHi(), testClassHi + testSubclass)

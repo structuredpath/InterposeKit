@@ -3,68 +3,118 @@ import XCTest
 
 fileprivate class ExampleClass: NSObject {
     @objc dynamic func doSomething() {}
+    @objc dynamic var intValue = 1
 }
 
 fileprivate class ExampleSubclass: ExampleClass {}
 
 final class ClassHookTests: InterposeKitTestCase {
     
-    func testSuccess_applyHook() throws {
+    func testLifecycle_applyHook() throws {
         let hook = try Interpose.applyHook(
             on: ExampleClass.self,
-            for: #selector(ExampleClass.doSomething),
-            methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
-            hookSignature: (@convention(block) (NSObject) -> Void).self
+            for: #selector(getter: ExampleClass.intValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
-            return { `self` in }
+            return { `self` in
+                1 + hook.original(self, hook.selector)
+            }
         }
         
+        XCTAssertEqual(ExampleClass().intValue, 2)
         XCTAssertEqual(hook.state, .active)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Active hook for -\[ExampleClass doSomething\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
+            #"^Active hook for -\[ExampleClass intValue\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
         )
         
         try hook.revert()
         
+        XCTAssertEqual(ExampleClass().intValue, 1)
         XCTAssertEqual(hook.state, .pending)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Pending hook for -\[ExampleClass doSomething\]$"#
+            #"^Pending hook for -\[ExampleClass intValue\]$"#
         )
     }
     
-    func testSuccess_prepareHook() throws {
+    func testLifecycle_prepareHook() throws {
         let hook = try Interpose.prepareHook(
             on: ExampleClass.self,
-            for: #selector(ExampleClass.doSomething),
-            methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
-            hookSignature: (@convention(block) (NSObject) -> Void).self
+            for: #selector(getter: ExampleClass.intValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
-            return { `self` in }
+            return { `self` in
+                1 + hook.original(self, hook.selector)
+            }
         }
         
+        XCTAssertEqual(ExampleClass().intValue, 1)
         XCTAssertEqual(hook.state, .pending)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Pending hook for -\[ExampleClass doSomething\]$"#
+            #"^Pending hook for -\[ExampleClass intValue\]$"#
         )
         
         try hook.apply()
         
+        XCTAssertEqual(ExampleClass().intValue, 2)
         XCTAssertEqual(hook.state, .active)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Active hook for -\[ExampleClass doSomething\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
+            #"^Active hook for -\[ExampleClass intValue\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
         )
         
         try hook.revert()
         
+        XCTAssertEqual(ExampleClass().intValue, 1)
         XCTAssertEqual(hook.state, .pending)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Pending hook for -\[ExampleClass doSomething\]$"#
+            #"^Pending hook for -\[ExampleClass intValue\]$"#
         )
+    }
+    
+    func testLifecycle_idempotentApplyAndRevert() throws {
+        let object = ExampleClass()
+        
+        let hook = try Interpose.prepareHook(
+            on: ExampleClass.self,
+            for: #selector(getter: ExampleClass.intValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> Int).self,
+            hookSignature: (@convention(block) (NSObject) -> Int).self
+        ) { hook in
+            return { `self` in
+                1 + hook.original(self, hook.selector)
+            }
+        }
+        
+        XCTAssertEqual(object.intValue, 1)
+        XCTAssertEqual(hook.state, .pending)
+        
+        try hook.apply()
+        try hook.apply() // noop
+        
+        XCTAssertEqual(object.intValue, 2)
+        XCTAssertEqual(hook.state, .active)
+        
+        try hook.revert()
+        try hook.revert() // noop
+        
+        XCTAssertEqual(object.intValue, 1)
+        XCTAssertEqual(hook.state, .pending)
+        
+        try hook.apply()
+        
+        XCTAssertEqual(object.intValue, 2)
+        XCTAssertEqual(hook.state, .active)
+        
+        try hook.revert()
+        
+        XCTAssertEqual(object.intValue, 1)
+        XCTAssertEqual(hook.state, .pending)
     }
     
     func testValidationFailure_methodNotFound() throws {
