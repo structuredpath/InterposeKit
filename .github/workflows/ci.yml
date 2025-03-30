@@ -29,6 +29,14 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
           xcodebuild -version
 
+      - name: Print system and architecture info
+        run: |
+          echo "Architecture: $(uname -m)"
+          echo "Processor: $(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo 'N/A')"
+          echo "macOS Version: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
+          echo "Xcode Path: $(xcode-select -p)"
+          echo "macOS SDK: $(xcrun --sdk macosx --show-sdk-path)"
+
       - name: Build
         run: swift build -v
 
