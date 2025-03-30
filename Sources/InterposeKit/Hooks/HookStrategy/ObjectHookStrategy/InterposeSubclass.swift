@@ -7,9 +7,6 @@ class InterposeSubclass {
         static let subclassSuffix = "InterposeKit_"
     }
 
-    /// The object that is being hooked.
-    let object: AnyObject
-
     /// Subclass that we create on the fly
     private(set) var dynamicClass: AnyClass
 
@@ -19,8 +16,15 @@ class InterposeSubclass {
     /// Making KVO and Object-based hooking work at the same time is difficult.
     /// If we make a dynamic subclass over KVO, invalidating the token crashes in cache_getImp.
     init(object: AnyObject) throws {
-        self.object = object
-        self.dynamicClass = try Self.getExistingSubclass(object: object) ?? Self.createSubclass(object: object)
+        let dynamicClass: AnyClass = try { () throws -> AnyClass in
+            if let dynamicClass = Self.getExistingSubclass(object: object) {
+                return dynamicClass
+            }
+            
+            return try Self.createSubclass(object: object)
+        }()
+        
+        self.dynamicClass = dynamicClass
     }
 
     private static func createSubclass(object: AnyObject) throws -> AnyClass {
@@ -61,10 +65,6 @@ class InterposeSubclass {
             return actualClass
         }
         return nil
-    }
-
-    class var supportsSuperTrampolines: Bool {
-        ITKSuperBuilder.isSupportedArchitecture
     }
 
     func addSuperTrampoline(selector: Selector) {

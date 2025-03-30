@@ -1,6 +1,8 @@
-#if __APPLE__
-#import <Foundation/Foundation.h>
+#if !(defined(__APPLE__) && (defined(__arm64__) || defined(__x86_64__)))
+#error "[InterposeKit] Supported only on Apple platforms with arm64 or x86_64 architecture."
 #endif
+
+#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -44,7 +46,7 @@ There are a few important details:
 
 @see https://steipete.com/posts/calling-super-at-runtime/
 */
-@interface ITKSuperBuilder : NSObject
+@interface ITKSuperBuilder: NSObject
 
 /// Adds an empty super implementation instance method to originalClass.
 /// If a method already exists, this will return NO and a descriptive error message.
@@ -53,22 +55,14 @@ There are a few important details:
                                 error:(NSError **)error;
 
 /// Check if the instance method in `originalClass` is a super trampoline.
-+ (BOOL)isSuperTrampolineForClass:(Class)originalClass selector:(SEL)selector;
-
-/// x86-64 and ARM64 are currently supported.
-@property(class, readonly) BOOL isSupportedArchitecture;
-
-#if (defined (__arm64__) || defined (__x86_64__)) && __APPLE__
-/// Helper that does not exist if architecture is not supported.
-+ (BOOL)isCompileTimeSupportedArchitecture;
-#endif
++ (BOOL)isSuperTrampolineForClass:(Class)originalClass
+                         selector:(SEL)selector;
 
 @end
 
 NSString *const ITKSuperBuilderErrorDomain;
 
 typedef NS_ERROR_ENUM(ITKSuperBuilderErrorDomain, ITKSuperBuilderErrorCode) {
-    SuperBuilderErrorCodeArchitectureNotSupported,
     SuperBuilderErrorCodeNoSuperClass,
     SuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable,
     SuperBuilderErrorCodeFailedToAddMethod

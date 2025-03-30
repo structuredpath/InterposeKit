@@ -1,3 +1,7 @@
+#if !(arch(arm64) || arch(x86_64))
+#error("[InterposeKit] This code only supports arm64 and x86_64 architectures.")
+#endif
+
 import ObjectiveC
 
 /// Interpose is a modern library to swizzle elegantly in Swift.
