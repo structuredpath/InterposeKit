@@ -16,7 +16,6 @@ import ObjectiveC
 /// - Parameter object: The object to check.
 /// - Returns: `true` if KVO is active and the object has been subclassed at runtime; otherwise,
 /// `false`.
-@inline(__always)
 internal func object_isKVOActive(
     _ object: NSObject
 ) -> Bool {

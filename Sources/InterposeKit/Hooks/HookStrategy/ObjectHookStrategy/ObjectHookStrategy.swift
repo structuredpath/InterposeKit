@@ -69,13 +69,13 @@ final class ObjectHookStrategy: HookStrategy {
         }
         
         //  This function searches superclasses for implementations
-        let hasExistingMethod = self.exactClassImplementsSelector(self.dynamicSubclass, self.selector)
+        let declaresMethod = class_implementsInstanceMethod(self.dynamicSubclass, self.selector)
         let encoding = method_getTypeEncoding(method)
         
         if self.generatesSuperIMP {
             // If the subclass is empty, we create a super trampoline first.
             // If a hook already exists, we must skip this.
-            if !hasExistingMethod {
+            if !declaresMethod {
                 self.interposeSubclass!.addSuperTrampoline(selector: self.selector)
             }
             
@@ -87,7 +87,7 @@ final class ObjectHookStrategy: HookStrategy {
             Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
         } else {
             // Could potentially be unified in the code paths
-            if hasExistingMethod {
+            if declaresMethod {
                 self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, hookIMP, encoding)
                 if self.storedOriginalIMP != nil {
                     Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(hookIMP) via replacement")
@@ -105,20 +105,6 @@ final class ObjectHookStrategy: HookStrategy {
                 }
             }
         }
-    }
-    
-    /// Looks for an instance method in the exact class, without looking up the hierarchy.
-    private func exactClassImplementsSelector(_ klass: AnyClass, _ selector: Selector) -> Bool {
-        var methodCount: CUnsignedInt = 0
-        guard let methodsInAClass = class_copyMethodList(klass, &methodCount) else { return false }
-        defer { free(methodsInAClass) }
-        for index in 0 ..< Int(methodCount) {
-            let method = methodsInAClass[index]
-            if method_getName(method) == selector {
-                return true
-            }
-        }
-        return false
     }
     
     func restoreImplementation() throws {

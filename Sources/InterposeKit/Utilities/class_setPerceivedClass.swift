@@ -11,7 +11,6 @@ import ObjectiveC
 /// - Parameters:
 ///   - targetClass: The class whose `class` method should be overridden.
 ///   - perceivedClass: The class it should appear to be.
-@inline(__always)
 internal func class_setPerceivedClass(
     for targetClass: AnyClass,
     to perceivedClass: AnyClass
