@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/steipete/InterposeKit/master/logo.png" width="60%" alt="InterposeKit"/>
+# InterposeKit
 
 [![CI](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml)
 ![Xcode 15+](https://img.shields.io/badge/Xcode-15%2B-blue.svg)
