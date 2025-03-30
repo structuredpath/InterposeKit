@@ -4,7 +4,7 @@ import XCTest
 fileprivate class ExampleClass: NSObject {
     @objc static dynamic func doSomethingStatic() {}
     @objc dynamic func doSomething() {}
-    @objc dynamic var intValue: Int { 1 }
+    @objc dynamic var intValue = 1
     @objc dynamic var arrayValue: [String] { ["base"] }
 }
 
