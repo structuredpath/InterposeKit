@@ -26,7 +26,8 @@ final class KVOTests: InterposeKitTestCase {
         let testObj = TestClass()
 
         // KVO before hooking works, but hooking will fail
-        try withExtendedLifetime(TestClassObserver()) { observer in
+        do {
+            let observer = TestClassObserver()
             observer.observe(obj: testObj)
             XCTAssertEqual(testObj.age, 1)
             testObj.age = 2
@@ -61,7 +62,8 @@ final class KVOTests: InterposeKitTestCase {
         XCTAssertEqual(testObj.age, 3)
 
         // Now we KVO after hooking!
-        withExtendedLifetime(TestClassObserver()) { observer in
+        do {
+            let observer = TestClassObserver()
             observer.observe(obj: testObj)
             XCTAssertEqual(testObj.age, 3)
             // Setter is fine but won't change outcome

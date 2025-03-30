@@ -2,7 +2,7 @@
 import XCTest
 
 fileprivate class ExampleClass: NSObject {
-    @objc dynamic func foo() {}
+    @objc dynamic func doSomething() {}
 }
 
 fileprivate class ExampleSubclass: ExampleClass {}
@@ -12,7 +12,7 @@ final class ClassHookTests: InterposeKitTestCase {
     func testSuccess_applyHook() throws {
         let hook = try Interpose.applyHook(
             on: ExampleClass.self,
-            for: #selector(ExampleClass.foo),
+            for: #selector(ExampleClass.doSomething),
             methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
             hookSignature: (@convention(block) (NSObject) -> Void).self
         ) { hook in
@@ -22,7 +22,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(hook.state, .active)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Active hook for -\[ExampleClass foo\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
+            #"^Active hook for -\[ExampleClass doSomething\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
         )
         
         try hook.revert()
@@ -30,14 +30,14 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(hook.state, .pending)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Pending hook for -\[ExampleClass foo\]$"#
+            #"^Pending hook for -\[ExampleClass doSomething\]$"#
         )
     }
     
     func testSuccess_prepareHook() throws {
         let hook = try Interpose.prepareHook(
             on: ExampleClass.self,
-            for: #selector(ExampleClass.foo),
+            for: #selector(ExampleClass.doSomething),
             methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
             hookSignature: (@convention(block) (NSObject) -> Void).self
         ) { hook in
@@ -47,7 +47,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(hook.state, .pending)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Pending hook for -\[ExampleClass foo\]$"#
+            #"^Pending hook for -\[ExampleClass doSomething\]$"#
         )
         
         try hook.apply()
@@ -55,7 +55,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(hook.state, .active)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Active hook for -\[ExampleClass foo\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
+            #"^Active hook for -\[ExampleClass doSomething\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
         )
         
         try hook.revert()
@@ -63,7 +63,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(hook.state, .pending)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Pending hook for -\[ExampleClass foo\]$"#
+            #"^Pending hook for -\[ExampleClass doSomething\]$"#
         )
     }
     
@@ -71,7 +71,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertThrowsError(
             try Interpose.prepareHook(
                 on: ExampleClass.self,
-                for: Selector(("bar")),
+                for: Selector(("doSomethingNotFound")),
                 methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
                 hookSignature: (@convention(block) (NSObject) -> Void).self
             ) { hook in
@@ -79,7 +79,7 @@ final class ClassHookTests: InterposeKitTestCase {
             },
             expected: InterposeError.methodNotFound(
                 class: ExampleClass.self,
-                selector: Selector(("bar"))
+                selector: Selector(("doSomethingNotFound"))
             )
         )
     }
@@ -88,7 +88,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertThrowsError(
             try Interpose.prepareHook(
                 on: ExampleSubclass.self,
-                for: #selector(ExampleClass.foo),
+                for: #selector(ExampleClass.doSomething),
                 methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
                 hookSignature: (@convention(block) (NSObject) -> Void).self
             ) { hook in
@@ -96,7 +96,7 @@ final class ClassHookTests: InterposeKitTestCase {
             },
             expected: InterposeError.methodNotDirectlyImplemented(
                 class: ExampleSubclass.self,
-                selector: #selector(ExampleClass.foo)
+                selector: #selector(ExampleClass.doSomething)
             )
         )
     }
@@ -104,7 +104,7 @@ final class ClassHookTests: InterposeKitTestCase {
     func testRevertFailure_corrupted() throws {
         let hook = try Interpose.applyHook(
             on: ExampleClass.self,
-            for: #selector(ExampleClass.foo),
+            for: #selector(ExampleClass.doSomething),
             methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
             hookSignature: (@convention(block) (NSObject) -> Void).self
         ) { hook in
@@ -116,7 +116,7 @@ final class ClassHookTests: InterposeKitTestCase {
         // in which it cannot restore the original implementation.
         let method = try XCTUnwrap(class_getInstanceMethod(
             ExampleClass.self,
-            #selector(ExampleClass.foo)
+            #selector(ExampleClass.doSomething)
         ))
         
         let externalBlock: @convention(block) (NSObject) -> Void = { _ in }
@@ -124,7 +124,7 @@ final class ClassHookTests: InterposeKitTestCase {
         
         XCTAssertNotNil(class_replaceMethod(
             ExampleClass.self,
-            #selector(ExampleClass.foo),
+            #selector(ExampleClass.doSomething),
             externalIMP,
             method_getTypeEncoding(method)
         ))
@@ -133,7 +133,7 @@ final class ClassHookTests: InterposeKitTestCase {
             try hook.revert(),
             expected: InterposeError.revertCorrupted(
                 class: ExampleClass.self,
-                selector: #selector(ExampleClass.foo),
+                selector: #selector(ExampleClass.doSomething),
                 imp: externalIMP
             )
         )
@@ -141,7 +141,7 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(hook.state, .failed)
         XCTAssertMatchesRegex(
             hook.debugDescription,
-            #"^Failed hook for -\[ExampleClass foo\]$"#
+            #"^Failed hook for -\[ExampleClass doSomething\]$"#
         )
     }
     

@@ -3,10 +3,6 @@ import XCTest
 
 final class InterposeKitTests: InterposeKitTestCase {
 
-    override func setUpWithError() throws {
-        Interpose.isLoggingEnabled = true
-    }
-
     func testClassOverrideAndRevert() throws {
         let testObj = TestClass()
         XCTAssertEqual(testObj.sayHi(), testClassHi)
