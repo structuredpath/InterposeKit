@@ -5,12 +5,12 @@ fileprivate class ExampleClass: NSObject {
     @objc static dynamic func doSomethingStatic() {}
     @objc dynamic func doSomething() {}
     @objc dynamic var intValue: Int { 1 }
-    @objc dynamic var arrayValue: [String] { ["ExampleClass"] }
+    @objc dynamic var arrayValue: [String] { ["superclass"] }
 }
 
 fileprivate class ExampleSubclass: ExampleClass {
     override var arrayValue: [String] {
-        super.arrayValue + ["ExampleSubclass"]
+        super.arrayValue + ["subclass"]
     }
 }
 
@@ -87,7 +87,7 @@ final class ClassHookTests: XCTestCase {
         )
     }
     
-    func testLifecycle_idempotentApplyAndRevert() throws {
+    func testIdempotentApplyAndRevert() throws {
         let object = ExampleClass()
         
         let hook = try Interpose.prepareHook(
@@ -127,9 +127,9 @@ final class ClassHookTests: XCTestCase {
         XCTAssertEqual(hook.state, .pending)
     }
     
-    func testLifecycle_subclassOverride() throws {
+    func testSubclassOverride() throws {
         let object = ExampleSubclass()
-        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleSubclass"])
+        XCTAssertEqual(object.arrayValue, ["superclass", "subclass"])
         
         let superclassHook = try Interpose.applyHook(
             on: ExampleClass.self,
@@ -138,10 +138,10 @@ final class ClassHookTests: XCTestCase {
             hookSignature: (@convention(block) (NSObject) -> [String]).self
         ) { hook in
             return { `self` in
-                return hook.original(self, hook.selector) + ["ExampleClass.hook"]
+                return hook.original(self, hook.selector) + ["superclass.hook"]
             }
         }
-        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleClass.hook", "ExampleSubclass"])
+        XCTAssertEqual(object.arrayValue, ["superclass", "superclass.hook", "subclass"])
         
         let subclassHook = try Interpose.applyHook(
             on: ExampleSubclass.self,
@@ -150,17 +150,54 @@ final class ClassHookTests: XCTestCase {
             hookSignature: (@convention(block) (NSObject) -> [String]).self
         ) { hook in
             return { `self` in
-                return hook.original(self, hook.selector) + ["ExampleSubclass.hook"]
+                return hook.original(self, hook.selector) + ["subclass.hook"]
             }
         }
         
-        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleClass.hook", "ExampleSubclass", "ExampleSubclass.hook"])
+        XCTAssertEqual(object.arrayValue, ["superclass", "superclass.hook", "subclass", "subclass.hook"])
         
         try superclassHook.revert()
-        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleSubclass", "ExampleSubclass.hook"])
+        XCTAssertEqual(object.arrayValue, ["superclass", "subclass", "subclass.hook"])
         
         try subclassHook.revert()
-        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleSubclass"])
+        XCTAssertEqual(object.arrayValue, ["superclass", "subclass"])
+    }
+    
+    func testMultipleHooks() throws {
+        let object = ExampleClass()
+        XCTAssertEqual(object.arrayValue, ["superclass"])
+        
+        let hook1 = try Interpose.applyHook(
+            on: ExampleClass.self,
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["hook1"]
+            }
+        }
+        XCTAssertEqual(object.arrayValue, ["superclass", "hook1"])
+        
+        let hook2 = try Interpose.applyHook(
+            on: ExampleClass.self,
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["hook2"]
+            }
+        }
+        XCTAssertEqual(object.arrayValue, ["superclass", "hook1", "hook2"])
+        
+        // For now, reverting works only in the opposite order. Reverting hook1 before hook2
+        // would throw `revertCorrupted(…)` error.
+        try hook2.revert()
+        XCTAssertEqual(object.arrayValue, ["superclass", "hook1"])
+        
+        try hook1.revert()
+        XCTAssertEqual(object.arrayValue, ["superclass"])
     }
     
     func testValidationFailure_methodNotFound_nonExistent() throws {
