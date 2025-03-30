@@ -48,9 +48,6 @@ public enum InterposeError: LocalizedError {
     /// Unable to register subclass for object-based interposing.
     case failedToAllocateClassPair(class: AnyClass, subclassName: String)
 
-    /// Unable to add method  for object-based interposing.
-    case unableToAddMethod(AnyClass, Selector)
-
     /// Object-based hooking does not work if an object is using KVO.
     /// The KVO mechanism also uses subclasses created at runtime but doesn't check for additional overrides.
     /// Adding a hook eventually crashes the KVO management code so we reject hooking altogether in this case.
@@ -89,8 +86,6 @@ extension InterposeError: Equatable {
             return "Unexpected Implementation in -[\(klass) \(selector)]: \(String(describing: IMP))"
         case .failedToAllocateClassPair(let klass, let subclassName):
             return "Failed to allocate class pair: \(klass), \(subclassName)"
-        case .unableToAddMethod(let klass, let selector):
-            return "Unable to add method: -[\(klass) \(selector)]"
         case .kvoDetected(let obj):
             return "Unable to hook object that uses Key Value Observing: \(obj)"
         case .objectPosingAsDifferentClass(let obj, let actualClass):

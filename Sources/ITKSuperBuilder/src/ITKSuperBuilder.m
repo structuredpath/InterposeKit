@@ -17,9 +17,9 @@ void msgSendSuperStretTrampoline(void);
 static IMP ITKGetTrampolineForTypeEncoding(__unused const char *typeEncoding) {
     BOOL requiresStructDispatch = NO;
     #if defined (__arm64__)
-    // ARM64 doesn't use stret dispatch. Yay!
+    // arm64 doesn't use stret dispatch. Yay!
     #elif defined (__x86_64__)
-        // On x86-64, stret dispatch is ~used whenever return type doesn't fit into two registers
+        // On x86_64, stret dispatch is ~used whenever return type doesn't fit into two registers
         //
         // http://www.sealiesoftware.com/blog/archive/2008/10/30/objc_explain_objc_msgSend_stret.html
         // x86_64 is more complicated, including rules for returning floating-point struct fields in FPU registers, and ppc64's rules and exceptions will make your head spin. The gory details are documented in the Mac OS X ABI Guide, though as usual if the documentation and the compiler disagree then the documentation is wrong.
@@ -41,32 +41,12 @@ if (error) { *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain code:C
 
 @implementation ITKSuperBuilder
 
-+ (BOOL)isSupportedArchitecture {
-#if defined (__arm64__) || defined (__x86_64__)
-    return YES;
-#else
-    return NO;
-#endif
-}
-
-#if defined (__arm64__) || defined (__x86_64__)
-+ (BOOL)isCompileTimeSupportedArchitecture {
-    return [self isSupportedArchitecture];
-}
-#endif
-
 + (BOOL)isSuperTrampolineForClass:(Class)originalClass selector:(SEL)selector {
-    // No architecture check needed - will just be NO.
     let method = class_getInstanceMethod(originalClass, selector);
     return ITKMethodIsSuperTrampoline(method);
 }
 
 + (BOOL)addSuperInstanceMethodToClass:(Class)originalClass selector:(SEL)selector error:(NSError **)error {
-    if (!self.isSupportedArchitecture) {
-        let msg = @"Unsupported Architecture. (Support includes ARM64 and x86-64 )";
-        ERROR_AND_RETURN(SuperBuilderErrorCodeArchitectureNotSupported, msg)
-    }
-
     // Check that class has a superclass
     let superClass = class_getSuperclass(originalClass);
     if (superClass == nil) {

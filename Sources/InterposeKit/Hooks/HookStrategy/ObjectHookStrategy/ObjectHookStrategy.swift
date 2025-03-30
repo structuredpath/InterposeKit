@@ -30,9 +30,6 @@ final class ObjectHookStrategy: HookStrategy {
     /// Subclass that we create on the fly
     var interposeSubclass: InterposeSubclass?
     
-    // Logic switch to use super builder
-    let generatesSuperIMP = InterposeSubclass.supportsSuperTrampolines
-    
     var dynamicSubclass: AnyClass {
         interposeSubclass!.dynamicClass
     }
@@ -75,46 +72,25 @@ final class ObjectHookStrategy: HookStrategy {
         let classImplementsMethod = class_implementsInstanceMethod(self.dynamicSubclass, self.selector)
         let encoding = method_getTypeEncoding(method)
         
-        if self.generatesSuperIMP {
-            // If the subclass is empty, we create a super trampoline first.
-            // If a hook already exists, we must skip this.
-            if !classImplementsMethod {
-                // TODO: Make this failable
-                self.interposeSubclass!.addSuperTrampoline(selector: self.selector)
-            }
-            
-            // Replace IMP (by now we guarantee that it exists)
-            self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, hookIMP, encoding)
-            guard self.storedOriginalIMP != nil else {
-                // This should not happen if the class implements the method or we have installed
-                // the super trampoline. Instead, we should make the trampoline implementation
-                // failable.
-                throw InterposeError.implementationNotFound(
-                    class: self.dynamicSubclass,
-                    selector: self.selector
-                )
-            }
-            Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
-        } else {
-            // Could potentially be unified in the code paths
-            if classImplementsMethod {
-                self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, hookIMP, encoding)
-                if self.storedOriginalIMP != nil {
-                    Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(hookIMP) via replacement")
-                } else {
-                    Interpose.log("Unable to replace: -[\(self.class).\(self.selector)] IMP: \(hookIMP)")
-                    throw InterposeError.unableToAddMethod(self.class, self.selector)
-                }
-            } else {
-                let didAddMethod = class_addMethod(self.dynamicSubclass, self.selector, hookIMP, encoding)
-                if didAddMethod {
-                    Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(hookIMP)")
-                } else {
-                    Interpose.log("Unable to add: -[\(self.class).\(self.selector)] IMP: \(hookIMP)")
-                    throw InterposeError.unableToAddMethod(self.class, self.selector)
-                }
-            }
+        // If the subclass is empty, we create a super trampoline first.
+        // If a hook already exists, we must skip this.
+        if !classImplementsMethod {
+            // TODO: Make this failable
+            self.interposeSubclass!.addSuperTrampoline(selector: self.selector)
         }
+        
+        // Replace IMP (by now we guarantee that it exists)
+        self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, hookIMP, encoding)
+        guard self.storedOriginalIMP != nil else {
+            // This should not happen if the class implements the method or we have installed
+            // the super trampoline. Instead, we should make the trampoline implementation
+            // failable.
+            throw InterposeError.implementationNotFound(
+                class: self.dynamicSubclass,
+                selector: self.selector
+            )
+        }
+        Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
     }
     
     func restoreImplementation() throws {
