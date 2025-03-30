@@ -1,76 +1,73 @@
-#if __APPLE__
 #import "ITKSuperBuilder.h"
 
 @import ObjectiveC.message;
 @import ObjectiveC.runtime;
 
+#define let const __auto_type
+#define var __auto_type
+
 NS_ASSUME_NONNULL_BEGIN
 
 NSString *const ITKSuperBuilderErrorDomain = @"com.steipete.InterposeKit";
 
-void msgSendSuperTrampoline(void);
-void msgSendSuperStretTrampoline(void);
-
-#define let const __auto_type
-#define var __auto_type
-
-static IMP ITKGetTrampolineForTypeEncoding(__unused const char *typeEncoding) {
-    BOOL requiresStructDispatch = NO;
-    #if defined (__arm64__)
-    // arm64 doesn't use stret dispatch. Yay!
-    #elif defined (__x86_64__)
-        // On x86_64, stret dispatch is ~used whenever return type doesn't fit into two registers
-        //
-        // http://www.sealiesoftware.com/blog/archive/2008/10/30/objc_explain_objc_msgSend_stret.html
-        // x86_64 is more complicated, including rules for returning floating-point struct fields in FPU registers, and ppc64's rules and exceptions will make your head spin. The gory details are documented in the Mac OS X ABI Guide, though as usual if the documentation and the compiler disagree then the documentation is wrong.
-        NSUInteger returnTypeActualSize = 0;
-        NSGetSizeAndAlignment(typeEncoding, &returnTypeActualSize, NULL);
-        requiresStructDispatch = returnTypeActualSize > (sizeof(void *) * 2);
-    #else
-    // Unknown architecture
-    // https://devblogs.microsoft.com/xamarin/apple-new-processor-architecture/
-    // watchOS uses arm64_32 since series 4, before armv7k. watch Simulator uses i386.
-    // See ILP32: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dai0490a/ar01s01.html
-    #endif
-
-    return requiresStructDispatch ? (IMP)msgSendSuperStretTrampoline : (IMP)msgSendSuperTrampoline;
-}
-
-#define ERROR_AND_RETURN(CODE, STRING)\
-if (error) { *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain code:CODE userInfo:@{NSLocalizedDescriptionKey: STRING}];} return NO;
+static IMP ITKGetTrampolineForTypeEncoding(__unused const char *typeEncoding);
+static BOOL ITKMethodIsSuperTrampoline(Method method);
 
 @implementation ITKSuperBuilder
 
-+ (BOOL)isSuperTrampolineForClass:(Class)originalClass selector:(SEL)selector {
-    let method = class_getInstanceMethod(originalClass, selector);
-    return ITKMethodIsSuperTrampoline(method);
-}
-
-+ (BOOL)addSuperInstanceMethodToClass:(Class)originalClass selector:(SEL)selector error:(NSError **)error {
++ (BOOL)addSuperInstanceMethodToClass:(Class)originalClass
+                             selector:(SEL)selector
+                                error:(NSError **)error
+{
     // Check that class has a superclass
-    let superClass = class_getSuperclass(originalClass);
-    if (superClass == nil) {
-        let msg = [NSString stringWithFormat:@"Unable to find superclass for %@", NSStringFromClass(originalClass)];
-        ERROR_AND_RETURN(SuperBuilderErrorCodeNoSuperClass, msg)
+    let superclass = class_getSuperclass(originalClass);
+    
+    if (superclass == nil) {
+        if (error) {
+            let message = [NSString stringWithFormat:@"Unable to find superclass for %@", NSStringFromClass(originalClass)];
+            *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain
+                                         code:SuperBuilderErrorCodeNoSuperClass
+                                     userInfo:@{NSLocalizedDescriptionKey: message}];
+            return NO;
+        }
     }
-
+    
     // Fetch method called with super
-    let method = class_getInstanceMethod(superClass, selector);
+    let method = class_getInstanceMethod(superclass, selector);
     if (method == NULL) {
-        let msg = [NSString stringWithFormat:@"No dynamically dispatched method with selector %@ is available on any of the superclasses of %@", NSStringFromSelector(selector), NSStringFromClass(originalClass)];
-        ERROR_AND_RETURN(SuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable, msg)
+        if (error) {
+            let message = [NSString stringWithFormat:@"No dynamically dispatched method with selector %@ is available on any of the superclasses of %@", NSStringFromSelector(selector), NSStringFromClass(originalClass)];
+            *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain
+                                         code:SuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable
+                                     userInfo:@{NSLocalizedDescriptionKey: message}];
+            return NO;
+        }
     }
-
+    
     // Add trampoline
     let typeEncoding = method_getTypeEncoding(method);
     let trampoline = ITKGetTrampolineForTypeEncoding(typeEncoding);
     let methodAdded = class_addMethod(originalClass, selector, trampoline, typeEncoding);
     if (!methodAdded) {
-        let msg = [NSString stringWithFormat:@"Failed to add method for selector %@ to class %@", NSStringFromSelector(selector), NSStringFromClass(originalClass)];
-        ERROR_AND_RETURN(SuperBuilderErrorCodeFailedToAddMethod, msg)
+        if (error) {
+            let message = [NSString stringWithFormat:@"Failed to add method for selector %@ to class %@", NSStringFromSelector(selector), NSStringFromClass(originalClass)];
+            *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain
+                                         code:SuperBuilderErrorCodeFailedToAddMethod
+                                     userInfo:@{NSLocalizedDescriptionKey: message}];
+            return NO;
+        }
     }
     return methodAdded;
 }
+
++ (BOOL)isSuperTrampolineForClass:(Class)originalClass
+                         selector:(SEL)selector
+{
+    let method = class_getInstanceMethod(originalClass, selector);
+    return ITKMethodIsSuperTrampoline(method);
+}
+
+@end
 
 // Control if the trampoline should also push/pop the floating point registers.
 // This is slightly slower and not needed for our simple implementation
@@ -81,12 +78,50 @@ if (error) { *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain code:C
 // One thread local per thread should be enough
 _Thread_local struct objc_super _threadSuperStorage;
 
-static BOOL ITKMethodIsSuperTrampoline(Method method) {
-    let methodIMP = method_getImplementation(method);
-    return methodIMP == (IMP)msgSendSuperTrampoline || methodIMP == (IMP)msgSendSuperStretTrampoline;
+void msgSendSuperTrampoline(void);
+
+#if defined (__x86_64__)
+void msgSendSuperStretTrampoline(void);
+#endif
+
+static IMP ITKGetTrampolineForTypeEncoding(__unused const char *typeEncoding) {
+#if defined (__arm64__)
+    // arm64 doesn't use stret dispatch. Yay!
+    return (IMP)msgSendSuperTrampoline;
+#elif defined (__x86_64__)
+    // On x86_64, stret dispatch is ~used whenever return type doesn't fit into two registers
+    //
+    // http://www.sealiesoftware.com/blog/archive/2008/10/30/objc_explain_objc_msgSend_stret.html
+    // x86_64 is more complicated, including rules for returning floating-point struct fields in FPU registers, and ppc64's rules and exceptions will make your head spin. The gory details are documented in the Mac OS X ABI Guide, though as usual if the documentation and the compiler disagree then the documentation is wrong.
+    NSUInteger returnTypeActualSize = 0;
+    NSGetSizeAndAlignment(typeEncoding, &returnTypeActualSize, NULL);
+    BOOL requiresStructDispatch = returnTypeActualSize > (sizeof(void *) * 2);
+    return requiresStructDispatch ? (IMP)msgSendSuperStretTrampoline : (IMP)msgSendSuperTrampoline;
+#else
+    // Unknown architecture
+    // https://devblogs.microsoft.com/xamarin/apple-new-processor-architecture/
+    // watchOS uses arm64_32 since series 4, before armv7k. watch Simulator uses i386.
+    // See ILP32: http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dai0490a/ar01s01.html
+    return NO;
+#endif
 }
 
-struct objc_super *ITKReturnThreadSuper(__unsafe_unretained id obj, SEL _cmd);
+static BOOL ITKMethodIsSuperTrampoline(Method method) {
+    let methodIMP = method_getImplementation(method);
+    
+    if (methodIMP == (IMP)msgSendSuperTrampoline) {
+        return YES;
+    }
+    
+    #if defined (__x86_64__)
+    if (methodIMP == (IMP)msgSendSuperStretTrampoline) {
+        return YES;
+    }
+    #endif
+    
+    return NO;
+}
+
 struct objc_super *ITKReturnThreadSuper(__unsafe_unretained id obj, SEL _cmd) {
     /**
      Assume you have a class hierarchy made of four classes `Level1` <- `Level2` <- `Level3` <- `Level4`,
@@ -119,8 +154,6 @@ struct objc_super *ITKReturnThreadSuper(__unsafe_unretained id obj, SEL _cmd) {
     _super->super_class = clazz;
     return _super;
 }
-
-@end
 
 /**
  Inline assembly is used to perfectly forward all parameters to objc_msgSendSuper,
@@ -193,9 +226,6 @@ void msgSendSuperTrampoline(void) {
                   : : : "x0", "x1");
 }
 
-// arm64 doesn't use _stret variants.
-void msgSendSuperStretTrampoline(void) {}
-
 #elif defined(__x86_64__)
 
 __attribute__((__naked__))
@@ -265,7 +295,6 @@ void msgSendSuperTrampoline(void) {
                   : : : "rsi", "rdi");
 }
 
-
 __attribute__((__naked__))
 void msgSendSuperStretTrampoline(void) {
     asm volatile (
@@ -312,11 +341,6 @@ void msgSendSuperStretTrampoline(void) {
                   : : : "rsi", "rdi");
 }
 
-#else
-// Unknown architecture - time to write some assembly :)
-void msgSendSuperTrampoline(void) {}
-void msgSendSuperStretTrampoline(void) {}
 #endif
 
 NS_ASSUME_NONNULL_END
-#endif
