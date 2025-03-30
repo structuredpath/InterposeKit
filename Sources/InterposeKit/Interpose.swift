@@ -13,7 +13,7 @@ public enum Interpose {
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         build: @escaping HookBuilder<MethodSignature, HookSignature>
-    ) throws -> Hook {
+    ) throws(InterposeError) -> Hook {
         try Hook(
             target: .class(`class`),
             selector: selector,

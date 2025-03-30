@@ -18,12 +18,20 @@ class InterposeSubclass {
     ///
     /// Making KVO and Object-based hooking work at the same time is difficult.
     /// If we make a dynamic subclass over KVO, invalidating the token crashes in cache_getImp.
-    init(object: AnyObject) throws {
+    init(object: AnyObject) throws(InterposeError) {
+        let dynamicClass: AnyClass = try { () throws(InterposeError) -> AnyClass in
+            if let dynamicClass = Self.getExistingSubclass(object: object) {
+                return dynamicClass
+            }
+            
+            return try Self.createSubclass(object: object)
+        }()
+        
         self.object = object
-        self.dynamicClass = try Self.getExistingSubclass(object: object) ?? Self.createSubclass(object: object)
+        self.dynamicClass = dynamicClass
     }
 
-    private static func createSubclass(object: AnyObject) throws -> AnyClass {
+    private static func createSubclass(object: AnyObject) throws(InterposeError) -> AnyClass {
         let perceivedClass: AnyClass = type(of: object)
         let actualClass: AnyClass = object_getClass(object)!
 
@@ -45,7 +53,7 @@ class InterposeSubclass {
         }
 
         guard let nnSubclass = subclass else {
-            throw InterposeError.failedToAllocateClassPair(class: perceivedClass, subclassName: subclassName)
+            throw .failedToAllocateClassPair(class: perceivedClass, subclassName: subclassName)
         }
 
         object_setClass(object, nnSubclass)
