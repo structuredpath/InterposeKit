@@ -3,10 +3,15 @@ import XCTest
 
 fileprivate class ExampleClass: NSObject {
     @objc dynamic func doSomething() {}
-    @objc dynamic var intValue = 1
+    @objc dynamic var intValue: Int { 1 }
+    @objc dynamic var arrayValue: [String] { ["ExampleClass"] }
 }
 
-fileprivate class ExampleSubclass: ExampleClass {}
+fileprivate class ExampleSubclass: ExampleClass {
+    override var arrayValue: [String] {
+        super.arrayValue + ["ExampleSubclass"]
+    }
+}
 
 final class ClassHookTests: InterposeKitTestCase {
     
@@ -117,6 +122,42 @@ final class ClassHookTests: InterposeKitTestCase {
         XCTAssertEqual(hook.state, .pending)
     }
     
+    func testLifecycle_subclassOverride() throws {
+        let object = ExampleSubclass()
+        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleSubclass"])
+        
+        let superclassHook = try Interpose.applyHook(
+            on: ExampleClass.self,
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["ExampleClass.hook"]
+            }
+        }
+        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleClass.hook", "ExampleSubclass"])
+        
+        let subclassHook = try Interpose.applyHook(
+            on: ExampleSubclass.self,
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["ExampleSubclass.hook"]
+            }
+        }
+        
+        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleClass.hook", "ExampleSubclass", "ExampleSubclass.hook"])
+        
+        try superclassHook.revert()
+        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleSubclass", "ExampleSubclass.hook"])
+        
+        try subclassHook.revert()
+        XCTAssertEqual(object.arrayValue, ["ExampleClass", "ExampleSubclass"])
+    }
+    
     func testValidationFailure_methodNotFound() throws {
         XCTAssertThrowsError(
             try Interpose.prepareHook(
@@ -193,6 +234,52 @@ final class ClassHookTests: InterposeKitTestCase {
             hook.debugDescription,
             #"^Failed hook for -\[ExampleClass doSomething\]$"#
         )
+    }
+    
+    func testCleanup_implementationPreserved() throws {
+        var deallocated = false
+        
+        try autoreleasepool {
+            let tracker = LifetimeTracker { deallocated = true }
+            
+            try Interpose.applyHook(
+                on: ExampleClass.self,
+                for: #selector(ExampleClass.doSomething),
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in
+                    tracker.keep()
+                    return hook.original(self, hook.selector)
+                }
+            }
+        }
+        
+        XCTAssertFalse(deallocated)
+    }
+    
+    func testCleanup_implementationDeallocated() throws {
+        var deallocated = false
+        
+        try autoreleasepool {
+            let tracker = LifetimeTracker { deallocated = true }
+            
+            let hook = try Interpose.applyHook(
+                on: ExampleClass.self,
+                for: #selector(ExampleClass.doSomething),
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in
+                    tracker.keep()
+                    return hook.original(self, hook.selector)
+                }
+            }
+            
+            try hook.revert()
+        }
+        
+        XCTAssertTrue(deallocated)
     }
     
 }

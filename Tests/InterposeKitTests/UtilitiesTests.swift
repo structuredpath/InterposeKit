@@ -55,4 +55,27 @@ final class UtilitiesTests: XCTestCase {
         XCTAssertFalse(object_isKVOActive(object))
     }
     
+    func test_impRemoveBlock() {
+        var deallocated = false
+        
+        let imp: IMP = autoreleasepool {
+            let tracker = LifetimeTracker { deallocated = true }
+            
+            let block: @convention(block) (NSObject) -> Void = { _ in
+                tracker.keep()
+            }
+            
+            return imp_implementationWithBlock(block)
+        }
+        
+        // `imp` retains `block` which retains `tracker`.
+        XCTAssertFalse(deallocated)
+        
+        // Detach `block` from `imp`, while keeping `imp`.
+        imp_removeBlock(imp)
+        
+        // `block` and `tracker` should be deallocated now.
+        XCTAssertTrue(deallocated)
+    }
+    
 }
