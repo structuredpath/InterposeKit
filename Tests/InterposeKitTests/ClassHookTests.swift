@@ -28,7 +28,7 @@ final class ClassHookTests: XCTestCase {
             hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
             return { `self` in
-                1 + hook.original(self, hook.selector)
+                hook.original(self, hook.selector) + 1
             }
         }
         
@@ -57,7 +57,7 @@ final class ClassHookTests: XCTestCase {
             hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
             return { `self` in
-                1 + hook.original(self, hook.selector)
+                hook.original(self, hook.selector) + 1
             }
         }
         
@@ -97,7 +97,7 @@ final class ClassHookTests: XCTestCase {
             hookSignature: (@convention(block) (NSObject) -> Int).self
         ) { hook in
             return { `self` in
-                1 + hook.original(self, hook.selector)
+                hook.original(self, hook.selector) + 1
             }
         }
         

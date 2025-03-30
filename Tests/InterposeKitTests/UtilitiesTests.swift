@@ -40,10 +40,10 @@ final class UtilitiesTests: XCTestCase {
         let object = ExampleClass()
         XCTAssertFalse(object_isKVOActive(object))
         
-        var token1: NSKeyValueObservation? = object.observe(\.intValue, options: []) { _, _ in }
+        var token1: NSKeyValueObservation? = object.observe(\.intValue) { _, _ in }
         XCTAssertTrue(object_isKVOActive(object))
         
-        var token2: NSKeyValueObservation? = object.observe(\.intValue, options: []) { _, _ in }
+        var token2: NSKeyValueObservation? = object.observe(\.intValue) { _, _ in }
         XCTAssertTrue(object_isKVOActive(object))
         
         _ = token1

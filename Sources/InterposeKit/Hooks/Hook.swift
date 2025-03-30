@@ -184,7 +184,7 @@ extension Hook: CustomDebugStringConvertible {
         description.append(" hook for -[\(self.class) \(self.selector)]")
         
         if case .object(let object) = self.scope {
-            description.append(" on \(ObjectIdentifier(object))")
+            description.append(" on \(Unmanaged.passUnretained(object).toOpaque())")
         }
         
         if let originalIMP = self.strategy.storedOriginalIMP {

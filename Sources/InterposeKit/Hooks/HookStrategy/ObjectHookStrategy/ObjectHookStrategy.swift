@@ -44,7 +44,7 @@ final class ObjectHookStrategy: HookStrategy {
         
         if let _ = checkObjectPosingAsDifferentClass(self.object) {
             if object_isKVOActive(self.object) {
-                throw InterposeError.keyValueObservationDetected(object)
+                throw InterposeError.kvoDetected(object)
             }
             // TODO: Handle the case where the object is posing as different class but not the interpose subclass
         }
@@ -159,6 +159,8 @@ final class ObjectHookStrategy: HookStrategy {
             // Replace next's original IMP
             nextHook?.originalIMP = self.storedOriginalIMP
         }
+        
+        self.storedOriginalIMP = nil
         
         // FUTURE: remove class pair!
         // This might fail if we get KVO observed.

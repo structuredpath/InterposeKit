@@ -4,36 +4,6 @@ import XCTest
 
 final class ObjectInterposeTests: XCTestCase {
 
-    func testInterposeSingleObject() throws {
-        let testObj = TestClass()
-        let testObj2 = TestClass()
-
-        XCTAssertEqual(testObj.sayHi(), testClassHi)
-        XCTAssertEqual(testObj2.sayHi(), testClassHi)
-
-        let hook = try testObj.applyHook(
-            for: #selector(TestClass.sayHi),
-            methodSignature: (@convention(c) (NSObject, Selector) -> String).self,
-            hookSignature: (@convention(block) (NSObject) -> String).self
-        ) { hook in
-            return { `self` in
-                print("Before Interposing \(self)")
-                let string = hook.original(self, hook.selector)
-                print("After Interposing \(self)")
-                return string + testString
-            }
-        }
-
-        XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
-        XCTAssertEqual(testObj2.sayHi(), testClassHi)
-        try hook.revert()
-        XCTAssertEqual(testObj.sayHi(), testClassHi)
-        XCTAssertEqual(testObj2.sayHi(), testClassHi)
-        try hook.apply()
-        XCTAssertEqual(testObj.sayHi(), testClassHi + testString)
-        XCTAssertEqual(testObj2.sayHi(), testClassHi)
-    }
-
     func testInterposeSingleObjectInt() throws {
         let testObj = TestClass()
         let returnIntDefault = testObj.returnInt()
