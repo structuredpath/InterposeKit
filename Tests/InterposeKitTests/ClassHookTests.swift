@@ -5,7 +5,7 @@ fileprivate class ExampleClass: NSObject {
     @objc static dynamic func doSomethingStatic() {}
     @objc dynamic func doSomething() {}
     @objc dynamic var intValue: Int { 1 }
-    @objc dynamic var arrayValue: [String] { ["superclass"] }
+    @objc dynamic var arrayValue: [String] { ["base"] }
 }
 
 fileprivate class ExampleSubclass: ExampleClass {
@@ -129,7 +129,7 @@ final class ClassHookTests: XCTestCase {
     
     func testSubclassOverride() throws {
         let object = ExampleSubclass()
-        XCTAssertEqual(object.arrayValue, ["superclass", "subclass"])
+        XCTAssertEqual(object.arrayValue, ["base", "subclass"])
         
         let superclassHook = try Interpose.applyHook(
             on: ExampleClass.self,
@@ -141,7 +141,7 @@ final class ClassHookTests: XCTestCase {
                 return hook.original(self, hook.selector) + ["superclass.hook"]
             }
         }
-        XCTAssertEqual(object.arrayValue, ["superclass", "superclass.hook", "subclass"])
+        XCTAssertEqual(object.arrayValue, ["base", "superclass.hook", "subclass"])
         
         let subclassHook = try Interpose.applyHook(
             on: ExampleSubclass.self,
@@ -154,18 +154,18 @@ final class ClassHookTests: XCTestCase {
             }
         }
         
-        XCTAssertEqual(object.arrayValue, ["superclass", "superclass.hook", "subclass", "subclass.hook"])
+        XCTAssertEqual(object.arrayValue, ["base", "superclass.hook", "subclass", "subclass.hook"])
         
         try superclassHook.revert()
-        XCTAssertEqual(object.arrayValue, ["superclass", "subclass", "subclass.hook"])
+        XCTAssertEqual(object.arrayValue, ["base", "subclass", "subclass.hook"])
         
         try subclassHook.revert()
-        XCTAssertEqual(object.arrayValue, ["superclass", "subclass"])
+        XCTAssertEqual(object.arrayValue, ["base", "subclass"])
     }
     
     func testMultipleHooks() throws {
         let object = ExampleClass()
-        XCTAssertEqual(object.arrayValue, ["superclass"])
+        XCTAssertEqual(object.arrayValue, ["base"])
         
         let hook1 = try Interpose.applyHook(
             on: ExampleClass.self,
@@ -177,7 +177,7 @@ final class ClassHookTests: XCTestCase {
                 return hook.original(self, hook.selector) + ["hook1"]
             }
         }
-        XCTAssertEqual(object.arrayValue, ["superclass", "hook1"])
+        XCTAssertEqual(object.arrayValue, ["base", "hook1"])
         
         let hook2 = try Interpose.applyHook(
             on: ExampleClass.self,
@@ -189,15 +189,15 @@ final class ClassHookTests: XCTestCase {
                 return hook.original(self, hook.selector) + ["hook2"]
             }
         }
-        XCTAssertEqual(object.arrayValue, ["superclass", "hook1", "hook2"])
+        XCTAssertEqual(object.arrayValue, ["base", "hook1", "hook2"])
         
         // For now, reverting works only in the opposite order. Reverting hook1 before hook2
         // would throw `revertCorrupted(…)` error.
         try hook2.revert()
-        XCTAssertEqual(object.arrayValue, ["superclass", "hook1"])
+        XCTAssertEqual(object.arrayValue, ["base", "hook1"])
         
         try hook1.revert()
-        XCTAssertEqual(object.arrayValue, ["superclass"])
+        XCTAssertEqual(object.arrayValue, ["base"])
     }
     
     func testValidationFailure_methodNotFound_nonExistent() throws {
@@ -295,7 +295,7 @@ final class ClassHookTests: XCTestCase {
         )
     }
     
-    func testCleanup_implementationPreserved() throws {
+    func testCleanUp_implementationPreserved() throws {
         var deallocated = false
         
         try autoreleasepool {
@@ -317,7 +317,7 @@ final class ClassHookTests: XCTestCase {
         XCTAssertFalse(deallocated)
     }
     
-    func testCleanup_implementationDeallocated() throws {
+    func testCleanUp_implementationDeallocated() throws {
         var deallocated = false
         
         try autoreleasepool {

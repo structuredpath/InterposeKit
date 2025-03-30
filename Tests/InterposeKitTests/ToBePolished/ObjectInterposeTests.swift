@@ -218,32 +218,4 @@ final class ObjectInterposeTests: XCTestCase {
 //        XCTAssertEqual(testObj.invert3DTransform(transform), transform.inverted)
 //    }
     
-    func testRevertedCleanup_object() throws {
-        var deallocated = false
-        
-        try autoreleasepool {
-            let tracker = LifetimeTracker {
-                deallocated = true
-            }
-            
-            let object = TestClass()
-            let hook = try Interpose.applyHook(
-                on: object,
-                for: #selector(TestClass.doNothing),
-                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
-                hookSignature: (@convention(block) (NSObject) -> Void).self
-            ) { hook in
-                return { `self` in
-                    tracker.keep()
-                    return hook.original(self, hook.selector)
-                }
-            }
-            
-            try hook.revert()
-        }
-        
-        // Verify that the block was deallocated
-        XCTAssertTrue(deallocated)
-    }
-    
 }

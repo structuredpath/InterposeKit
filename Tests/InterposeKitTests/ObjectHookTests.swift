@@ -3,6 +3,8 @@ import XCTest
 
 fileprivate class ExampleClass: NSObject {
     @objc dynamic var intValue = 1
+    @objc dynamic func doSomething() {}
+    @objc dynamic var arrayValue: [String] { ["base"] }
 }
 
 final class ObjectHookTests: XCTestCase {
@@ -44,6 +46,40 @@ final class ObjectHookTests: XCTestCase {
             hook.debugDescription,
             #"^Pending hook for -\[ExampleClass intValue\] on 0x[0-9a-fA-F]+$"#
         )
+    }
+    
+    func testMultipleHooks() throws {
+        let object = ExampleClass()
+        XCTAssertEqual(object.arrayValue, ["base"])
+        
+        let hook1 = try object.applyHook(
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["hook1"]
+            }
+        }
+        XCTAssertEqual(object.arrayValue, ["base", "hook1"])
+        
+        let hook2 = try object.applyHook(
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["hook2"]
+            }
+        }
+        XCTAssertEqual(object.arrayValue, ["base", "hook1", "hook2"])
+        
+        // Unlike with class hooks, we can revert object hooks in the middle of the chain.
+        try hook1.revert()
+        XCTAssertEqual(object.arrayValue, ["base", "hook2"])
+        
+        try hook2.revert()
+        XCTAssertEqual(object.arrayValue, ["base"])
     }
     
     // Hooking fails on an object that has KVO activated.
@@ -113,6 +149,52 @@ final class ObjectHookTests: XCTestCase {
         XCTAssertEqual(didInvokeObserver, true)
         
         _ = token
+    }
+    
+    func testCleanUp_implementationPreserved() throws {
+        let object = ExampleClass()
+        var deallocated = false
+        
+        try autoreleasepool {
+            let tracker = LifetimeTracker { deallocated = true }
+            
+            try object.applyHook(
+                for: #selector(ExampleClass.doSomething),
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in
+                    tracker.keep()
+                    return hook.original(self, hook.selector)
+                }
+            }
+        }
+        
+        XCTAssertFalse(deallocated)
+    }
+    
+    func testCleanUp_implementationDeallocated() throws {
+        let object = ExampleClass()
+        var deallocated = false
+        
+        try autoreleasepool {
+            let tracker = LifetimeTracker { deallocated = true }
+            
+            let hook = try object.applyHook(
+                for: #selector(ExampleClass.doSomething),
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in
+                    tracker.keep()
+                    return hook.original(self, hook.selector)
+                }
+            }
+            
+            try hook.revert()
+        }
+        
+        XCTAssertTrue(deallocated)
     }
 
 }
