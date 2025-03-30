@@ -76,4 +76,43 @@ final class ClassHookTests: InterposeKitTestCase {
         )
     }
     
+    func testRevertFailure_corrupted() throws {
+        let hook = try Interpose.applyHook(
+            on: ExampleClass.self,
+            for: #selector(ExampleClass.foo),
+            methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+            hookSignature: (@convention(block) (NSObject) -> Void).self
+        ) { hook in
+            return { `self` in }
+        }
+        XCTAssertEqual(hook.state, .active)
+        
+        // After applying the hook, we swizzle once more externally, putting the hook into a state,
+        // in which it cannot restore the original implementation.
+        let method = try XCTUnwrap(class_getInstanceMethod(
+            ExampleClass.self,
+            #selector(ExampleClass.foo)
+        ))
+        
+        let externalBlock: @convention(block) (NSObject) -> Void = { _ in }
+        let externalIMP = imp_implementationWithBlock(externalBlock)
+        
+        XCTAssertNotNil(class_replaceMethod(
+            ExampleClass.self,
+            #selector(ExampleClass.foo),
+            externalIMP,
+            method_getTypeEncoding(method)
+        ))
+        
+        XCTAssertThrowsError(
+            try hook.revert(),
+            expected: InterposeError.revertCorrupted(
+                class: ExampleClass.self,
+                selector: #selector(ExampleClass.foo),
+                imp: externalIMP
+            )
+        )
+        XCTAssertEqual(hook.state, .failed)
+    }
+    
 }
