@@ -112,6 +112,28 @@ final class SignatureTests: XCTestCase {
     }
     
     func testPassthroughTransform3D() throws {
+        // This test crashes in Xcode Debug builds due to compiler-injected instrumentation into
+        // `msgSendSuperTrampoline()`. Although the function is marked `__attribute__((naked))`
+        // and is defined entirely in inline assembly, Xcode injects code at the beginning that
+        // overwrites the `x8` register. `x8` is used by the ABI as the indirect return pointer
+        // for large structs like `CATransform3D`. Overwriting it causes the trampoline to write
+        // to an invalid address, leading to a crash.
+        //
+        // The injected code looks like this:
+        //
+        // ```
+        // adrp   x8, 43
+        // ldr    x9, [x8, #0xce0]
+        // add    x9, x9, #0x1
+        // str    x9, [x8, #0xce0]
+        // ```
+        //
+        // This only happens when tests are run inside Xcode. Running `swift test` works correctly
+        // in both Debug and Release configurations.
+        if ProcessInfo.processInfo.environment["__XCODE_BUILT_PRODUCTS_DIR_PATHS"] != nil {
+            throw XCTSkip("Skipping test: trampoline is instrumented in Xcode Debug builds.")
+        }
+        
         let object = ExampleClass()
         let input = CATransform3DMakeTranslation(1, 2, 3)
         

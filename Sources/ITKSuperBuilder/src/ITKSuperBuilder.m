@@ -132,7 +132,7 @@ struct objc_super *ITKReturnThreadSuper(__unsafe_unretained id obj, SEL _cmd) {
         }
         clazz = superclazz;
         superclazz = class_getSuperclass(clazz);
-    }while (1);
+    } while (1);
 
     struct objc_super *_super = &_threadSuperStorage;
     _super->receiver = obj;
