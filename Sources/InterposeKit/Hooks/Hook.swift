@@ -195,42 +195,6 @@ extension Hook: CustomDebugStringConvertible {
     }
 }
 
-/// A closure that builds a hook implementation block for a method.
-///
-/// Receives a proxy to the hook, which provides access to the selector and the original
-/// implementation, and returns a block to be installed when the hook is applied.
-///
-/// `MethodSignature` is the C function type of the original method implementation, typically
-/// in the form: `(@convention(c) (NSObject, Selector, Params…) -> ReturnValue).self`.
-///
-/// `HookSignature` is the block type used as the replacement, typically in the form:
-/// `(@convention(block) (NSObject, Params…) -> ReturnValue).self`.
-public typealias HookBuilder<MethodSignature, HookSignature> = (HookProxy<MethodSignature>) -> HookSignature
-
-/// A lightweight proxy passed to a `HookBuilder`, providing access to the selector and original
-/// implementation of the hooked method.
-public final class HookProxy<MethodSignature> {
-    
-    internal init(
-        selector: Selector,
-        getOriginal: @escaping () -> MethodSignature
-    ) {
-        self.selector = selector
-        self._getOriginal = getOriginal
-    }
-    
-    /// The selector of the method being hooked.
-    public let selector: Selector
-    
-    /// The original method implementation, safe to call from within the hook block.
-    public var original: MethodSignature {
-        self._getOriginal()
-    }
-    
-    private let _getOriginal: () -> MethodSignature
-    
-}
-
 public enum HookScope {
     
     /// The scope that targets all instances of the class.
