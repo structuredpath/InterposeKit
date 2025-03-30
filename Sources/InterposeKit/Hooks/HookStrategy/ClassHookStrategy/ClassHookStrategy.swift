@@ -120,9 +120,3 @@ internal final class ClassHookStrategy: HookStrategy {
     }
     
 }
-
-extension ClassHookStrategy: CustomDebugStringConvertible {
-    internal var debugDescription: String {
-        "\(self.selector) → \(String(describing: self.storedOriginalIMP))"
-    }
-}

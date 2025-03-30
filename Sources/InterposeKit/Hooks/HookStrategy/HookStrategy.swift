@@ -1,6 +1,6 @@
 import ObjectiveC
 
-internal protocol HookStrategy: AnyObject, CustomDebugStringConvertible {
+internal protocol HookStrategy: AnyObject {
     
     var `class`: AnyClass { get }
     var scope: HookScope { get }

@@ -18,10 +18,20 @@ final class ClassHookTests: InterposeKitTestCase {
         ) { hook in
             return { `self` in }
         }
+        
         XCTAssertEqual(hook.state, .active)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Active hook for -\[ExampleClass foo\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
+        )
         
         try hook.revert()
+        
         XCTAssertEqual(hook.state, .pending)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Pending hook for -\[ExampleClass foo\]$"#
+        )
     }
     
     func testSuccess_prepareHook() throws {
@@ -33,13 +43,28 @@ final class ClassHookTests: InterposeKitTestCase {
         ) { hook in
             return { `self` in }
         }
+        
         XCTAssertEqual(hook.state, .pending)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Pending hook for -\[ExampleClass foo\]$"#
+        )
         
         try hook.apply()
+        
         XCTAssertEqual(hook.state, .active)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Active hook for -\[ExampleClass foo\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
+        )
         
         try hook.revert()
+        
         XCTAssertEqual(hook.state, .pending)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Pending hook for -\[ExampleClass foo\]$"#
+        )
     }
     
     func testValidationFailure_methodNotFound() throws {
@@ -112,7 +137,12 @@ final class ClassHookTests: InterposeKitTestCase {
                 imp: externalIMP
             )
         )
+        
         XCTAssertEqual(hook.state, .failed)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Failed hook for -\[ExampleClass foo\]$"#
+        )
     }
     
 }

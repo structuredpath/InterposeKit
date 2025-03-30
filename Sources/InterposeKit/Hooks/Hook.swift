@@ -173,7 +173,25 @@ public final class Hook {
 
 extension Hook: CustomDebugStringConvertible {
     public var debugDescription: String {
-        self.strategy.debugDescription
+        var description = ""
+        
+        switch self.state {
+        case .pending: description += "Pending"
+        case .active: description += "Active"
+        case .failed: description += "Failed"
+        }
+        
+        description.append(" hook for -[\(self.class) \(self.selector)]")
+        
+        if case .object(let object) = self.scope {
+            description.append(" on \(ObjectIdentifier(object))")
+        }
+        
+        if let originalIMP = self.strategy.storedOriginalIMP {
+            description.append(" (originalIMP: \(originalIMP))")
+        }
+        
+        return description
     }
 }
 

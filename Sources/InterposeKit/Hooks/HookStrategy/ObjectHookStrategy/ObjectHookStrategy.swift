@@ -206,9 +206,3 @@ final class ObjectHookStrategy: HookStrategy {
     }
     
 }
-
-extension ObjectHookStrategy: CustomDebugStringConvertible {
-    internal var debugDescription: String {
-        "\(self.selector) of \(self.object) → \(String(describing: self.originalIMP))"
-    }
-}
