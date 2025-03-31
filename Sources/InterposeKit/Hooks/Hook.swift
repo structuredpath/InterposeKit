@@ -13,11 +13,39 @@ public final class Hook {
         build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws {
         self.makeStrategy = { hook in
+            // Hook should never be deallocated when invoking `makeHookIMP()`, as this only
+            // occurs during strategy installation, which is triggered from a live hook instance.
+            //
+            // To ensure this, a strong reference cycle is intentionally created when the hook
+            // is applied: the strategy installs a block-based IMP (stored in `appliedHookIMP`)
+            // that retains a hook proxy, which in turn holds a strong reference to the hook.
+            // This keeps the hook alive while it is applied, allowing access to its original
+            // implementation.
+            //
+            // When not applied (i.e. prepared or reverted), `makeHookIMP` captures the hook
+            // weakly to avoid premature retention, causing the hook to be deallocated when
+            // the client releases it.
+            //
+            // Reference graph:
+            //                          +------------------+
+            //                          |      Client      |
+            //                          +------------------+
+            //                                    |
+            //                                    v
+            // +------------------+     +------------------+     weak
+            // |    HookProxy     |---->|       Hook       |< - - - - - - -+
+            // +------------------+     +------------------+               |
+            //           ^                        |                        |
+            //           |                        v                        |
+            //           |              +------------------+     +------------------+
+            //           |              |   HookStrategy   |---->|   makeHookIMP    |
+            //           |              +------------------+     +------------------+
+            //           |                        |
+            //           |                        v
+            //           |              +------------------+
+            //           +--------------|  appliedHookIMP  |
+            //                          +------------------+
             let makeHookIMP: () -> IMP = { [weak hook] in
-                
-                // Hook should never be deallocated when invoking `makeHookIMP()`, as this only
-                // happens when installing implementation from within the strategy, which is
-                // triggered from a live hook instance.
                 guard let hook else {
                     Interpose.fail(
                         """
