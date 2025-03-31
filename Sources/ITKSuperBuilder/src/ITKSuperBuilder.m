@@ -138,15 +138,15 @@ struct objc_super *ITKReturnThreadSuper(__unsafe_unretained id obj, SEL _cmd) {
      Looking at the method implementation we can also skip subsequent super calls.
      */
     Class clazz = object_getClass(obj);
-    Class superclazz = class_getSuperclass(clazz);
+    Class superclass = class_getSuperclass(clazz);
     do {
-        let superclassMethod = class_getInstanceMethod(superclazz, _cmd);
+        let superclassMethod = class_getInstanceMethod(superclass, _cmd);
         let sameMethods = class_getInstanceMethod(clazz, _cmd) == superclassMethod;
         if (!sameMethods && !ITKMethodIsSuperTrampoline(superclassMethod)) {
             break;
         }
-        clazz = superclazz;
-        superclazz = class_getSuperclass(clazz);
+        clazz = superclass;
+        superclass = class_getSuperclass(clazz);
     } while (1);
 
     struct objc_super *_super = &_threadSuperStorage;
