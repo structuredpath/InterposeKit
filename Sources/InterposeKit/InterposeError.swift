@@ -76,16 +76,16 @@ extension InterposeError: Equatable {
 
     public var errorDescription: String {
         switch self {
-        case .methodNotFound(let klass, let selector):
-            return "Method not found: -[\(klass) \(selector)]"
-        case .methodNotDirectlyImplemented(let klass, let selector):
-            return "Method not directly implemented: -[\(klass) \(selector)]"
-        case .implementationNotFound(let klass, let selector):
-            return "Implementation not found: -[\(klass) \(selector)]"
-        case .revertCorrupted(let klass, let selector, let IMP):
-            return "Unexpected Implementation in -[\(klass) \(selector)]: \(String(describing: IMP))"
-        case .failedToAllocateClassPair(let klass, let subclassName):
-            return "Failed to allocate class pair: \(klass), \(subclassName)"
+        case .methodNotFound(let `class`, let selector):
+            return "Method not found: -[\(`class`) \(selector)]"
+        case .methodNotDirectlyImplemented(let `class`, let selector):
+            return "Method not directly implemented: -[\(`class`) \(selector)]"
+        case .implementationNotFound(let `class`, let selector):
+            return "Implementation not found: -[\(`class`) \(selector)]"
+        case .revertCorrupted(let `class`, let selector, let IMP):
+            return "Unexpected Implementation in -[\(`class`) \(selector)]: \(String(describing: IMP))"
+        case .failedToAllocateClassPair(let `class`, let subclassName):
+            return "Failed to allocate class pair: \(`class`), \(subclassName)"
         case .kvoDetected(let obj):
             return "Unable to hook object that uses Key Value Observing: \(obj)"
         case .objectPosingAsDifferentClass(let obj, let actualClass):
