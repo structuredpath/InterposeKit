@@ -61,9 +61,6 @@ public enum InterposeError: LocalizedError {
     /// Use `NSClassFromString` to get the correct name.
     case objectPosingAsDifferentClass(AnyObject, actualClass: AnyClass)
 
-    /// Unable to remove hook.
-    case resetUnsupported(_ reason: String)
-
     /// Generic failure
     case unknownError(_ reason: String)
 }
@@ -90,8 +87,6 @@ extension InterposeError: Equatable {
             return "Unable to hook object that uses Key Value Observing: \(obj)"
         case .objectPosingAsDifferentClass(let obj, let actualClass):
             return "Unable to hook \(type(of: obj)) posing as \(NSStringFromClass(actualClass))/"
-        case .resetUnsupported(let reason):
-            return "Reset Unsupported: \(reason)"
         case .unknownError(let reason):
             return reason
         }

@@ -1,4 +1,5 @@
 import Foundation
+import ITKSuperBuilder
 
 final class ObjectHookStrategy: HookStrategy {
     
@@ -28,11 +29,6 @@ final class ObjectHookStrategy: HookStrategy {
     )
     
     /// Subclass that we create on the fly
-    var interposeSubclass: InterposeSubclass?
-    
-    var dynamicSubclass: AnyClass {
-        interposeSubclass!.dynamicClass
-    }
     
     func validate() throws {
         guard class_getInstanceMethod(self.class, self.selector) != nil else {
@@ -66,27 +62,33 @@ final class ObjectHookStrategy: HookStrategy {
         
         // Check if there's an existing subclass we can reuse.
         // Create one at runtime if there is none.
-        self.interposeSubclass = try InterposeSubclass(object: self.object)
+        let dynamicSubclass: AnyClass = try InterposeSubclass.getDynamicSubclass(for: self.object)
         
         //  This function searches superclasses for implementations
-        let classImplementsMethod = class_implementsInstanceMethod(self.dynamicSubclass, self.selector)
+        let classImplementsMethod = class_implementsInstanceMethod(dynamicSubclass, self.selector)
         let encoding = method_getTypeEncoding(method)
         
         // If the subclass is empty, we create a super trampoline first.
         // If a hook already exists, we must skip this.
         if !classImplementsMethod {
-            // TODO: Make this failable
-            self.interposeSubclass!.addSuperTrampoline(selector: self.selector)
+            do {
+                try ITKSuperBuilder.addSuperInstanceMethod(to: dynamicSubclass, selector: self.selector)
+                let imp = class_getMethodImplementation(dynamicSubclass, self.selector)!
+                Interpose.log("Added super trampoline for -[\(dynamicSubclass) \(self.selector)]: \(imp)")
+            } catch {
+                // Interpose.log("Failed to add super implementation to -[\(dynamicClass).\(selector)]: \(error)")
+                throw InterposeError.unknownError(String(describing: error))
+            }
         }
         
         // Replace IMP (by now we guarantee that it exists)
-        self.storedOriginalIMP = class_replaceMethod(self.dynamicSubclass, self.selector, hookIMP, encoding)
+        self.storedOriginalIMP = class_replaceMethod(dynamicSubclass, self.selector, hookIMP, encoding)
         guard self.storedOriginalIMP != nil else {
             // This should not happen if the class implements the method or we have installed
             // the super trampoline. Instead, we should make the trampoline implementation
             // failable.
             throw InterposeError.implementationNotFound(
-                class: self.dynamicSubclass,
+                class: dynamicSubclass,
                 selector: self.selector
             )
         }
@@ -95,48 +97,42 @@ final class ObjectHookStrategy: HookStrategy {
     
     func restoreImplementation() throws {
         guard let hookIMP = self.appliedHookIMP else { return }
+        guard let originalIMP = self.storedOriginalIMP else { return }
+        
         defer {
             imp_removeBlock(hookIMP)
             self.appliedHookIMP = nil
+            self.storedOriginalIMP = nil
         }
+        
+        guard let dynamicSubclass = InterposeSubclass.getExistingSubclass(object: self.object) else { return }
         
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(class: self.class, selector: self.selector)
         }
         
-        guard self.storedOriginalIMP != nil else {
-            // Removing methods at runtime is not supported.
-            // https://stackoverflow.com/questions/1315169/how-do-i-remove-instance-methods-at-runtime-in-objective-c-2-0
-            //
-            // This codepath will be hit if the super helper is missing.
-            // We could recreate the whole class at runtime and rebuild all hooks,
-            // but that seems excessive when we have a trampoline at our disposal.
-            Interpose.log("Reset of -[\(self.class).\(self.selector)] not supported. No IMP")
-            throw InterposeError.resetUnsupported("No Original IMP found. SuperBuilder missing?")
-        }
-        
-        guard let currentIMP = class_getMethodImplementation(self.dynamicSubclass, self.selector) else {
+        guard let currentIMP = class_getMethodImplementation(dynamicSubclass, self.selector) else {
             throw InterposeError.unknownError("No Implementation found")
         }
         
         // We are the topmost hook, replace method.
         if currentIMP == hookIMP {
-            let previousIMP = class_replaceMethod(self.dynamicSubclass, self.selector, self.storedOriginalIMP!, method_getTypeEncoding(method))
+            let previousIMP = class_replaceMethod(dynamicSubclass, self.selector, originalIMP, method_getTypeEncoding(method))
             guard previousIMP == hookIMP else {
                 throw InterposeError.revertCorrupted(
-                    class: self.dynamicSubclass,
+                    class: dynamicSubclass,
                     selector: self.selector,
                     imp: previousIMP
                 )
             }
-            Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!)")
+            Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(originalIMP)")
         } else {
             let nextHook = self._findParentHook(from: currentIMP)
             // Replace next's original IMP
-            nextHook?.originalIMP = self.storedOriginalIMP
+            nextHook?.originalIMP = originalIMP
         }
         
-        self.storedOriginalIMP = nil
+        
         
         // FUTURE: remove class pair!
         // This might fail if we get KVO observed.
