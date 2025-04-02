@@ -1,4 +1,4 @@
-import InterposeKit
+@testable import InterposeKit
 import XCTest
 
 fileprivate class ExampleClass: NSObject {
@@ -80,6 +80,56 @@ final class ObjectHookTests: XCTestCase {
         
         try hook2.revert()
         XCTAssertEqual(object.arrayValue, ["base"])
+    }
+    
+    func testHookOnMultipleObjects() throws {
+        let object1 = ExampleClass()
+        let object2 = ExampleClass()
+        
+        XCTAssertEqual(object1.arrayValue, ["base"])
+        XCTAssertEqual(object2.arrayValue, ["base"])
+        
+        XCTAssertEqual(
+            NSStringFromClass(object_getClass(object1)),
+            NSStringFromClass(object_getClass(object2))
+        )
+        
+        let hook1 = try object1.applyHook(
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["hook1"]
+            }
+        }
+        XCTAssertEqual(object1.arrayValue, ["base", "hook1"])
+        XCTAssertEqual(object2.arrayValue, ["base"])
+        
+        let hook2 = try object2.applyHook(
+            for: #selector(getter: ExampleClass.arrayValue),
+            methodSignature: (@convention(c) (NSObject, Selector) -> [String]).self,
+            hookSignature: (@convention(block) (NSObject) -> [String]).self
+        ) { hook in
+            return { `self` in
+                return hook.original(self, hook.selector) + ["hook2"]
+            }
+        }
+        XCTAssertEqual(object1.arrayValue, ["base", "hook1"])
+        XCTAssertEqual(object2.arrayValue, ["base", "hook2"])
+        
+        XCTAssertNotEqual(
+            NSStringFromClass(object_getClass(object1)),
+            NSStringFromClass(object_getClass(object2))
+        )
+        
+        try hook1.revert()
+        XCTAssertEqual(object1.arrayValue, ["base"])
+        XCTAssertEqual(object2.arrayValue, ["base", "hook2"])
+        
+        try hook2.revert()
+        XCTAssertEqual(object1.arrayValue, ["base"])
+        XCTAssertEqual(object2.arrayValue, ["base"])
     }
     
     // Hooking fails on an object that has KVO activated.

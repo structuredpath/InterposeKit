@@ -1,37 +1,38 @@
 import Foundation
-import ITKSuperBuilder
 
-class InterposeSubclass {
+internal enum InterposeSubclass {
     
-    private enum Constants {
-        static let subclassSuffix = "InterposeKit_"
-    }
-    
-    /// Subclass that we create on the fly
-    //private(set) var dynamicClass: AnyClass
-    
-    /// If the class has been altered (e.g. via NSKVONotifying_ KVO logic)
-    /// then perceived and actual class don't match.
-    ///
-    /// Making KVO and Object-based hooking work at the same time is difficult.
-    /// If we make a dynamic subclass over KVO, invalidating the token crashes in cache_getImp.
-    
-    static func getDynamicSubclass(for object: AnyObject) throws -> AnyClass {
-        if let existingSubclass = Self.getExistingSubclass(object: object) {
-            return existingSubclass
-        } else {
-            return try self.createSubclass(object: object)
+    internal static func dynamicSubclass(
+        for object: NSObject
+    ) throws -> AnyClass {
+        // Reuse the subclass if already installed on the object.
+        if let installedSubclass = self.installedDynamicSubclass(for: object) {
+            return installedSubclass
         }
+        
+        return try self.makeDynamicSubclass(for: object)
     }
     
-    private static func createSubclass(object: AnyObject) throws -> AnyClass {
+    internal static func installedDynamicSubclass(
+        for object: NSObject
+    ) -> AnyClass? {
+        let actualClass: AnyClass = object_getClass(object)
+        if NSStringFromClass(actualClass).hasPrefix(self.namePrefix) {
+            return actualClass
+        }
+        return nil
+    }
+    
+    private static func makeDynamicSubclass(
+        for object: NSObject
+    ) throws -> AnyClass {
         let perceivedClass: AnyClass = type(of: object)
-        let actualClass: AnyClass = object_getClass(object)!
+        let actualClass: AnyClass = object_getClass(object)
         
-        let className = NSStringFromClass(perceivedClass)
-        // Right now we are wasteful. Might be able to optimize for shared IMP?
-        let uuid = UUID().uuidString.replacingOccurrences(of: "-", with: "")
-        let subclassName = Constants.subclassSuffix + className + uuid
+        let subclassName = self.uniqueSubclassName(
+            for: object,
+            perceivedClass: perceivedClass
+        )
         
         let subclass: AnyClass? = subclassName.withCString { cString in
             if let existingClass = objc_getClass(cString) as! AnyClass? {
@@ -54,13 +55,30 @@ class InterposeSubclass {
         return nnSubclass
     }
     
-    /// We need to reuse a dynamic subclass if the object already has one.
-    static func getExistingSubclass(object: AnyObject) -> AnyClass? {
-        let actualClass: AnyClass = object_getClass(object)!
-        if NSStringFromClass(actualClass).hasPrefix(Constants.subclassSuffix) {
-            return actualClass
-        }
-        return nil
+    /// Constructs a unique subclass name for a specific object and its perceived class.
+    ///
+    /// Previously, subclass names used random UUIDs to ensure uniqueness. Since each dynamic
+    /// subclass is tied to a single concrete object, we now use the object’s memory address
+    /// instead. This eliminates randomness while still guaranteeing unique subclass names,
+    /// which is necessary when hooking multiple objects of the same class.
+    private static func uniqueSubclassName(
+        for object: NSObject,
+        perceivedClass: AnyClass
+    ) -> String {
+        let className = NSStringFromClass(perceivedClass)
+        let pointer = Unmanaged.passUnretained(object).toOpaque()
+        let objectAddress = UInt(bitPattern: pointer)
+        let pointerWidth = MemoryLayout<UInt>.size * 2
+        return "\(self.namePrefix)_\(className)_\(String(format: "%0\(pointerWidth)llx", objectAddress))"
     }
     
+    /// The prefix to use in names of dynamically created subclasses.
+    private static let namePrefix = "InterposeKit"
+    
 }
+
+/// If the class has been altered (e.g. via NSKVONotifying_ KVO logic)
+/// then perceived and actual class don't match.
+///
+/// Making KVO and Object-based hooking work at the same time is difficult.
+/// If we make a dynamic subclass over KVO, invalidating the token crashes in cache_getImp.
