@@ -56,20 +56,29 @@ public enum InterposeError: LocalizedError {
         object: NSObject
     )
     
-    // ---
-
-    /// Object-based hooking does not work if an object is using KVO.
-    /// The KVO mechanism also uses subclasses created at runtime but doesn't check for additional overrides.
-    /// Adding a hook eventually crashes the KVO management code so we reject hooking altogether in this case.
-    case kvoDetected(AnyObject)
-
-    /// Object is lying about it's actual class metadata.
-    /// This usually happens when other swizzling libraries (like Aspects) also interfere with a class.
-    /// While this might just work, it's not worth risking a crash, so similar to KVO this case is rejected.
+    /// Detected Key-Value Observing on the object while applying or reverting a hook.
     ///
-    /// @note Printing classes in Swift uses the class posing mechanism.
-    /// Use `NSClassFromString` to get the correct name.
-    case objectPosingAsDifferentClass(AnyObject, actualClass: AnyClass)
+    /// The KVO mechanism installs its own dynamic subclass at runtime but does not support
+    /// additional method overrides. Applying or reverting hooks on an object under KVO can lead
+    /// to crashes in the Objective-C runtime, so such operations are explicitly disallowed.
+    ///
+    /// It is safe to start observing an object *after* it has been hooked, but not the other way
+    /// around. Once KVO is active, reverting an existing hook is also considered unsafe.
+    case kvoDetected(object: NSObject)
+    
+    /// The object uses a dynamic subclass that was not installed by InterposeKit.
+    ///
+    /// This typically indicates interference from another runtime system, such as method
+    /// swizzling libraries (like [Aspects](https://github.com/steipete/Aspects)). Similar to KVO,
+    /// such subclasses bypass normal safety checks. Hooking is disallowed in this case to
+    /// avoid crashes.
+    ///
+    /// - Note: Use `NSStringFromClass` to print class names accurately. Swift’s default
+    ///   formatting may reflect the perceived, not the actual runtime class.
+    case unexpectedDynamicSubclass(
+        object: NSObject,
+        actualClass: AnyClass
+    )
 
     /// Generic failure
     case unknownError(_ reason: String)
@@ -95,7 +104,7 @@ extension InterposeError: Equatable {
             return "Failed to allocate class pair: \(object), \(subclassName)"
         case .kvoDetected(let obj):
             return "Unable to hook object that uses Key Value Observing: \(obj)"
-        case .objectPosingAsDifferentClass(let obj, let actualClass):
+        case .unexpectedDynamicSubclass(let obj, let actualClass):
             return "Unable to hook \(type(of: obj)) posing as \(NSStringFromClass(actualClass))/"
         case .unknownError(let reason):
             return reason
