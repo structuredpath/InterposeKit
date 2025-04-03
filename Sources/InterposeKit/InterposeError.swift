@@ -1,4 +1,4 @@
-import ObjectiveC
+import Foundation
 
 public enum InterposeError: Error {
     
@@ -79,9 +79,21 @@ public enum InterposeError: Error {
         object: NSObject,
         actualClass: AnyClass
     )
+    
+    /// Failed to add a super trampoline for the specified class and selector.
+    ///
+    /// When interposing an instance method on a dynamic subclass, InterposeKit installs
+    /// a *super trampoline*—a method that forwards calls to the original implementation
+    /// in the superclass. This allows the hook to delegate to the original behavior when needed.
+    ///
+    /// This error is thrown when the trampoline cannot be added, which is very rare.
+    /// Refer to the underlying error for more details.
+    case failedToAddSuperTrampoline(
+        class: AnyClass,
+        selector: Selector,
+        underlyingError: NSError
+    )
 
-    /// Generic failure
-    case unknownError(_ reason: String)
 }
 
 extension InterposeError: Equatable {
@@ -143,10 +155,13 @@ extension InterposeError: Equatable {
                 return false
             }
             
-        case let .unknownError(lhsReason):
+        case let .failedToAddSuperTrampoline(lhsClass, lhsSelector, lhsError):
             switch rhs {
-            case let .unknownError(rhsReason):
-                return lhsReason == rhsReason
+            case let .failedToAddSuperTrampoline(rhsClass, rhsSelector, rhsError):
+                return lhsClass == rhsClass
+                && lhsSelector == rhsSelector
+                && lhsError.domain == rhsError.domain
+                && lhsError.code == rhsError.code
             default:
                 return false
             }

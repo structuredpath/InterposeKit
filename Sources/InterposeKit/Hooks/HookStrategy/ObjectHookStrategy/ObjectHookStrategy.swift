@@ -1,9 +1,13 @@
-import Foundation
 import ITKSuperBuilder
+import ObjectiveC
 
-final class ObjectHookStrategy: HookStrategy {
+internal final class ObjectHookStrategy: HookStrategy {
     
-    init(
+    // ============================================================================ //
+    // MARK: Initialization
+    // ============================================================================ //
+    
+    internal init(
         object: NSObject,
         selector: Selector,
         makeHookIMP: @escaping () -> IMP
@@ -14,23 +18,34 @@ final class ObjectHookStrategy: HookStrategy {
         self.makeHookIMP = makeHookIMP
     }
     
-    let `class`: AnyClass
-    let object: NSObject
-    var scope: HookScope { .object(self.object) }
-    let selector: Selector
+    // ============================================================================ //
+    // MARK: Configuration
+    // ============================================================================ //
+    
+    internal let `class`: AnyClass
+    internal let object: NSObject
+    internal var scope: HookScope { .object(self.object) }
+    internal let selector: Selector
     
     private let makeHookIMP: () -> IMP
-    private(set) var appliedHookIMP: IMP?
-    private(set) var storedOriginalIMP: IMP?
+    
+    // ============================================================================ //
+    // MARK: Implementations & Handle
+    // ============================================================================ //
+    
+    private(set) internal var appliedHookIMP: IMP?
+    private(set) internal var storedOriginalIMP: IMP?
     
     private lazy var handle = ObjectHookHandle(
         getOriginalIMP: { [weak self] in self?.storedOriginalIMP },
         setOriginalIMP: { [weak self] in self?.storedOriginalIMP = $0 }
     )
+
+    // ============================================================================ //
+    // MARK: Validation
+    // ============================================================================ //
     
-    /// Subclass that we create on the fly
-    
-    func validate() throws {
+    internal func validate() throws {
         guard class_getInstanceMethod(self.class, self.selector) != nil else {
             throw InterposeError.methodNotFound(
                 class: self.class,
@@ -55,16 +70,22 @@ final class ObjectHookStrategy: HookStrategy {
         }
     }
     
-    func replaceImplementation() throws {
+    // ============================================================================ //
+    // MARK: Installing Implementation
+    // ============================================================================ //
+    
+    internal func replaceImplementation() throws {
         let hookIMP = self.makeHookIMP()
-        self.appliedHookIMP = hookIMP
-        ObjectHookRegistry.register(self.handle, for: hookIMP)
         
+        // Fetch the method, whose implementation we want to replace.
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
-            throw InterposeError.methodNotFound(class: self.class, selector: self.selector)
+            throw InterposeError.methodNotFound(
+                class: self.class,
+                selector: self.selector
+            )
         }
         
-        // The implementation of the call that is hooked must exist.
+        // Ensure that the method has an associated implementation.
         guard self.lookUpIMP() != nil else {
             throw InterposeError.implementationNotFound(
                 class: self.class,
@@ -72,42 +93,54 @@ final class ObjectHookStrategy: HookStrategy {
             )
         }
         
-        // Check if there's an existing subclass we can reuse.
-        // Create one at runtime if there is none.
-        let dynamicSubclass: AnyClass = try ObjectSubclassManager.ensureSubclassInstalled(for: self.object)
+        // Retrieve a ready-to-use dynamic subclass. It might be reused if the object already
+        // has one installed or a newly created one.
+        let subclass: AnyClass = try ObjectSubclassManager.ensureSubclassInstalled(for: self.object)
         
-        //  This function searches superclasses for implementations
-        let classImplementsMethod = class_implementsInstanceMethod(dynamicSubclass, self.selector)
-        let encoding = method_getTypeEncoding(method)
-        
-        // If the subclass is empty, we create a super trampoline first.
-        // If a hook already exists, we must skip this.
-        if !classImplementsMethod {
+        // If the dynamic subclass does not implement the method directly, we create a super
+        // trampoline first. Otherwise, when a hook for that method has already been applied
+        // (and potentially reverted), we skip this step.
+        if !class_implementsInstanceMethod(subclass, self.selector) {
             do {
-                try ITKSuperBuilder.addSuperInstanceMethod(to: dynamicSubclass, selector: self.selector)
-                let imp = class_getMethodImplementation(dynamicSubclass, self.selector)!
-                Interpose.log("Added super trampoline for -[\(dynamicSubclass) \(self.selector)] IMP: \(imp)")
+                try ITKSuperBuilder.addSuperInstanceMethod(
+                    to: subclass,
+                    selector: self.selector
+                )
+                
+                Interpose.log({
+                    var message = "Added super trampoline for -[\(subclass) \(self.selector)]"
+                    if let imp = class_getMethodImplementation(subclass, self.selector) {
+                        message += " IMP: \(imp)"
+                    }
+                    return message
+                }())
             } catch {
-                // Interpose.log("Failed to add super implementation to -[\(dynamicClass).\(selector)]: \(error)")
-                throw InterposeError.unknownError(String(describing: error))
+                throw InterposeError.failedToAddSuperTrampoline(
+                    class: subclass,
+                    selector: self.selector,
+                    underlyingError: error as NSError
+                )
             }
         }
         
-        // Replace IMP (by now we guarantee that it exists)
-        self.storedOriginalIMP = class_replaceMethod(dynamicSubclass, self.selector, hookIMP, encoding)
-        guard self.storedOriginalIMP != nil else {
+        guard let imp = class_replaceMethod(subclass, self.selector, hookIMP, method_getTypeEncoding(method)) else {
             // This should not happen if the class implements the method or we have installed
             // the super trampoline. Instead, we should make the trampoline implementation
             // failable.
             throw InterposeError.implementationNotFound(
-                class: dynamicSubclass,
+                class: subclass,
                 selector: self.selector
             )
         }
+        
+        self.appliedHookIMP = hookIMP
+        self.storedOriginalIMP = imp
+        ObjectHookRegistry.register(self.handle, for: hookIMP)
+        
         Interpose.log("Replaced implementation for -[\(self.class) \(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
     }
     
-    func restoreImplementation() throws {
+    internal func restoreImplementation() throws {
         guard let hookIMP = self.appliedHookIMP else { return }
         guard let originalIMP = self.storedOriginalIMP else { return }
         
@@ -126,7 +159,11 @@ final class ObjectHookStrategy: HookStrategy {
         }
         
         guard let currentIMP = class_getMethodImplementation(dynamicSubclass, self.selector) else {
-            throw InterposeError.unknownError("No Implementation found")
+            // Do we need this???
+            throw InterposeError.implementationNotFound(
+                class: self.class,
+                selector: self.selector
+            )
         }
         
         // We are the topmost hook, replace method.
@@ -155,6 +192,10 @@ final class ObjectHookStrategy: HookStrategy {
         // objc_disposeClassPair(dynamicSubclass)
         // self.dynamicSubclass = nil
     }
+    
+    // ============================================================================ //
+    // MARK: Helpers
+    // ============================================================================ //
     
     /// Traverses the object hook chain to find the handle to the parent of this hook, starting
     /// from the topmost IMP for the hooked method.

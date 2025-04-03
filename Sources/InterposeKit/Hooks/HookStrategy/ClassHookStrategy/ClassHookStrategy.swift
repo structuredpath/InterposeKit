@@ -1,4 +1,4 @@
-import Foundation
+import ObjectiveC
 
 internal final class ClassHookStrategy: HookStrategy {
     
@@ -23,6 +23,7 @@ internal final class ClassHookStrategy: HookStrategy {
     internal let `class`: AnyClass
     internal var scope: HookScope { .class }
     internal let selector: Selector
+    
     private let makeHookIMP: () -> IMP
     
     // ============================================================================ //
