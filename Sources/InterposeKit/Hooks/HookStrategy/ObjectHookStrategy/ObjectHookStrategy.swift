@@ -46,6 +46,7 @@ internal final class ObjectHookStrategy: HookStrategy {
     // ============================================================================ //
     
     internal func validate() throws {
+        // Ensure that the method exists.
         guard class_getInstanceMethod(self.class, self.selector) != nil else {
             throw InterposeError.methodNotFound(
                 class: self.class,
@@ -53,6 +54,16 @@ internal final class ObjectHookStrategy: HookStrategy {
             )
         }
         
+        // Ensure that the method has an associated implementation (can be in a superclass).
+        guard self.lookUpIMP() != nil else {
+            throw InterposeError.implementationNotFound(
+                class: self.class,
+                selector: self.selector
+            )
+        }
+        
+        // Ensure that the object either does not have a dynamic subclass installed or that
+        // it is the subclass installed by InterposeKit rather than by KVO or other mechanism.
         let perceivedClass: AnyClass = type(of: self.object)
         let actualClass: AnyClass = object_getClass(self.object)
         
@@ -80,14 +91,6 @@ internal final class ObjectHookStrategy: HookStrategy {
         // Fetch the method, whose implementation we want to replace.
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(
-                class: self.class,
-                selector: self.selector
-            )
-        }
-        
-        // Ensure that the method has an associated implementation.
-        guard self.lookUpIMP() != nil else {
-            throw InterposeError.implementationNotFound(
                 class: self.class,
                 selector: self.selector
             )
@@ -123,10 +126,15 @@ internal final class ObjectHookStrategy: HookStrategy {
             }
         }
         
-        guard let imp = class_replaceMethod(subclass, self.selector, hookIMP, method_getTypeEncoding(method)) else {
-            // This should not happen if the class implements the method or we have installed
-            // the super trampoline. Instead, we should make the trampoline implementation
-            // failable.
+        guard let originalIMP = class_replaceMethod(
+            subclass,
+            self.selector,
+            hookIMP,
+            method_getTypeEncoding(method)
+        ) else {
+            // This should not fail under normal circumstances, as the subclass should already
+            // have an associated implementation, which might be the just-installed trampoline
+            // or an existing hook.
             throw InterposeError.implementationNotFound(
                 class: subclass,
                 selector: self.selector
@@ -134,10 +142,10 @@ internal final class ObjectHookStrategy: HookStrategy {
         }
         
         self.appliedHookIMP = hookIMP
-        self.storedOriginalIMP = imp
+        self.storedOriginalIMP = originalIMP
         ObjectHookRegistry.register(self.handle, for: hookIMP)
         
-        Interpose.log("Replaced implementation for -[\(self.class) \(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
+        Interpose.log("Replaced implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP) -> \(hookIMP)")
     }
     
     internal func restoreImplementation() throws {
@@ -155,20 +163,28 @@ internal final class ObjectHookStrategy: HookStrategy {
         ) else { return }
         
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
-            throw InterposeError.methodNotFound(class: self.class, selector: self.selector)
+            throw InterposeError.methodNotFound(
+                class: self.class,
+                selector: self.selector
+            )
         }
         
         guard let currentIMP = class_getMethodImplementation(dynamicSubclass, self.selector) else {
-            // Do we need this???
             throw InterposeError.implementationNotFound(
                 class: self.class,
                 selector: self.selector
             )
         }
         
-        // We are the topmost hook, replace method.
+        // If we are the topmost hook, we have to replace the implementation on the subclass.
         if currentIMP == hookIMP {
-            let previousIMP = class_replaceMethod(dynamicSubclass, self.selector, originalIMP, method_getTypeEncoding(method))
+            let previousIMP = class_replaceMethod(
+                dynamicSubclass,
+                self.selector,
+                originalIMP,
+                method_getTypeEncoding(method)
+            )
+            
             guard previousIMP == hookIMP else {
                 throw InterposeError.revertCorrupted(
                     class: dynamicSubclass,
@@ -176,21 +192,14 @@ internal final class ObjectHookStrategy: HookStrategy {
                     imp: previousIMP
                 )
             }
-            Interpose.log("Restored implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP)")
         } else {
+            // Otherwise, find the next hook and set its original IMP to this hook’s original IMP,
+            // effectively unlinking this hook from the chain.
             let nextHook = self._findParentHook(from: currentIMP)
-            // Replace next's original IMP
             nextHook?.originalIMP = originalIMP
         }
         
-        
-        
-        // FUTURE: remove class pair!
-        // This might fail if we get KVO observed.
-        // objc_disposeClassPair does not return a bool but logs if it fails.
-        //
-        // objc_disposeClassPair(dynamicSubclass)
-        // self.dynamicSubclass = nil
+        Interpose.log("Restored implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP)")
     }
     
     // ============================================================================ //
