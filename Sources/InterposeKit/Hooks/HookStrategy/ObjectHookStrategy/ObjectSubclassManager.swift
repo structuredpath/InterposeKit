@@ -36,17 +36,16 @@ internal enum ObjectSubclassManager {
         // with the runtime.
         let subclass: AnyClass = try self.makeSubclass(for: object)
         
-        // Then, set the created class on the object.
-        object_setClass(object, subclass)
+        // Finally, set the created class on the object.
+        let previousClass: AnyClass? = object_setClass(object, subclass)
         
         Interpose.log({
             let subclassName = NSStringFromClass(subclass)
             let objectAddress = String(format: "%p", object)
             var message = "Created subclass: \(subclassName) for object \(objectAddress)"
             
-            if let superclass = class_getSuperclass(subclass) {
-                let superclassName = NSStringFromClass(superclass)
-                message += " (was: \(superclassName))"
+            if let previousClass {
+                message += " (previously: \(NSStringFromClass(previousClass)))"
             }
             
             return message
@@ -74,14 +73,18 @@ internal enum ObjectSubclassManager {
         let subclassName = self.uniqueSubclassName(for: perceivedClass)
         
         return try subclassName.withCString { cString in
+            // Attempt to allocate a new subclass that inherits from the object’s actual class.
             guard let subclass: AnyClass = objc_allocateClassPair(actualClass, cString, 0) else {
-                throw InterposeError.failedToAllocateClassPair(
-                    class: perceivedClass,
-                    subclassName: subclassName
+                throw InterposeError.subclassCreationFailed(
+                    subclassName: subclassName,
+                    object: object
                 )
             }
             
+            // Set the perceived class to make the runtime report the original type.
             class_setPerceivedClass(for: subclass, to: perceivedClass)
+            
+            // Register the subclass with the runtime.
             objc_registerClassPair(subclass)
             
             return subclass

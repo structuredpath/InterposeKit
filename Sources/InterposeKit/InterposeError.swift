@@ -44,9 +44,19 @@ public enum InterposeError: LocalizedError {
         selector: Selector,
         imp: IMP?
     )
-
-    /// Unable to register subclass for object-based interposing.
-    case failedToAllocateClassPair(class: AnyClass, subclassName: String)
+    
+    /// Failed to create a dynamic subclass for the given object.
+    ///
+    /// This can occur if the desired subclass name is already in use. While InterposeKit
+    /// generates globally unique subclass names using an internal counter, a name collision may
+    /// still happen if another system has registered a class with the same name earlier during
+    /// the process lifetime.
+    case subclassCreationFailed(
+        subclassName: String,
+        object: NSObject
+    )
+    
+    // ---
 
     /// Object-based hooking does not work if an object is using KVO.
     /// The KVO mechanism also uses subclasses created at runtime but doesn't check for additional overrides.
@@ -81,8 +91,8 @@ extension InterposeError: Equatable {
             return "Implementation not found: -[\(`class`) \(selector)]"
         case .revertCorrupted(let `class`, let selector, let IMP):
             return "Unexpected Implementation in -[\(`class`) \(selector)]: \(String(describing: IMP))"
-        case .failedToAllocateClassPair(let `class`, let subclassName):
-            return "Failed to allocate class pair: \(`class`), \(subclassName)"
+        case .subclassCreationFailed(let subclassName, let object):
+            return "Failed to allocate class pair: \(object), \(subclassName)"
         case .kvoDetected(let obj):
             return "Unable to hook object that uses Key Value Observing: \(obj)"
         case .objectPosingAsDifferentClass(let obj, let actualClass):
