@@ -293,6 +293,11 @@ final class ClassHookTests: XCTestCase {
             hook.debugDescription,
             #"^Failed hook for -\[ExampleClass doSomething\]$"#
         )
+        
+        XCTAssertThrowsError(
+            try hook.revert(),
+            expected: InterposeError.hookInFailedState
+        )
     }
     
     func testCleanUp_implementationPreserved() throws {

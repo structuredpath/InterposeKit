@@ -120,27 +120,37 @@ public final class Hook {
 
     /// Applies the hook by interposing the method implementation.
     public func apply() throws {
-        guard self.state == .pending else { return }
-        
-        do {
-            try self.strategy.replaceImplementation()
-            self.state = .active
-        } catch {
-            self.state = .failed
-            throw error
+        switch self.state {
+        case .pending:
+            do {
+                try self.strategy.replaceImplementation()
+                self.state = .active
+            } catch {
+                self.state = .failed
+                throw error
+            }
+        case .failed:
+            throw InterposeError.hookInFailedState
+        case .active:
+            return
         }
     }
 
     /// Reverts the hook, restoring the original method implementation.
     public func revert() throws {
-        guard self.state == .active else { return }
-        
-        do {
-            try self.strategy.restoreImplementation()
-            self.state = .pending
-        } catch {
-            self.state = .failed
-            throw error
+        switch self.state {
+        case .active:
+            do {
+                try self.strategy.restoreImplementation()
+                self.state = .pending
+            } catch {
+                self.state = .failed
+                throw error
+            }
+        case .failed:
+            throw InterposeError.hookInFailedState
+        case .pending:
+            return
         }
     }
 
