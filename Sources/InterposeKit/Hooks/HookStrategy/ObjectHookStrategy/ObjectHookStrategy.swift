@@ -62,7 +62,7 @@ final class ObjectHookStrategy: HookStrategy {
         
         // Check if there's an existing subclass we can reuse.
         // Create one at runtime if there is none.
-        let dynamicSubclass: AnyClass = try InterposeSubclass.dynamicSubclass(for: self.object)
+        let dynamicSubclass: AnyClass = try ObjectSubclassManager.ensureSubclassInstalled(for: self.object)
         
         //  This function searches superclasses for implementations
         let classImplementsMethod = class_implementsInstanceMethod(dynamicSubclass, self.selector)
@@ -105,7 +105,7 @@ final class ObjectHookStrategy: HookStrategy {
             self.storedOriginalIMP = nil
         }
         
-        guard let dynamicSubclass = InterposeSubclass.installedDynamicSubclass(
+        guard let dynamicSubclass = ObjectSubclassManager.installedSubclass(
             for: self.object
         ) else { return }
         
