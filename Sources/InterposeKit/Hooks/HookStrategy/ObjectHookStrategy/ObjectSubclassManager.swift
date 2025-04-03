@@ -65,7 +65,29 @@ internal enum ObjectSubclassManager {
     internal static func uninstallSubclass(
         for object: NSObject
     ) {
-        fatalError("Not yet implemented")
+        // Get the InterposeKit-managed dynamic subclass installed on the object.
+        guard let dynamicSubclass = self.installedSubclass(for: object) else { return }
+        
+        // Retrieve the original class (superclass of the dynamic subclass) we want to restore
+        // the object to.
+        guard let originalClass = class_getSuperclass(dynamicSubclass) else { return }
+        
+        // Restore the object’s class to its original class.
+        object_setClass(object, originalClass)
+        
+        Interpose.log({
+            let subclassName = NSStringFromClass(dynamicSubclass)
+            let originalClassName = NSStringFromClass(originalClass)
+            let objectAddress = String(format: "%p", object)
+            return "Removed subclass: \(subclassName), restored \(originalClassName) on object \(objectAddress)"
+        }())
+        
+        // Dispose of the dynamic subclass.
+        //
+        // This is safe to call here because all hooks have been reverted. Unfortunately, we can’t
+        // validate this explicitly, as `objc_disposeClassPair(...)` offers no feedback mechanism
+        // and will silently fail if the subclass is still in use.
+        objc_disposeClassPair(dynamicSubclass)
     }
     
     // ============================================================================ //

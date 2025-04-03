@@ -4,6 +4,7 @@ import XCTest
 fileprivate class ExampleClass: NSObject {
     @objc dynamic var intValue = 1
     @objc dynamic func doSomething() {}
+    @objc dynamic func doSomethingElse() {}
     @objc dynamic var arrayValue: [String] { ["base"] }
 }
 
@@ -48,7 +49,7 @@ final class ObjectHookTests: XCTestCase {
         )
     }
     
-    func testMultipleHooks() throws {
+    func testMultipleHooksOnSingleObject() throws {
         let object = ExampleClass()
         XCTAssertEqual(object.arrayValue, ["base"])
         
@@ -82,7 +83,7 @@ final class ObjectHookTests: XCTestCase {
         XCTAssertEqual(object.arrayValue, ["base"])
     }
     
-    func testHookOnMultipleObjects() throws {
+    func testHooksOnMultipleObjects() throws {
         let object1 = ExampleClass()
         let object2 = ExampleClass()
         
@@ -201,7 +202,7 @@ final class ObjectHookTests: XCTestCase {
         _ = token
     }
     
-    func testCleanUp_implementationPreserved() throws {
+    func testCleanUp_hook_implementationPreserved() throws {
         let object = ExampleClass()
         var deallocated = false
         
@@ -223,7 +224,7 @@ final class ObjectHookTests: XCTestCase {
         XCTAssertFalse(deallocated)
     }
     
-    func testCleanUp_implementationDeallocated() throws {
+    func testCleanUp_hook_implementationDeallocated() throws {
         let object = ExampleClass()
         var deallocated = false
         
@@ -245,6 +246,57 @@ final class ObjectHookTests: XCTestCase {
         }
         
         XCTAssertTrue(deallocated)
+    }
+    
+    func testCleanUp_dynamicSubclass() throws {
+        let object = ExampleClass()
+        
+        // Original class
+        XCTAssertTrue(object_getClass(object) == ExampleClass.self)
+        
+        let hook1 = try object.applyHook(
+            for: #selector(ExampleClass.doSomething),
+            methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+            hookSignature: (@convention(block) (NSObject) -> Void).self
+        ) { hook in
+            return { `self` in hook.original(self, hook.selector) }
+        }
+        
+        let hook2 = try object.applyHook(
+            for: #selector(ExampleClass.doSomething),
+            methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+            hookSignature: (@convention(block) (NSObject) -> Void).self
+        ) { hook in
+            return { `self` in hook.original(self, hook.selector) }
+        }
+        
+        let hook3 = try object.applyHook(
+            for: #selector(ExampleClass.doSomethingElse),
+            methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+            hookSignature: (@convention(block) (NSObject) -> Void).self
+        ) { hook in
+            return { `self` in hook.original(self, hook.selector) }
+        }
+        
+        // Dynamic subclass
+        XCTAssertTrue(object_getClass(object) != ExampleClass.self)
+        
+        try hook1.revert()
+        try hook2.revert()
+        
+        // Dynamic subclass
+        XCTAssertTrue(object_getClass(object) != ExampleClass.self)
+        
+        // Back to original subclass after reverting the last hook
+        try hook3.revert()
+        XCTAssertTrue(object_getClass(object) == ExampleClass.self)
+        
+        try hook2.apply()
+        XCTAssertTrue(object_getClass(object) != ExampleClass.self)
+        
+        // Back to original subclass after reverting the last hook
+        try hook2.revert()
+        XCTAssertTrue(object_getClass(object) == ExampleClass.self)
     }
 
 }
