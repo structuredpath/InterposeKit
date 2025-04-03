@@ -177,24 +177,27 @@ public final class Hook {
     // ============================================================================ //
     
     deinit {
-        var logComponents = [String]()
-        
-        switch self.state {
-        case .pending:
-            logComponents.append("Releasing")
-        case .active:
-            logComponents.append("Keeping")
-        case .failed:
-            logComponents.append("Leaking")
-        }
-        
-        logComponents.append("-[\(self.class) \(self.selector)]")
-        
-        if let hookIMP = self.strategy.appliedHookIMP {
-            logComponents.append("IMP: \(hookIMP)")
-        }
-        
-        Interpose.log(logComponents.joined(separator: " "))
+        Interpose.log({
+            var components = [String]()
+            
+            switch self.state {
+            case .pending:
+                components.append("Releasing")
+            case .active:
+                components.append("Keeping")
+            case .failed:
+                components.append("Leaking")
+            }
+            
+            components.append("hook for")
+            components.append("-[\(self.class) \(self.selector)]")
+            
+            if let hookIMP = self.strategy.appliedHookIMP {
+                components.append("IMP: \(hookIMP)")
+            }
+            
+            return components.joined(separator: " ")
+        }())
     }
     
 }

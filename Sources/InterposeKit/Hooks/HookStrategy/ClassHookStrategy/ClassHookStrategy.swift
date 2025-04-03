@@ -81,7 +81,7 @@ internal final class ClassHookStrategy: HookStrategy {
         self.appliedHookIMP = hookIMP
         self.storedOriginalIMP = originalIMP
         
-        Interpose.log("Swizzled -[\(self.class) \(self.selector)] IMP: \(originalIMP) -> \(hookIMP)")
+        Interpose.log("Replaced implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP) -> \(hookIMP)")
     }
     
     internal func restoreImplementation() throws {
@@ -116,7 +116,7 @@ internal final class ClassHookStrategy: HookStrategy {
             )
         }
         
-        Interpose.log("Restored -[\(self.class) \(self.selector)] IMP: \(originalIMP)")
+        Interpose.log("Restored implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP)")
     }
     
 }
