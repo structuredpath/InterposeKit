@@ -10,8 +10,16 @@ internal enum ObjectSubclassManager {
         for object: NSObject
     ) -> AnyClass? {
         let actualClass: AnyClass = object_getClass(object)
-        let hasPrefix = NSStringFromClass(actualClass).hasPrefix(self.namePrefix)
-        return hasPrefix ? actualClass : nil
+        return self.isDynamicSubclass(actualClass) ? actualClass : nil
+    }
+    
+    internal static func hasInstalledSubclass(_ object: NSObject) -> Bool {
+        let actualClass: AnyClass = object_getClass(object)
+        return self.isDynamicSubclass(actualClass)
+    }
+    
+    private static func isDynamicSubclass(_ class: AnyClass) -> Bool {
+        NSStringFromClass(`class`).hasPrefix(self.namePrefix)
     }
     
     // ============================================================================ //

@@ -32,14 +32,26 @@ final class ObjectHookStrategy: HookStrategy {
     
     func validate() throws {
         guard class_getInstanceMethod(self.class, self.selector) != nil else {
-            throw InterposeError.methodNotFound(class: self.class, selector: self.selector)
+            throw InterposeError.methodNotFound(
+                class: self.class,
+                selector: self.selector
+            )
         }
         
-        if let _ = checkObjectPosingAsDifferentClass(self.object) {
+        let perceivedClass: AnyClass = type(of: self.object)
+        let actualClass: AnyClass = object_getClass(self.object)
+        
+        if perceivedClass != actualClass {
             if object_isKVOActive(self.object) {
-                throw InterposeError.kvoDetected(object)
+                throw InterposeError.kvoDetected(object: self.object)
             }
-            // TODO: Handle the case where the object is posing as different class but not the interpose subclass
+            
+            if !ObjectSubclassManager.hasInstalledSubclass(self.object) {
+                throw InterposeError.unexpectedDynamicSubclass(
+                    object: self.object,
+                    actualClass: actualClass
+                )
+            }
         }
     }
     
@@ -142,17 +154,6 @@ final class ObjectHookStrategy: HookStrategy {
         //
         // objc_disposeClassPair(dynamicSubclass)
         // self.dynamicSubclass = nil
-    }
-    
-    // Checks if a object is posing as a different class
-    // via implementing 'class' and returning something else.
-    private func checkObjectPosingAsDifferentClass(_ object: AnyObject) -> AnyClass? {
-        let perceivedClass: AnyClass = type(of: object)
-        let actualClass: AnyClass = object_getClass(object)!
-        if actualClass != perceivedClass {
-            return actualClass
-        }
-        return nil
     }
     
     /// Traverses the object hook chain to find the handle to the parent of this hook, starting

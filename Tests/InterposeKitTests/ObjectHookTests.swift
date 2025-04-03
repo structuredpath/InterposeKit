@@ -158,7 +158,7 @@ final class ObjectHookTests: XCTestCase {
                     hook.original(self, hook.selector) + 1
                 }
             },
-            expected: InterposeError.kvoDetected(object)
+            expected: InterposeError.kvoDetected(object: object)
         )
         XCTAssertEqual(object.intValue, 2)
 
