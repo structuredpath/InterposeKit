@@ -1,6 +1,6 @@
-import Foundation
+import ObjectiveC
 
-public enum InterposeError: LocalizedError {
+public enum InterposeError: Error {
     
     /// No instance method found for the selector on the specified class.
     ///
@@ -85,34 +85,71 @@ public enum InterposeError: LocalizedError {
 }
 
 extension InterposeError: Equatable {
-    // Lazy equating via string compare
-    public static func == (lhs: InterposeError, rhs: InterposeError) -> Bool {
-        return lhs.errorDescription == rhs.errorDescription
-    }
-
-    public var errorDescription: String {
-        switch self {
-        case .methodNotFound(let `class`, let selector):
-            return "Method not found: -[\(`class`) \(selector)]"
-        case .methodNotDirectlyImplemented(let `class`, let selector):
-            return "Method not directly implemented: -[\(`class`) \(selector)]"
-        case .implementationNotFound(let `class`, let selector):
-            return "Implementation not found: -[\(`class`) \(selector)]"
-        case .revertCorrupted(let `class`, let selector, let IMP):
-            return "Unexpected Implementation in -[\(`class`) \(selector)]: \(String(describing: IMP))"
-        case .subclassCreationFailed(let subclassName, let object):
-            return "Failed to allocate class pair: \(object), \(subclassName)"
-        case .kvoDetected(let obj):
-            return "Unable to hook object that uses Key Value Observing: \(obj)"
-        case .unexpectedDynamicSubclass(let obj, let actualClass):
-            return "Unable to hook \(type(of: obj)) posing as \(NSStringFromClass(actualClass))/"
-        case .unknownError(let reason):
-            return reason
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        switch lhs {
+        case let .methodNotFound(lhsClass, lhsSelector):
+            switch rhs {
+            case let .methodNotFound(rhsClass, rhsSelector):
+                return lhsClass == rhsClass && lhsSelector == rhsSelector
+            default:
+                return false
+            }
+            
+        case let .methodNotDirectlyImplemented(lhsClass, lhsSelector):
+            switch rhs {
+            case let .methodNotDirectlyImplemented(rhsClass, rhsSelector):
+                return lhsClass == rhsClass && lhsSelector == rhsSelector
+            default:
+                return false
+            }
+            
+        case let .implementationNotFound(lhsClass, lhsSelector):
+            switch rhs {
+            case let .implementationNotFound(rhsClass, rhsSelector):
+                return lhsClass == rhsClass && lhsSelector == rhsSelector
+            default:
+                return false
+            }
+            
+        case let .revertCorrupted(lhsClass, lhsSelector, lhsIMP):
+            switch rhs {
+            case let .revertCorrupted(rhsClass, rhsSelector, rhsIMP):
+                return lhsClass == rhsClass && lhsSelector == rhsSelector && lhsIMP == rhsIMP
+            default:
+                return false
+            }
+            
+        case let .subclassCreationFailed(lhsName, lhsObject):
+            switch rhs {
+            case let .subclassCreationFailed(rhsName, rhsObject):
+                return lhsName == rhsName && lhsObject === rhsObject
+            default:
+                return false
+            }
+            
+        case let .kvoDetected(lhsObject):
+            switch rhs {
+            case let .kvoDetected(rhsObject):
+                return lhsObject === rhsObject
+            default:
+                return false
+            }
+            
+        case let .unexpectedDynamicSubclass(lhsObject, lhsClass):
+            switch rhs {
+            case let .unexpectedDynamicSubclass(rhsObject, rhsClass):
+                return lhsObject === rhsObject && lhsClass == rhsClass
+            default:
+                return false
+            }
+            
+        case let .unknownError(lhsReason):
+            switch rhs {
+            case let .unknownError(rhsReason):
+                return lhsReason == rhsReason
+            default:
+                return false
+            }
         }
-    }
-
-    @discardableResult func log() -> InterposeError {
-        Interpose.log(self.errorDescription)
-        return self
     }
 }
