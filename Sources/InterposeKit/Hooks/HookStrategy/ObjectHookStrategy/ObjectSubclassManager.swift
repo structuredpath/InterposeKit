@@ -2,6 +2,10 @@ import Foundation
 
 internal enum ObjectSubclassManager {
     
+    // ============================================================================ //
+    // MARK: Getting Installed Subclass
+    // ============================================================================ //
+    
     internal static func installedSubclass(
         for object: NSObject
     ) -> AnyClass? {
@@ -9,6 +13,10 @@ internal enum ObjectSubclassManager {
         let hasPrefix = NSStringFromClass(actualClass).hasPrefix(self.namePrefix)
         return hasPrefix ? actualClass : nil
     }
+    
+    // ============================================================================ //
+    // MARK: Installing & Uninstalling
+    // ============================================================================ //
     
     internal static func ensureSubclassInstalled(
         for object: NSObject
@@ -18,14 +26,28 @@ internal enum ObjectSubclassManager {
             return installedSubclass
         }
         
+        // Otherwise, create a dynamic subclass by generating a unique name and registering it
+        // with the runtime.
         let subclass: AnyClass = try self.makeSubclass(for: object)
+        
+        // Then, set the created class on the object.
         object_setClass(object, subclass)
         
-        let oldName = NSStringFromClass(class_getSuperclass(object_getClass(object)!)!)
+        let oldName = NSStringFromClass(class_getSuperclass(object_getClass(object))!)
         Interpose.log("Generated \(NSStringFromClass(subclass)) for object (was: \(oldName))")
         
         return subclass
     }
+    
+    internal static func uninstallSubclass(
+        for object: NSObject
+    ) {
+        fatalError("Not yet implemented")
+    }
+    
+    // ============================================================================ //
+    // MARK: Subclass Generation
+    // ============================================================================ //
     
     private static func makeSubclass(
         for object: NSObject
@@ -33,18 +55,9 @@ internal enum ObjectSubclassManager {
         let actualClass: AnyClass = object_getClass(object)
         let perceivedClass: AnyClass = type(of: object)
         
-        let subclassName = self.uniqueSubclassName(
-            for: object,
-            perceivedClass: perceivedClass
-        )
+        let subclassName = self.uniqueSubclassName(for: perceivedClass)
         
         return try subclassName.withCString { cString in
-            // ???
-            if let existingClass = objc_getClass(cString) as? AnyClass {
-                print("Existing", subclassName)
-                return existingClass
-            }
-            
             guard let subclass: AnyClass = objc_allocateClassPair(actualClass, cString, 0) else {
                 throw InterposeError.failedToAllocateClassPair(
                     class: perceivedClass,
@@ -59,24 +72,36 @@ internal enum ObjectSubclassManager {
         }
     }
     
-    /// Constructs a unique subclass name for a specific object and its perceived class.
+    /// Constructs a unique subclass name for the given perceived class.
     ///
-    /// Previously, subclass names used random UUIDs to ensure uniqueness. Since each dynamic
-    /// subclass is tied to a single concrete object, we now use the object’s memory address
-    /// instead. This eliminates randomness while still guaranteeing unique subclass names,
-    /// which is necessary when hooking multiple objects of the same class.
+    /// Subclass names must be globally unique to avoid registration conflicts. Earlier versions
+    /// used random UUIDs, which guaranteed uniqueness but resulted in long and noisy names.
+    /// We then considered using the object’s memory address, but since addresses can be reused
+    /// during the lifetime of a process, this led to potential conflicts and flaky test behavior.
+    ///
+    /// The final approach uses a global incrementing counter to ensure uniqueness without relying
+    /// on randomness or memory layout. This results in shorter, more readable names that are safe
+    /// across repeated test runs and stable in production.
     private static func uniqueSubclassName(
-        for object: NSObject,
-        perceivedClass: AnyClass
+        for perceivedClass: AnyClass
     ) -> String {
         let className = NSStringFromClass(perceivedClass)
-        let pointer = Unmanaged.passUnretained(object).toOpaque()
-        let objectAddress = UInt(bitPattern: pointer)
-        let pointerWidth = MemoryLayout<UInt>.size * 2
-        return "\(self.namePrefix)_\(className)_\(String(format: "%0\(pointerWidth)llx", objectAddress))"
+        
+        let counterSuffix: String = self.subclassCounterQueue.sync {
+            self.subclassCounter &+= 1
+            return String(format: "%04llx", self.subclassCounter)
+        }
+        
+        return "\(self.namePrefix)_\(className)_\(counterSuffix)"
     }
     
-    /// The prefix to use in names of dynamically created subclasses.
+    /// The prefix used for all dynamically created subclass names.
     private static let namePrefix = "InterposeKit"
+    
+    /// A global counter for generating unique subclass name suffixes.
+    private static var subclassCounter: UInt64 = 0
+    
+    /// A serial queue to ensure thread-safe access to `subclassCounter`.
+    private static let subclassCounterQueue = DispatchQueue(label: "com.steipete.InterposeKit.subclassCounter")
     
 }
