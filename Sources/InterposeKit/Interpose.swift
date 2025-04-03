@@ -88,14 +88,18 @@ public enum Interpose {
     /// The flag indicating whether logging is enabled.
     public static var isLoggingEnabled = false
     
-    internal static func log(_ message: String) {
+    internal static func log(
+        _ message: @autoclosure () -> String
+    ) {
         if self.isLoggingEnabled {
-            print("[InterposeKit] \(message)")
+            print("[InterposeKit] \(message())")
         }
     }
     
-    internal static func fail(_ message: String) -> Never {
-        fatalError("[InterposeKit] \(message)")
+    internal static func fail(
+        _ message: @autoclosure () -> String
+    ) -> Never {
+        fatalError("[InterposeKit] \(message())")
     }
     
 }

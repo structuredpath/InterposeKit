@@ -74,7 +74,7 @@ final class ObjectHookStrategy: HookStrategy {
             do {
                 try ITKSuperBuilder.addSuperInstanceMethod(to: dynamicSubclass, selector: self.selector)
                 let imp = class_getMethodImplementation(dynamicSubclass, self.selector)!
-                Interpose.log("Added super trampoline for -[\(dynamicSubclass) \(self.selector)]: \(imp)")
+                Interpose.log("Added super trampoline for -[\(dynamicSubclass) \(self.selector)] IMP: \(imp)")
             } catch {
                 // Interpose.log("Failed to add super implementation to -[\(dynamicClass).\(selector)]: \(error)")
                 throw InterposeError.unknownError(String(describing: error))
@@ -92,7 +92,7 @@ final class ObjectHookStrategy: HookStrategy {
                 selector: self.selector
             )
         }
-        Interpose.log("Added -[\(self.class).\(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
+        Interpose.log("Replaced implementation for -[\(self.class) \(self.selector)] IMP: \(self.storedOriginalIMP!) -> \(hookIMP)")
     }
     
     func restoreImplementation() throws {
@@ -127,7 +127,7 @@ final class ObjectHookStrategy: HookStrategy {
                     imp: previousIMP
                 )
             }
-            Interpose.log("Restored -[\(self.class).\(self.selector)] IMP: \(originalIMP)")
+            Interpose.log("Restored implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP)")
         } else {
             let nextHook = self._findParentHook(from: currentIMP)
             // Replace next's original IMP

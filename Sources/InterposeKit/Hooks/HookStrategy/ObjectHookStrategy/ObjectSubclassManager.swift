@@ -23,6 +23,12 @@ internal enum ObjectSubclassManager {
     ) throws -> AnyClass {
         // If there is a dynamic subclass already installed on the object, reuse it straightaway.
         if let installedSubclass = self.installedSubclass(for: object) {
+            Interpose.log({
+                let subclassName = NSStringFromClass(installedSubclass)
+                let objectAddress = String(format: "%p", object)
+                return "Reused subclass: \(subclassName) for object \(objectAddress)"
+            }())
+            
             return installedSubclass
         }
         
@@ -33,8 +39,18 @@ internal enum ObjectSubclassManager {
         // Then, set the created class on the object.
         object_setClass(object, subclass)
         
-        let oldName = NSStringFromClass(class_getSuperclass(object_getClass(object))!)
-        Interpose.log("Generated \(NSStringFromClass(subclass)) for object (was: \(oldName))")
+        Interpose.log({
+            let subclassName = NSStringFromClass(subclass)
+            let objectAddress = String(format: "%p", object)
+            var message = "Created subclass: \(subclassName) for object \(objectAddress)"
+            
+            if let superclass = class_getSuperclass(subclass) {
+                let superclassName = NSStringFromClass(superclass)
+                message += " (was: \(superclassName))"
+            }
+            
+            return message
+        }())
         
         return subclass
     }
