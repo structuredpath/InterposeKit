@@ -151,6 +151,10 @@ internal final class ObjectHookStrategy: HookStrategy {
     }
     
     internal func restoreImplementation() throws {
+        if object_isKVOActive(self.object) {
+            throw InterposeError.kvoDetected(object: self.object)
+        }
+        
         guard let hookIMP = self.appliedHookIMP else { return }
         guard let originalIMP = self.storedOriginalIMP else { return }
         
