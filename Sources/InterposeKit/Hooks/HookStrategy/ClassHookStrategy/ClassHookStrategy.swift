@@ -38,6 +38,7 @@ internal final class ClassHookStrategy: HookStrategy {
     // ============================================================================ //
     
     internal func validate() throws {
+        // Ensure that the method exists.
         guard class_getInstanceMethod(self.class, self.selector) != nil else {
             throw InterposeError.methodNotFound(
                 class: self.class,
@@ -45,6 +46,7 @@ internal final class ClassHookStrategy: HookStrategy {
             )
         }
         
+        // Ensure that the class directly implements the method.
         guard class_implementsInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotDirectlyImplemented(
                 class: self.class,
@@ -61,6 +63,8 @@ internal final class ClassHookStrategy: HookStrategy {
         let hookIMP = self.makeHookIMP()
         
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
+            // This should not happen under normal circumstances, as we perform validation upon
+            // creating the hook strategy, which itself checks for the presence of the method.
             throw InterposeError.methodNotFound(
                 class: self.class,
                 selector: self.selector
@@ -73,6 +77,8 @@ internal final class ClassHookStrategy: HookStrategy {
             hookIMP,
             method_getTypeEncoding(method)
         ) else {
+            // This should not happen under normal circumstances, as we perform validation upon
+            // creating the hook strategy, which checks if the class directly implements the method.
             throw InterposeError.implementationNotFound(
                 class: self.class,
                 selector: self.selector
