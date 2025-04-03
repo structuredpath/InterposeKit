@@ -2,6 +2,9 @@ import Foundation
 
 public enum InterposeError: Error {
     
+    /// A hook operation failed and the hook is no longer usable.
+    case hookInFailedState
+    
     /// No instance method found for the selector on the specified class.
     ///
     /// This typically occurs when mistyping a stringified selector or attempting to interpose
@@ -162,6 +165,14 @@ extension InterposeError: Equatable {
                 && lhsSelector == rhsSelector
                 && lhsError.domain == rhsError.domain
                 && lhsError.code == rhsError.code
+            default:
+                return false
+            }
+            
+        case .hookInFailedState:
+            switch rhs {
+            case .hookInFailedState:
+                return true
             default:
                 return false
             }
