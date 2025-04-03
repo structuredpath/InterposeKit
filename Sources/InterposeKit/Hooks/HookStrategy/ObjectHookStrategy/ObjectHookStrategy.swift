@@ -143,6 +143,8 @@ internal final class ObjectHookStrategy: HookStrategy {
         
         self.appliedHookIMP = hookIMP
         self.storedOriginalIMP = originalIMP
+        
+        self.object.incrementHookCount()
         ObjectHookRegistry.register(self.handle, for: hookIMP)
         
         Interpose.log("Replaced implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP) -> \(hookIMP)")
@@ -200,6 +202,11 @@ internal final class ObjectHookStrategy: HookStrategy {
         }
         
         Interpose.log("Restored implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP)")
+        
+        // Decrement the hook count and if this was the last hook, uninstall the dynamic subclass.
+        if self.object.decrementHookCount() {
+            ObjectSubclassManager.uninstallSubclass(for: object)
+        }
     }
     
     // ============================================================================ //
@@ -233,3 +240,54 @@ internal final class ObjectHookStrategy: HookStrategy {
     }
     
 }
+
+extension NSObject {
+    
+    /// Increments the number of active object-based hooks on this instance by one.
+    fileprivate func incrementHookCount() {
+        self.hookCount += 1
+    }
+    
+    /// Decrements the number of active object-based hooks on this instance by one and returns
+    /// `true` if this was the last hook, or `false` otherwise.
+    fileprivate func decrementHookCount() -> Bool {
+        guard self.hookCount > 0 else { return false }
+        self.hookCount -= 1
+        return self.hookCount == 0
+    }
+    
+    /// The current number of active object-based hooks on this instance.
+    ///
+    /// Internally stored using associated objects. Always returns a non-negative value.
+    private var hookCount: Int {
+        get {
+            guard let count = objc_getAssociatedObject(
+                self,
+                &ObjectHookCountKey
+            ) as? NSNumber else { return 0 }
+            
+            return count.intValue
+        }
+        set {
+            let newCount = max(0, newValue)
+            if newCount == 0 {
+                objc_setAssociatedObject(
+                    self,
+                    &ObjectHookCountKey,
+                    nil,
+                    .OBJC_ASSOCIATION_ASSIGN
+                )
+            } else {
+                objc_setAssociatedObject(
+                    self,
+                    &ObjectHookCountKey,
+                    NSNumber(value: newCount),
+                    .OBJC_ASSOCIATION_RETAIN_NONATOMIC
+                )
+            }
+        }
+    }
+    
+}
+
+private var ObjectHookCountKey: UInt8 = 0

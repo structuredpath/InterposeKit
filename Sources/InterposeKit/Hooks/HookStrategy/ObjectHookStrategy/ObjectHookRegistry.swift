@@ -13,7 +13,7 @@ internal enum ObjectHookRegistry {
         
         objc_setAssociatedObject(
             block,
-            &self.associatedKey,
+            &ObjectHookRegistryKey,
             WeakReference(handle),
             .OBJC_ASSOCIATION_RETAIN
         )
@@ -26,15 +26,15 @@ internal enum ObjectHookRegistry {
         
         guard let reference = objc_getAssociatedObject(
             block,
-            &self.associatedKey
+            &ObjectHookRegistryKey
         ) as? WeakReference<ObjectHookHandle> else { return nil }
         
         return reference.object
     }
     
-    private static var associatedKey: UInt8 = 0
-    
 }
+
+fileprivate var ObjectHookRegistryKey: UInt8 = 0
 
 fileprivate class WeakReference<T: AnyObject>: NSObject {
     
