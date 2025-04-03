@@ -166,7 +166,10 @@ final class ObjectHookTests: XCTestCase {
         _ = token
     }
     
-    // KVO works just fine on an object that has already been hooked.
+    // KVO works on an object that was hooked earlier, but reverting the hook while an active
+    // observer is installed fails. While it is technically possible to recover by stopping
+    // the observation before reverting, the hook enters a failed state on error, preventing
+    // it from accepting further operations.
     func testKVO_observationAfterHooking() throws {
         let object = ExampleClass()
         
@@ -198,6 +201,11 @@ final class ObjectHookTests: XCTestCase {
         object.intValue = 2
         XCTAssertEqual(object.intValue, 3)
         XCTAssertEqual(didInvokeObserver, true)
+        
+        XCTAssertThrowsError(
+            try hook.revert(),
+            expected: InterposeError.kvoDetected(object: object)
+        )
         
         _ = token
     }
