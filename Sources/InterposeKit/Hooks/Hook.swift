@@ -223,7 +223,8 @@ extension Hook: CustomDebugStringConvertible {
         case .failed: description += "Failed"
         }
         
-        description.append(" hook for -[\(self.class) \(self.selector)]")
+        let symbolPrefix = self.scope.methodKind.symbolPrefix
+        description.append(" hook for \(symbolPrefix)[\(self.class) \(self.selector)]")
         
         if case .object(let object) = self.scope {
             description.append(" on \(Unmanaged.passUnretained(object).toOpaque())")
@@ -235,16 +236,6 @@ extension Hook: CustomDebugStringConvertible {
         
         return description
     }
-}
-
-public enum HookScope {
-    
-    /// The scope that targets a method on a class type (instance or class method).
-    case `class`(MethodKind)
-    
-    /// The scope that targets a specific object instance.
-    case object(NSObject)
-    
 }
 
 public enum HookState: Equatable {
