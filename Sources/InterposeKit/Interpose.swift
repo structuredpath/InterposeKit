@@ -85,10 +85,14 @@ public enum Interpose {
     // MARK: Logging
     // ============================================================================ //
     
-    /// The flag indicating whether logging is enabled.
-    public static var isLoggingEnabled = false
+    /// The flag that enables logging of InterposeKit internal operations to standard output
+    /// using the `print(…)` function. Defaults to `false`.
+    ///
+    /// It is recommended to set this flag only once early in your application lifecycle,
+    /// e.g. at app startup or in test setup.
+    public nonisolated(unsafe) static var isLoggingEnabled = false
     
-    internal static func log(
+    internal nonisolated static func log(
         _ message: @autoclosure () -> String
     ) {
         if self.isLoggingEnabled {
@@ -96,7 +100,7 @@ public enum Interpose {
         }
     }
     
-    internal static func fail(
+    internal nonisolated static func fail(
         _ message: @autoclosure () -> String
     ) -> Never {
         fatalError("[InterposeKit] \(message())")
