@@ -34,7 +34,7 @@ internal enum ObjectHookRegistry {
     
 }
 
-fileprivate var ObjectHookRegistryKey: UInt8 = 0
+fileprivate nonisolated(unsafe) var ObjectHookRegistryKey: UInt8 = 0
 
 fileprivate class WeakReference<T: AnyObject>: NSObject {
     
