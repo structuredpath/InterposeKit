@@ -294,4 +294,4 @@ extension NSObject {
     
 }
 
-private var ObjectHookCountKey: UInt8 = 0
+private nonisolated(unsafe) var ObjectHookCountKey: UInt8 = 0
