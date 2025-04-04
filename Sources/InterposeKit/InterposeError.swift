@@ -1,6 +1,6 @@
 import Foundation
 
-public enum InterposeError: Error {
+public enum InterposeError: Error, @unchecked Sendable {
     
     /// A hook operation failed and the hook is no longer usable.
     case hookInFailedState
