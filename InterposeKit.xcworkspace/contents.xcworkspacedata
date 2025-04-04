@@ -4,4 +4,7 @@
    <FileRef
       location = "group:">
    </FileRef>
+   <FileRef
+      location = "group:Example/InterposeKitExample.xcodeproj">
+   </FileRef>
 </Workspace>
