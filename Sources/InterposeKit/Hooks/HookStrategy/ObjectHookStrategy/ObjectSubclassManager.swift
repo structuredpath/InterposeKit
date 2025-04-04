@@ -136,9 +136,9 @@ internal enum ObjectSubclassManager {
     ) -> String {
         let className = NSStringFromClass(perceivedClass)
         
-        let counterSuffix: String = self.subclassCounterQueue.sync {
-            self.subclassCounter &+= 1
-            return String(format: "%04llx", self.subclassCounter)
+        let counterSuffix: String = self.subclassCounter.withValue { counter in
+            counter &+= 1
+            return String(format: "%04llx", counter)
         }
         
         return "\(self.namePrefix)_\(className)_\(counterSuffix)"
@@ -147,10 +147,7 @@ internal enum ObjectSubclassManager {
     /// The prefix used for all dynamically created subclass names.
     private static let namePrefix = "InterposeKit"
     
-    /// A global counter for generating unique subclass name suffixes.
-    private static var subclassCounter: UInt64 = 0
-    
-    /// A serial queue to ensure thread-safe access to `subclassCounter`.
-    private static let subclassCounterQueue = DispatchQueue(label: "com.steipete.InterposeKit.subclassCounter")
+    /// A lock-isolated global counter for generating unique subclass name suffixes.
+    private static let subclassCounter = LockIsolated<UInt64>(0)
     
 }
