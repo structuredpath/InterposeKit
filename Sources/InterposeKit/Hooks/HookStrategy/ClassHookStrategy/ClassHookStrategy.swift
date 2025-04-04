@@ -37,22 +37,40 @@ internal final class ClassHookStrategy: HookStrategy {
     private(set) internal var storedOriginalIMP: IMP?
     
     // ============================================================================ //
+    // MARK: Target Class
+    // ============================================================================ //
+    
+    /// The target class resolved for the configured method kind.
+    ///
+    /// This is the class itself for instance methods, or the metaclass for class methods.
+    private lazy var targetClass: AnyClass = {
+        switch self.methodKind {
+        case .instance:
+            return self.class
+        case .class:
+            return object_getClass(self.class)
+        }
+    }()
+    
+    // ============================================================================ //
     // MARK: Validation
     // ============================================================================ //
     
     internal func validate() throws {
         // Ensure that the method exists.
-        guard class_getInstanceMethod(self.class, self.selector) != nil else {
+        guard class_getInstanceMethod(self.targetClass, self.selector) != nil else {
             throw InterposeError.methodNotFound(
                 class: self.class,
+                kind: self.methodKind,
                 selector: self.selector
             )
         }
         
         // Ensure that the class directly implements the method.
-        guard class_implementsInstanceMethod(self.class, self.selector) else {
+        guard class_implementsInstanceMethod(self.targetClass, self.selector) else {
             throw InterposeError.methodNotDirectlyImplemented(
                 class: self.class,
+                kind: self.methodKind,
                 selector: self.selector
             )
         }
@@ -65,17 +83,18 @@ internal final class ClassHookStrategy: HookStrategy {
     internal func replaceImplementation() throws {
         let hookIMP = self.makeHookIMP()
         
-        guard let method = class_getInstanceMethod(self.class, self.selector) else {
+        guard let method = class_getInstanceMethod(self.targetClass, self.selector) else {
             // This should not happen under normal circumstances, as we perform validation upon
             // creating the hook strategy, which itself checks for the presence of the method.
             throw InterposeError.methodNotFound(
                 class: self.class,
+                kind: self.methodKind,
                 selector: self.selector
             )
         }
         
         guard let originalIMP = class_replaceMethod(
-            self.class,
+            self.targetClass,
             self.selector,
             hookIMP,
             method_getTypeEncoding(method)
@@ -83,7 +102,8 @@ internal final class ClassHookStrategy: HookStrategy {
             // This should not happen under normal circumstances, as we perform validation upon
             // creating the hook strategy, which checks if the class directly implements the method.
             throw InterposeError.implementationNotFound(
-                class: self.class,
+                class: self.targetClass,
+                kind: self.methodKind,
                 selector: self.selector
             )
         }
@@ -91,7 +111,10 @@ internal final class ClassHookStrategy: HookStrategy {
         self.appliedHookIMP = hookIMP
         self.storedOriginalIMP = originalIMP
         
-        Interpose.log("Replaced implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP) -> \(hookIMP)")
+        Interpose.log({
+            let selector = "\(self.methodKind.symbolPrefix)[\(self.class) \(self.selector)]"
+            return "Replaced implementation for \(selector) IMP: \(originalIMP) -> \(hookIMP)"
+        }())
     }
     
     internal func restoreImplementation() throws {
@@ -104,15 +127,16 @@ internal final class ClassHookStrategy: HookStrategy {
             self.storedOriginalIMP = nil
         }
         
-        guard let method = class_getInstanceMethod(self.class, self.selector) else {
+        guard let method = class_getInstanceMethod(self.targetClass, self.selector) else {
             throw InterposeError.methodNotFound(
                 class: self.class,
+                kind: self.methodKind,
                 selector: self.selector
             )
         }
         
         let previousIMP = class_replaceMethod(
-            self.class,
+            self.targetClass,
             self.selector,
             originalIMP,
             method_getTypeEncoding(method)
@@ -121,12 +145,16 @@ internal final class ClassHookStrategy: HookStrategy {
         guard previousIMP == hookIMP else {
             throw InterposeError.revertCorrupted(
                 class: self.class,
+                kind: self.methodKind,
                 selector: self.selector,
                 imp: previousIMP
             )
         }
         
-        Interpose.log("Restored implementation for -[\(self.class) \(self.selector)] IMP: \(originalIMP)")
+        Interpose.log({
+            let selector = "\(self.methodKind.symbolPrefix)[\(self.class) \(self.selector)]"
+            return "Restored implementation for \(selector) IMP: \(originalIMP)"
+        }())
     }
     
 }
