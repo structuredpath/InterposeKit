@@ -1,8 +1,13 @@
 import AppKit
+import InterposeKit
 import SwiftUI
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
+    
+    // ============================================================================ //
+    // MARK: Window & Content View
+    // ============================================================================ //
     
     private lazy var window: NSWindow = {
         let window = NSWindow(
@@ -12,17 +17,109 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         
-        window.title = "InterposeKit Example"
-        window.contentViewController = self.hostingController
-        
+        let hostingController = NSHostingController(rootView: self.contentView)
+        window.contentViewController = hostingController
         return window
     }()
     
-    private lazy var hostingController: NSViewController = {
-        return NSHostingController(rootView: ContentView())
+    private lazy var contentView: ContentView = {
+        ContentView(
+            onHookToggled: { [weak self] example, isEnabled in
+                guard let self else { return }
+                
+                let hook = self.hook(for: example)
+                
+                do {
+                    if isEnabled {
+                        try hook.apply()
+                    } else {
+                        try hook.revert()
+                    }
+                } catch {
+                    fatalError("\(error)")
+                }
+            },
+            onWindowTitleChanged: { [weak self] title in
+                self?.window.title = title
+            }
+        )
     }()
     
+    // ============================================================================ //
+    // MARK: Hooks
+    // ============================================================================ //
+    
+    private func hook(
+        for example: HookExample
+    ) -> Hook {
+        if let hook = self._hooks[example] { return hook }
+        
+        let hook = self._makeHook(for: example)
+        self._hooks[example] = hook
+        return hook
+    }
+    
+    private func _makeHook(
+        for example: HookExample
+    ) -> Hook {
+        do {
+            switch example {
+            case .NSApplication_sendEvent:
+                return try Interpose.prepareHook(
+                    on: NSApplication.shared,
+                    for: #selector(NSApplication.sendEvent(_:)),
+                    methodSignature: (@convention(c) (NSApplication, Selector, NSEvent) -> Void).self,
+                    hookSignature: (@convention(block) (NSApplication, NSEvent) -> Void).self
+                ) { hook in
+                    return { `self`, event in
+                        print("NSApplication.sendEvent(_:) \(event)")
+                        hook.original(self, hook.selector, event)
+                    }
+                }
+            case .NSWindow_setTitle:
+                return try Interpose.prepareHook(
+                    on: self.window,
+                    for: #selector(setter: NSWindow.title),
+                    methodSignature: (@convention(c) (NSWindow, Selector, String) -> Void).self,
+                    hookSignature: (@convention(block) (NSWindow, String) -> Void).self
+                ) { hook in
+                    return { `self`, title in
+                        hook.original(self, hook.selector, "## \(title.uppercased()) ##")
+                    }
+                }
+            case .NSMenuItem_title:
+                return try Interpose.prepareHook(
+                    on: NSMenuItem.self,
+                    for: #selector(getter: NSMenuItem.title),
+                    methodSignature: (@convention(c) (NSMenuItem, Selector) -> String).self,
+                    hookSignature: (@convention(block) (NSMenuItem) -> String).self
+                ) { hook in
+                    return { `self` in
+                        let title = hook.original(`self`, hook.selector)
+                        return "## \(title) ##"
+                    }
+                }
+            case .NSColor_controlAccentColor:
+                fatalError("Not implemented")
+            }
+        } catch {
+            fatalError("\(error)")
+        }
+    }
+    
+    private var _hooks = [HookExample: Hook]()
+    
+    // ============================================================================ //
+    // MARK: NSApplicationDelegate
+    // ============================================================================ //
+    
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        Interpose.isLoggingEnabled = true
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
+        self.window.contentView?.layoutSubtreeIfNeeded()
+        
         Task { @MainActor in
             self.window.center()
             self.window.makeKeyAndOrderFront(nil)
@@ -35,13 +132,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
     
-}
-
-fileprivate struct ContentView: View {
-    fileprivate var body: some View {
-        Text("Hello from InterposeKit!")
-            .font(.title)
-            .fixedSize()
-            .padding(200)
-    }
 }
