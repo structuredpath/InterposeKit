@@ -14,12 +14,13 @@ public enum Interpose {
     public static func prepareHook<MethodSignature, HookSignature>(
         on `class`: AnyClass,
         for selector: Selector,
+        methodKind: MethodKind = .instance,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         try Hook(
-            target: .class(`class`),
+            target: .class(`class`, methodKind),
             selector: selector,
             build: build
         )
@@ -29,6 +30,7 @@ public enum Interpose {
     public static func applyHook<MethodSignature, HookSignature>(
         on `class`: AnyClass,
         for selector: Selector,
+        methodKind: MethodKind = .instance,
         methodSignature: MethodSignature.Type,
         hookSignature: HookSignature.Type,
         build: @escaping HookBuilder<MethodSignature, HookSignature>
@@ -36,6 +38,7 @@ public enum Interpose {
         let hook = try prepareHook(
             on: `class`,
             for: selector,
+            methodKind: methodKind,
             methodSignature: methodSignature,
             hookSignature: hookSignature,
             build: build
