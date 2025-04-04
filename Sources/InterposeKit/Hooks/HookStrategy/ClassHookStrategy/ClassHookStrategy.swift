@@ -8,11 +8,13 @@ internal final class ClassHookStrategy: HookStrategy {
     
     internal init(
         `class`: AnyClass,
+        methodKind: MethodKind,
         selector: Selector,
         makeHookIMP: @escaping () -> IMP
     ) {
         self.class = `class`
         self.selector = selector
+        self.methodKind = methodKind
         self.makeHookIMP = makeHookIMP
     }
     
@@ -21,9 +23,10 @@ internal final class ClassHookStrategy: HookStrategy {
     // ============================================================================ //
     
     internal let `class`: AnyClass
-    internal var scope: HookScope { .class }
+    internal var scope: HookScope { .class(self.methodKind) }
     internal let selector: Selector
     
+    private let methodKind: MethodKind
     private let makeHookIMP: () -> IMP
     
     // ============================================================================ //

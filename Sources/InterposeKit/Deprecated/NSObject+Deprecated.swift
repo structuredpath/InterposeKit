@@ -35,7 +35,7 @@ extension NSObject {
         _ build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
         let hook = try Hook(
-            target: .class(self),
+            target: .class(self, .instance),
             selector: selector,
             build: build
         )
