@@ -20,12 +20,12 @@ extension NSObject {
 
 final class UtilitiesTests: XCTestCase {
     
-    static var hasRunTestSetPerceivedClass = false
+    static let hasRunTestSetPerceivedClass = LockIsolated(false)
     
     func test_setPerceivedClass() throws {
         // Runs only once to avoid leaking class swizzling across test runs.
-        try XCTSkipIf(Self.hasRunTestSetPerceivedClass, "Class override already applied.")
-        Self.hasRunTestSetPerceivedClass = true
+        try XCTSkipIf(Self.hasRunTestSetPerceivedClass.value, "Class override already applied.")
+        Self.hasRunTestSetPerceivedClass.withValue{ $0 = true }
         
         let object = RealClass()
         
