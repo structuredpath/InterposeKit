@@ -3,6 +3,7 @@ import XCTest
 
 fileprivate class ExampleClass: NSObject {
     @objc static dynamic func doSomethingStatic() {}
+    @objc static dynamic let intValueStatic = 1
     @objc dynamic func doSomething() {}
     @objc dynamic var intValue = 1
     @objc dynamic var arrayValue: [String] { ["base"] }
@@ -200,6 +201,38 @@ final class ClassHookTests: XCTestCase {
         XCTAssertEqual(object.arrayValue, ["base"])
     }
     
+    func testClassMethod() throws {
+        let hook = try Interpose.prepareHook(
+            on: ExampleClass.self,
+            for: #selector(getter: ExampleClass.intValueStatic),
+            methodKind: .class,
+            methodSignature: (@convention(c) (ExampleClass, Selector) -> Int).self,
+            hookSignature: (@convention(block) (ExampleClass) -> Int).self
+        ) { hook in
+            return { `self` in 2 }
+        }
+        
+        XCTAssertEqual(ExampleClass.intValueStatic, 1)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Pending hook for \+\[ExampleClass intValueStatic\]$"#
+        )
+        
+        try hook.apply()
+        XCTAssertEqual(ExampleClass.intValueStatic, 2)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Active hook for \+\[ExampleClass intValueStatic\] \(originalIMP: 0x[0-9a-fA-F]+\)$"#
+        )
+        
+        try hook.revert()
+        XCTAssertEqual(ExampleClass.intValueStatic, 1)
+        XCTAssertMatchesRegex(
+            hook.debugDescription,
+            #"^Pending hook for \+\[ExampleClass intValueStatic\]$"#
+        )
+    }
+    
     func testValidationFailure_methodNotFound_nonExistent() throws {
         XCTAssertThrowsError(
             try Interpose.prepareHook(
@@ -212,29 +245,13 @@ final class ClassHookTests: XCTestCase {
             },
             expected: InterposeError.methodNotFound(
                 class: ExampleClass.self,
+                kind: .instance,
                 selector: Selector(("doSomethingNotFound"))
             )
         )
     }
     
-    func testValidationFailure_methodNotFound_classMethod() throws {
-        XCTAssertThrowsError(
-            try Interpose.prepareHook(
-                on: ExampleClass.self,
-                for: #selector(ExampleClass.doSomethingStatic),
-                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
-                hookSignature: (@convention(block) (NSObject) -> Void).self
-            ) { hook in
-                return { `self` in }
-            },
-            expected: InterposeError.methodNotFound(
-                class: ExampleClass.self,
-                selector: #selector(ExampleClass.doSomethingStatic)
-            )
-        )
-    }
-    
-    func testValidationFailure_methodNotDirectlyImplemented() throws {
+    func testValidationFailure_methodNotDirectlyImplemented_instanceMethod() throws {
         XCTAssertThrowsError(
             try Interpose.prepareHook(
                 on: ExampleSubclass.self,
@@ -246,7 +263,27 @@ final class ClassHookTests: XCTestCase {
             },
             expected: InterposeError.methodNotDirectlyImplemented(
                 class: ExampleSubclass.self,
+                kind: .instance,
                 selector: #selector(ExampleClass.doSomething)
+            )
+        )
+    }
+    
+    func testValidationFailure_methodNotDirectlyImplemented_classMethod() throws {
+        XCTAssertThrowsError(
+            try Interpose.prepareHook(
+                on: ExampleSubclass.self,
+                for: #selector(ExampleClass.doSomethingStatic),
+                methodKind: .class,
+                methodSignature: (@convention(c) (NSObject, Selector) -> Void).self,
+                hookSignature: (@convention(block) (NSObject) -> Void).self
+            ) { hook in
+                return { `self` in }
+            },
+            expected: InterposeError.methodNotDirectlyImplemented(
+                class: ExampleSubclass.self,
+                kind: .class,
+                selector: #selector(ExampleClass.doSomethingStatic)
             )
         )
     }
@@ -283,6 +320,7 @@ final class ClassHookTests: XCTestCase {
             try hook.revert(),
             expected: InterposeError.revertCorrupted(
                 class: ExampleClass.self,
+                kind: .instance,
                 selector: #selector(ExampleClass.doSomething),
                 imp: externalIMP
             )

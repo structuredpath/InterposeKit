@@ -71,13 +71,14 @@ public final class Hook {
             }
             
             switch target {
-            case .class(let `class`):
+            case let .class(`class`, methodKind):
                 return ClassHookStrategy(
                     class: `class`,
+                    methodKind: methodKind,
                     selector: selector,
                     makeHookIMP: makeHookIMP
                 )
-            case .object(let object):
+            case let .object(object):
                 return ObjectHookStrategy(
                     object: object,
                     selector: selector,
@@ -222,7 +223,8 @@ extension Hook: CustomDebugStringConvertible {
         case .failed: description += "Failed"
         }
         
-        description.append(" hook for -[\(self.class) \(self.selector)]")
+        let symbolPrefix = self.scope.methodKind.symbolPrefix
+        description.append(" hook for \(symbolPrefix)[\(self.class) \(self.selector)]")
         
         if case .object(let object) = self.scope {
             description.append(" on \(Unmanaged.passUnretained(object).toOpaque())")
@@ -234,16 +236,6 @@ extension Hook: CustomDebugStringConvertible {
         
         return description
     }
-}
-
-public enum HookScope {
-    
-    /// The scope that targets all instances of the class.
-    case `class`
-    
-    /// The scope that targets a specific instance of the class.
-    case object(NSObject)
-    
 }
 
 public enum HookState: Equatable {
@@ -259,7 +251,13 @@ public enum HookState: Equatable {
     
 }
 
+/// Represents the target of a hook operation—either a class type or a specific object instance.
 internal enum HookTarget {
-    case `class`(AnyClass)
+    
+    /// A hook targeting a method defined on a class, either an instance method or a class method.
+    case `class`(AnyClass, MethodKind)
+    
+    /// A hook targeting a method on a specific object instance.
     case object(NSObject)
+    
 }

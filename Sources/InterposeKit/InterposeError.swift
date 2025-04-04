@@ -5,35 +5,38 @@ public enum InterposeError: Error, @unchecked Sendable {
     /// A hook operation failed and the hook is no longer usable.
     case hookInFailedState
     
-    /// No instance method found for the selector on the specified class.
+    /// No method of the given kind found for the selector on the specified class.
     ///
-    /// This typically occurs when mistyping a stringified selector or attempting to interpose
-    /// a class method, which is not supported.
+    /// This typically occurs when mistyping a stringified selector or attempting to hook
+    /// a method that does not exist on the class.
     case methodNotFound(
         class: AnyClass,
+        kind: MethodKind,
         selector: Selector
     )
-    
-    /// The method for the selector is not directly implemented on the specified class
-    /// but inherited from a superclass.
+
+    /// The method for the selector is inherited from a superclass rather than directly implemented
+    /// by the specified class.
     ///
-    /// Class-based interposing only supports instance methods implemented directly by the class
-    /// itself. This restriction ensures safe reverting via `revert()`, which cannot remove
-    /// dynamically added methods.
+    /// Class-based interposing only supports methods directly implemented by the class itself.
+    /// This restriction ensures safe reverting via `revert()`, which cannot remove dynamically
+    /// added methods.
     ///
     /// To interpose this method, consider hooking the superclass that provides the implementation,
     /// or use object-based hooking on a specific instance instead.
     case methodNotDirectlyImplemented(
         class: AnyClass,
+        kind: MethodKind,
         selector: Selector
     )
-
-    /// No implementation found for the method matching the specified selector on the class.
+    
+    /// No implementation found for a method of the given kind matching the selector on the class.
     ///
     /// This should not occur under normal conditions and may indicate an invalid or misconfigured
     /// runtime state.
     case implementationNotFound(
         class: AnyClass,
+        kind: MethodKind,
         selector: Selector
     )
     
@@ -44,6 +47,7 @@ public enum InterposeError: Error, @unchecked Sendable {
     /// In such cases, `Hook.revert()` is unsafe and should be avoided.
     case revertCorrupted(
         class: AnyClass,
+        kind: MethodKind,
         selector: Selector,
         imp: IMP?
     )
@@ -102,34 +106,43 @@ public enum InterposeError: Error, @unchecked Sendable {
 extension InterposeError: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch lhs {
-        case let .methodNotFound(lhsClass, lhsSelector):
+        case let .methodNotFound(lhsClass, lhsKind, lhsSelector):
             switch rhs {
-            case let .methodNotFound(rhsClass, rhsSelector):
-                return lhsClass == rhsClass && lhsSelector == rhsSelector
+            case let .methodNotFound(rhsClass, rhsKind, rhsSelector):
+                return lhsClass == rhsClass
+                && lhsKind == rhsKind
+                && lhsSelector == rhsSelector
             default:
                 return false
             }
             
-        case let .methodNotDirectlyImplemented(lhsClass, lhsSelector):
+        case let .methodNotDirectlyImplemented(lhsClass, lhsKind, lhsSelector):
             switch rhs {
-            case let .methodNotDirectlyImplemented(rhsClass, rhsSelector):
-                return lhsClass == rhsClass && lhsSelector == rhsSelector
+            case let .methodNotDirectlyImplemented(rhsClass, rhsKind, rhsSelector):
+                return lhsClass == rhsClass
+                && lhsKind == rhsKind
+                && lhsSelector == rhsSelector
             default:
                 return false
             }
             
-        case let .implementationNotFound(lhsClass, lhsSelector):
+        case let .implementationNotFound(lhsClass, lhsKind, lhsSelector):
             switch rhs {
-            case let .implementationNotFound(rhsClass, rhsSelector):
-                return lhsClass == rhsClass && lhsSelector == rhsSelector
+            case let .implementationNotFound(rhsClass, rhsKind, rhsSelector):
+                return lhsClass == rhsClass
+                && lhsKind == rhsKind
+                && lhsSelector == rhsSelector
             default:
                 return false
             }
             
-        case let .revertCorrupted(lhsClass, lhsSelector, lhsIMP):
+        case let .revertCorrupted(lhsClass, lhsKind, lhsSelector, lhsIMP):
             switch rhs {
-            case let .revertCorrupted(rhsClass, rhsSelector, rhsIMP):
-                return lhsClass == rhsClass && lhsSelector == rhsSelector && lhsIMP == rhsIMP
+            case let .revertCorrupted(rhsClass, rhsKind, rhsSelector, rhsIMP):
+                return lhsClass == rhsClass
+                && lhsKind == rhsKind
+                && lhsSelector == rhsSelector
+                && lhsIMP == rhsIMP
             default:
                 return false
             }

@@ -50,6 +50,7 @@ internal final class ObjectHookStrategy: HookStrategy {
         guard class_getInstanceMethod(self.class, self.selector) != nil else {
             throw InterposeError.methodNotFound(
                 class: self.class,
+                kind: .instance,
                 selector: self.selector
             )
         }
@@ -58,6 +59,7 @@ internal final class ObjectHookStrategy: HookStrategy {
         guard self.lookUpIMP() != nil else {
             throw InterposeError.implementationNotFound(
                 class: self.class,
+                kind: .instance,
                 selector: self.selector
             )
         }
@@ -92,6 +94,7 @@ internal final class ObjectHookStrategy: HookStrategy {
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(
                 class: self.class,
+                kind: .instance,
                 selector: self.selector
             )
         }
@@ -137,6 +140,7 @@ internal final class ObjectHookStrategy: HookStrategy {
             // or an existing hook.
             throw InterposeError.implementationNotFound(
                 class: subclass,
+                kind: .instance,
                 selector: self.selector
             )
         }
@@ -171,6 +175,7 @@ internal final class ObjectHookStrategy: HookStrategy {
         guard let method = class_getInstanceMethod(self.class, self.selector) else {
             throw InterposeError.methodNotFound(
                 class: self.class,
+                kind: .instance,
                 selector: self.selector
             )
         }
@@ -178,6 +183,7 @@ internal final class ObjectHookStrategy: HookStrategy {
         guard let currentIMP = class_getMethodImplementation(dynamicSubclass, self.selector) else {
             throw InterposeError.implementationNotFound(
                 class: self.class,
+                kind: .instance,
                 selector: self.selector
             )
         }
@@ -194,6 +200,7 @@ internal final class ObjectHookStrategy: HookStrategy {
             guard previousIMP == hookIMP else {
                 throw InterposeError.revertCorrupted(
                     class: dynamicSubclass,
+                    kind: .instance,
                     selector: self.selector,
                     imp: previousIMP
                 )
