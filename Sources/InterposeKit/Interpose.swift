@@ -90,7 +90,11 @@ public enum Interpose {
     ///
     /// It is recommended to set this flag only once early in your application lifecycle,
     /// e.g. at app startup or in test setup.
+    #if compiler(>=5.10)
     public nonisolated(unsafe) static var isLoggingEnabled = false
+    #else
+    public static var isLoggingEnabled = false
+    #endif
     
     internal nonisolated static func log(
         _ message: @autoclosure () -> String
