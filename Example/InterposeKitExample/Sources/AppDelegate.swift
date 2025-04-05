@@ -99,8 +99,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         return "## \(title) ##"
                     }
                 }
-            case .NSColor_controlAccentColor:
-                fatalError("Not implemented")
+            case .NSColor_labelColor:
+                return try Interpose.prepareHook(
+                    on: NSColor.self,
+                    for: #selector(getter: NSColor.labelColor),
+                    methodKind: .class,
+                    methodSignature: (@convention(c) (NSColor.Type, Selector) -> NSColor).self,
+                    hookSignature: (@convention(block) (NSColor.Type) -> NSColor).self
+                ) { hook in
+                    return { `self` in
+                        return self.systemPink
+                    }
+                }
             }
         } catch {
             fatalError("\(error)")

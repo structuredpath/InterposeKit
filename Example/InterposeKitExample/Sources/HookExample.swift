@@ -2,7 +2,7 @@ enum HookExample: CaseIterable {
     case NSApplication_sendEvent
     case NSWindow_setTitle
     case NSMenuItem_title
-    case NSColor_controlAccentColor
+    case NSColor_labelColor
 }
 
 extension HookExample {
@@ -14,8 +14,8 @@ extension HookExample {
             return "-[NSWindow setTitle:]"
         case .NSMenuItem_title:
             return "-[NSMenuItem title]"
-        case .NSColor_controlAccentColor:
-            return "+[NSColor controlAccentColor]"
+        case .NSColor_labelColor:
+            return "+[NSColor labelColor]"
         }
     }
     
@@ -36,10 +36,10 @@ extension HookExample {
             A class hook on NSMenuItem that wraps all menu item titles with decorative markers, \ 
             visible in the main menu and the text field’s context menu.
             """
-        case .NSColor_controlAccentColor:
+        case .NSColor_labelColor:
             return """
-            A class hook that overrides the system accent color by hooking the corresponding \
-            class method on NSColor. (Not implemented.)
+            A class hook that overrides the standard label color by hooking the corresponding \
+            class method on NSColor. Affects text in this window and menus.
             """
         }
     }
