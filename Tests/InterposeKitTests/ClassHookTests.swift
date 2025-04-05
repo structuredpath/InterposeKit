@@ -206,8 +206,8 @@ final class ClassHookTests: XCTestCase {
             on: ExampleClass.self,
             for: #selector(getter: ExampleClass.intValueStatic),
             methodKind: .class,
-            methodSignature: (@convention(c) (ExampleClass, Selector) -> Int).self,
-            hookSignature: (@convention(block) (ExampleClass) -> Int).self
+            methodSignature: (@convention(c) (ExampleClass.Type, Selector) -> Int).self,
+            hookSignature: (@convention(block) (ExampleClass.Type) -> Int).self
         ) { hook in
             return { `self` in 2 }
         }
