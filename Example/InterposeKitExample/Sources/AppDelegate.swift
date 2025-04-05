@@ -75,6 +75,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         hook.original(self, hook.selector, "## \(title.uppercased()) ##")
                     }
                 }
+            case .NSWindow_miniaturize:
+                return try Interpose.prepareHook(
+                    on: self.window,
+                    for: #selector(NSWindow.miniaturize(_:)),
+                    methodSignature: (@convention(c) (NSWindow, Selector, Any?) -> Void).self,
+                    hookSignature: (@convention(block) (NSWindow, Any?) -> Void).self
+                ) { hook in
+                    return { `self`, sender in
+                        let alert = NSAlert()
+                        alert.messageText = "Miniaturization Intercepted"
+                        alert.informativeText = "This window refused to minimize because a hook was applied to\n -[NSWindow miniaturize:]."
+                        alert.runModal()
+                    }
+                }
             case .NSApplication_sendEvent:
                 return try Interpose.prepareHook(
                     on: NSApplication.shared,
