@@ -44,16 +44,13 @@ struct ContentView: View {
                                 .labelsHidden()
                                 .padding(.leading, 20)
                         } label: {
-                            Group {
-                                Text(example.selector)
-                                    .monospaced()
-                                
-                                Text(example.description)
-                                    .font(.subheadline)
-                            }
-                            .opacity(example == .NSColor_controlAccentColor ? 0.5 : 1)
+                            Text(example.selector)
+                                .monospaced()
+                                .foregroundStyle(Color(NSColor.labelColor))
+                            
+                            Text(example.description)
+                                .font(.subheadline)
                         }
-                        .disabled(example == .NSColor_controlAccentColor)
                     }
                 }
             }
