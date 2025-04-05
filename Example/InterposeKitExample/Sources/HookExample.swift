@@ -1,6 +1,6 @@
 enum HookExample: CaseIterable {
-    case NSApplication_sendEvent
     case NSWindow_setTitle
+    case NSApplication_sendEvent
     case NSMenuItem_title
     case NSColor_labelColor
 }
@@ -8,10 +8,10 @@ enum HookExample: CaseIterable {
 extension HookExample {
     var selector: String {
         switch self {
-        case .NSApplication_sendEvent:
-            return "-[NSApplication sendEvent:]"
         case .NSWindow_setTitle:
             return "-[NSWindow setTitle:]"
+        case .NSApplication_sendEvent:
+            return "-[NSApplication sendEvent:]"
         case .NSMenuItem_title:
             return "-[NSMenuItem title]"
         case .NSColor_labelColor:
@@ -21,15 +21,14 @@ extension HookExample {
     
     var description: String {
         switch self {
-        case .NSApplication_sendEvent:
-            return """
-            An object hook on the shared NSApplication instance that logs all events passed \ 
-            through sendEvent(_:).
-            """
         case .NSWindow_setTitle:
             return """
             An object hook on the main NSWindow that uppercases the title and wraps it with \
             decorative markers whenever it’s set. This can be tested using the text field below.
+            """
+        case .NSApplication_sendEvent:
+            return """
+            A class hook on NSApplication that logs all events passed through sendEvent(_:).
             """
         case .NSMenuItem_title:
             return """
