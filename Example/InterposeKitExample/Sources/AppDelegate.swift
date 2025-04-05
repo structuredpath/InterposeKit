@@ -64,6 +64,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     ) -> Hook {
         do {
             switch example {
+            case .NSWindow_setTitle:
+                return try Interpose.prepareHook(
+                    on: self.window,
+                    for: #selector(setter: NSWindow.title),
+                    methodSignature: (@convention(c) (NSWindow, Selector, String) -> Void).self,
+                    hookSignature: (@convention(block) (NSWindow, String) -> Void).self
+                ) { hook in
+                    return { `self`, title in
+                        hook.original(self, hook.selector, "## \(title.uppercased()) ##")
+                    }
+                }
             case .NSApplication_sendEvent:
                 return try Interpose.prepareHook(
                     on: NSApplication.shared,
@@ -74,17 +85,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     return { `self`, event in
                         print("NSApplication.sendEvent(_:) \(event)")
                         hook.original(self, hook.selector, event)
-                    }
-                }
-            case .NSWindow_setTitle:
-                return try Interpose.prepareHook(
-                    on: self.window,
-                    for: #selector(setter: NSWindow.title),
-                    methodSignature: (@convention(c) (NSWindow, Selector, String) -> Void).self,
-                    hookSignature: (@convention(block) (NSWindow, String) -> Void).self
-                ) { hook in
-                    return { `self`, title in
-                        hook.original(self, hook.selector, "## \(title.uppercased()) ##")
                     }
                 }
             case .NSMenuItem_title:
