@@ -1,3 +1,4 @@
+/// A specification of the method kind: instance or class.
 public enum MethodKind: Equatable {
     
     /// An instance method, e.g. `-[MyClass doSomething]`.

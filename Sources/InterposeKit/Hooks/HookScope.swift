@@ -1,11 +1,13 @@
 import ObjectiveC
 
+/// Defines what the scope of a hook—either a class (with method kind) or a specific object.
+/// This complements the class and selector when setting up a hook.
 public enum HookScope {
     
     /// The scope that targets a method on a class type (instance or class method).
     case `class`(MethodKind)
     
-    /// The scope that targets a specific object instance.
+    /// The scope that targets a specific object.
     case object(NSObject)
     
 }

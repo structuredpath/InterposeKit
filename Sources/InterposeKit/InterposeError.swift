@@ -1,5 +1,6 @@
 import Foundation
 
+/// An error representing failure to prepare, apply, or revert a hook.
 public enum InterposeError: Error, @unchecked Sendable {
     
     /// A hook operation failed and the hook is no longer usable.

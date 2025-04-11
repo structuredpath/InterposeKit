@@ -99,6 +99,8 @@ public final class Hook {
         self.strategy.class
     }
     
+    /// The scope of the hook, indicating whether it targets a method on a class or a specific
+    /// object.
     public var scope: HookScope {
         self.strategy.scope
     }
@@ -238,6 +240,7 @@ extension Hook: CustomDebugStringConvertible {
     }
 }
 
+/// Represents the current state of a hook during its lifecycle.
 public enum HookState: Equatable {
     
     /// The hook is ready to be applied.
@@ -251,13 +254,13 @@ public enum HookState: Equatable {
     
 }
 
-/// Represents the target of a hook operation—either a class type or a specific object instance.
+/// Represents the target of a hook operation—either a class type or a specific object.
 internal enum HookTarget {
     
     /// A hook targeting a method defined on a class, either an instance method or a class method.
     case `class`(AnyClass, MethodKind)
     
-    /// A hook targeting a method on a specific object instance.
+    /// A hook targeting a method on a specific object.
     case object(NSObject)
     
 }
