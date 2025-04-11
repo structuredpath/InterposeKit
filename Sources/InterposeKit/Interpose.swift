@@ -252,12 +252,12 @@ public enum Interpose {
     // MARK: Logging
     // ============================================================================ //
     
+    #if compiler(>=5.10)
     /// The flag that enables logging of InterposeKit internal operations to standard output
     /// using the `print(…)` function. Defaults to `false`.
     ///
     /// It is recommended to set this flag only once early in your application lifecycle,
     /// e.g. at app startup or in test setup.
-    #if compiler(>=5.10)
     public nonisolated(unsafe) static var isLoggingEnabled = false
     #else
     public static var isLoggingEnabled = false
