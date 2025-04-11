@@ -4,7 +4,16 @@
 
 import ObjectiveC
 
-/// Interpose is a modern library to swizzle elegantly in Swift.
+/// The entry point for using InterposeKit to hook Objective-C methods in Swift.
+///
+/// The `Interpose` namespace provides the main interface for building and applying method hooks
+/// with a block-based API. It supports both class-wide and per-object hooks.
+///
+/// Use `prepareHook` to create a hook in the pending state to apply later, or `applyHook` to build
+/// and activate it immediately. Once applied, a hook can be reverted.
+///
+/// The method to be hooked must be available to the Objective-C runtime. In Swift, this requires
+/// marking the method as `@objc dynamic`.
 public enum Interpose {
     
     // ============================================================================ //
