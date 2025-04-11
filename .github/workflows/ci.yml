@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-    name: Xcode ${{ matrix.xcode }} / ${{ matrix.os }}
+  swift-package:
+    name: Swift Package (Xcode ${{ matrix.xcode }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -42,3 +42,19 @@ jobs:
 
       - name: Run tests
         run: swift test -v
+
+  xcode-example:
+    name: Xcode Example App (latest macOS)
+    runs-on: macos-latest
+    needs: swift-package
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build example app
+        run: |
+          xcodebuild \
+            -project Example/InterposeKitExample.xcodeproj \
+            -scheme InterposeKitExample \
+            -destination 'platform=macOS' \
+            clean build
