@@ -1,6 +1,6 @@
 # InterposeKit
 
-[![CI](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml) ![Xcode 15+](https://img.shields.io/badge/Xcode-15%2B-blue.svg) ![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)
+[![CI](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml) ![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg) ![Xcode 15+](https://img.shields.io/badge/Xcode-15%2B-blue.svg)
 
 **InterposeKit** is a modern library for hooking Objective-C methods in Swift, also known as method swizzling. It supports both class-based and object-based hooks and it provides a clean, block-based, Swift-friendly API.
 
@@ -8,7 +8,7 @@ This is a continuation and modernization of [Peter Steinberger’s original impl
 
 ## Key Features
 
-- Swift-friendly, minimal, thread-safe API.
+- Swift-friendly, modern, and minimal API.
 - Block-based hooks targeting both classes and individual objects.
 - Support for both instance and class methods.
 - Hooks get access to the original implementation via a proxy.
@@ -19,12 +19,25 @@ This is a continuation and modernization of [Peter Steinberger’s original impl
 - There’s no runtime type checking, and the signature has to be written twice—a trade-off to avoid `NSInvocation`.
 - Written almost entirely in Swift on top of the Objective-C runtime[^2].
 
-## Getting Started
+## Installation
 
 - Installation Swift Package Manager
 - Swift 5.9+, Xcode 15+
 - arm64 and x86_64 architectures
-- Examples: instance method on class, class method on class, object  
+
+## Usage
+
+### Class Hook: Instance Method 
+
+…
+
+### Class Hook: Class Method
+
+…
+
+### Object Hook
+
+…  
 
 ## What’s Changed
 
@@ -48,14 +61,14 @@ Compared to the [original implementation](https://github.com/steipete/InterposeK
 - Object hooks now use a global counter instead of UUIDs for dynamic subclass names.
 - Dynamic subclasses created at runtime are now cleaned up when the last hook is reverted on an object.
 - Class hooks must now target the exact class that actually implements the method to ensure the revert functionality works correctly.
-- Added initial Swift 6 compatibility with some thread-safety checks. Most usage is still expected to be single-threaded, though.
+- Added initial Swift 6 support with basic concurrency checks. Should be thread-safe, but most usage is still expected to be single-threaded. 
 - Removed support for [delayed hooking](https://steipete.com/posts/mac-catalyst-crash-hunt/) (`whenAvailable(…)`) to keep the library laser-focused.
 - …and heavily refactored the Swift part of the codebase: cleaner use of Objective-C runtime APIs, a revamped `InterposeError` enum, and new supporting types like `HookScope` or `HookState`.
 
 ### Fixes
 
-- Fixed a crash where `IKTAddSuperImplementationToClass` was stripped in release builds per [steipete/InterposeKit#29](https://github.com/steipete/InterposeKit#29) by using the fix from [steipete/InterposeKit#30](https://github.com/steipete/InterposeKit#30) submitted by @Thomvis, which replaces a call via dynamic library with a direct Swift call to `IKTSuperBuilder.addSuperInstanceMethod(to:selector:)`.
-- Fixed floating-point register handling on arm64 using the patch from [steipete/InterposeKit#37](https://github.com/steipete/InterposeKit#37) submitted by @ishutinvv, which resolves an issue affecting swizzled methods with `CGFloat` parameters or structs like `CGPoint` and `CGRect` due to floating-point registers not being restored in the correct order after the trampoline call.
+- Fixed a crash where `IKTAddSuperImplementationToClass` was stripped in release builds per [steipete/InterposeKit#29](https://github.com/steipete/InterposeKit/issues/29) by using the fix from [steipete/InterposeKit#30](https://github.com/steipete/InterposeKit/issues/30) submitted by @Thomvis, which replaces a call via dynamic library with a direct Swift call to `IKTSuperBuilder.addSuperInstanceMethod(to:selector:)`.
+- Fixed floating-point register handling on arm64 using the patch from [steipete/InterposeKit#37](https://github.com/steipete/InterposeKit/issues/37) submitted by @ishutinvv, which resolves an issue affecting swizzled methods with `CGFloat` parameters or structs like `CGPoint` and `CGRect` due to floating-point registers not being restored in the correct order after the trampoline call.
 
 ## References
 
