@@ -1,34 +1,5 @@
 ## Usage
 
-Let's say you want to amend `sayHi` from `TestClass`:
-
-```swift
-class TestClass: NSObject {
-    // Functions need to be marked as `@objc dynamic` or written in Objective-C.
-    @objc dynamic func sayHi() -> String {
-        print("Calling sayHi")
-        return "Hi there 👋"
-    }
-}
-
-let interposer = try Interpose(TestClass.self) {
-    try $0.prepareHook(
-        #selector(TestClass.sayHi),
-        methodSignature: (@convention(c) (AnyObject, Selector) -> String).self,
-        hookSignature: (@convention(block) (AnyObject) -> String).self) {
-            store in { `self` in
-                print("Before Interposing \(`self`)")
-                let string = store.original(`self`, store.selector) // free to skip
-                print("After Interposing \(`self`)")
-                return string + "and Interpose"
-            }
-    }
-}
-
-// Don't need the hook anymore? Undo is built-in!
-interposer.revert()
-```
-
 Want to hook just a single instance? No problem!
 
 ```swift
@@ -40,15 +11,6 @@ let hook = try testObj.hook(
         }
 }
 ```
-
-Here's what we get when calling `print(TestClass().sayHi())`
-```
-[Interposer] Swizzled -[TestClass.sayHi] IMP: 0x000000010d9f4430 -> 0x000000010db36020
-Before Interposing <InterposeTests.TestClass: 0x7fa0b160c1e0>
-Calling sayHi
-After Interposing <InterposeTests.TestClass: 0x7fa0b160c1e0>
-Hi there 👋 and Interpose
-``` 
 
 ## Object Hooking
 
