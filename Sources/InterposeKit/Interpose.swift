@@ -35,7 +35,9 @@ public enum Interpose {
     ///
     /// - Throws: An ``InterposeError`` if the hook could not be prepared.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// #### Instance Method
     ///
     /// ```swift
     /// let hook = try Interpose.prepareHook(
@@ -47,6 +49,28 @@ public enum Interpose {
     ///     return { `self` in
     ///         print("Before")
     ///         let value = hook.original(self, hook.selector)
+    ///         print("After")
+    ///         return value + 1
+    ///     }
+    /// }
+    ///
+    /// try hook.apply()
+    /// try hook.revert()
+    /// ```
+    ///
+    /// #### Class Method
+    ///
+    /// ```swift
+    /// let hook = try Interpose.prepareHook(
+    ///     on: MyClass.self,
+    ///     for: #selector(MyClass.getStaticValue),
+    ///     methodKind: .class,
+    ///     methodSignature: (@convention(c) (MyClass.Type, Selector) -> Int).self,
+    ///     hookSignature: (@convention(block) (MyClass.Type) -> Int).self
+    /// ) { hook in
+    ///     return { `class` in
+    ///         print("Before")
+    ///         let value = hook.original(`class`, hook.selector)
     ///         print("After")
     ///         return value + 1
     ///     }
@@ -93,8 +117,10 @@ public enum Interpose {
     ///
     /// - Throws: An ``InterposeError`` if the hook could not be applied.
     ///
-    /// ### Example
-    /// 
+    /// ### Examples
+    ///
+    /// #### Instance Method
+    ///
     /// ```swift
     /// let hook = try Interpose.applyHook(
     ///     on: MyClass.self,
@@ -105,6 +131,27 @@ public enum Interpose {
     ///     return { `self` in
     ///         print("Before")
     ///         let value = hook.original(self, hook.selector)
+    ///         print("After")
+    ///         return value + 1
+    ///     }
+    /// }
+    ///
+    /// try hook.revert()
+    /// ```
+    ///
+    /// #### Class Method
+    ///
+    /// ```swift
+    /// let hook = try Interpose.applyHook(
+    ///     on: MyClass.self,
+    ///     for: #selector(MyClass.getStaticValue),
+    ///     methodKind: .class,
+    ///     methodSignature: (@convention(c) (MyClass.Type, Selector) -> Int).self,
+    ///     hookSignature: (@convention(block) (MyClass.Type) -> Int).self
+    /// ) { hook in
+    ///     return { `class` in
+    ///         print("Before")
+    ///         let value = hook.original(`class`, hook.selector)
     ///         print("After")
     ///         return value + 1
     ///     }
