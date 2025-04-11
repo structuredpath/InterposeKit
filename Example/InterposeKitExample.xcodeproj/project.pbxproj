@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		80523B6B2DA923430068EA71 /* InterposeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 80523B6A2DA923430068EA71 /* InterposeKit */; };
 		8078DF9F2DA016EE009A0B1A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8078DF962DA016EE009A0B1A /* Assets.xcassets */; };
 		8078DFA02DA016EE009A0B1A /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8078DF982DA016EE009A0B1A /* MainMenu.xib */; };
 		8078DFA12DA016EE009A0B1A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8078DF9A2DA016EE009A0B1A /* AppDelegate.swift */; };
-		8078DFA52DA01B90009A0B1A /* InterposeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8078DFA42DA01B90009A0B1A /* InterposeKit */; };
 		8078DFAA2DA04DAA009A0B1A /* HookExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8078DFA92DA04DAA009A0B1A /* HookExample.swift */; };
 		8078DFAC2DA04DC6009A0B1A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8078DFAB2DA04DC6009A0B1A /* ContentView.swift */; };
 /* End PBXBuildFile section */
@@ -30,7 +30,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8078DFA52DA01B90009A0B1A /* InterposeKit in Frameworks */,
+				80523B6B2DA923430068EA71 /* InterposeKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,6 +108,7 @@
 			name = InterposeKitExample;
 			packageProductDependencies = (
 				8078DFA42DA01B90009A0B1A /* InterposeKit */,
+				80523B6A2DA923430068EA71 /* InterposeKit */,
 			);
 			productName = InterposeKitExample;
 			productReference = 8078DF832DA016B6009A0B1A /* InterposeKitExample.app */;
@@ -138,6 +139,7 @@
 			mainGroup = 8078DF7A2DA016B6009A0B1A;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				80523B692DA923430068EA71 /* XCLocalSwiftPackageReference "../../InterposeKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8078DF842DA016B6009A0B1A /* Products */;
@@ -381,7 +383,18 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		80523B692DA923430068EA71 /* XCLocalSwiftPackageReference "../../InterposeKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../InterposeKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		80523B6A2DA923430068EA71 /* InterposeKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = InterposeKit;
+		};
 		8078DFA42DA01B90009A0B1A /* InterposeKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = InterposeKit;
