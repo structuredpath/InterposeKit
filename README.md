@@ -55,15 +55,71 @@ Then add the product to any target that needs it:
 
 ### Class Hook: Instance Method 
 
-…
+```swift
+class MyClass: NSObject {
+    @objc dynamic func getValue() -> Int {
+        return 42
+    }
+}
+
+let object = MyClass()
+print(object.getValue()) // => 42
+
+let hook = try Interpose.applyHook(
+    on: MyClass.self,
+    for: #selector(MyClass.getValue),
+    methodSignature: (@convention(c) (MyClass, Selector) -> Int).self,
+    hookSignature: (@convention(block) (MyClass) -> Int).self
+) { hook in
+    return { `self` in
+        // Retrieve the original result and add 1 to it. This can be skipped.
+        return hook.original(`self`, hook.selector) + 1
+    }
+}
+
+print(object.getValue()) // => 43
+
+try hook.revert()
+print(object.getValue()) // => 42
+```
 
 ### Class Hook: Class Method
 
-…
+```swift
+class MyClass: NSObject {
+    @objc dynamic class func getStaticValue() -> Int {
+        return 42
+    }
+}
+
+print(MyClass.getStaticValue()) // => 42
+
+let hook = try Interpose.applyHook(
+    on: MyClass.self,
+    for: #selector(MyClass.getStaticValue),
+    methodKind: .class,
+    methodSignature: (@convention(c) (MyClass.Type, Selector) -> Int).self,
+    hookSignature: (@convention(block) (MyClass.Type) -> Int).self
+) { hook in
+    return { `class` in
+        // Retrieve the original result and add 1 to it. This can be skipped.
+        return hook.original(`class`, hook.selector) + 1
+    }
+}
+
+print(MyClass.getStaticValue()) // => 43
+
+try hook.revert()
+print(MyClass.getStaticValue()) // => 42
+```
 
 ### Object Hook
 
 …  
+
+### More Examples
+
+You can check out the extensive test suite to see more advanced examples or the example Xcode project to see more real-life examples of tweaking AppKit classes.  
 
 ## What’s Changed
 
