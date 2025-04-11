@@ -1,6 +1,21 @@
 import ObjectiveC
 
 extension NSObject {
+
+    public func prepareHook<MethodSignature, HookSignature>(
+        for selector: Selector,
+        methodSignature: MethodSignature.Type,
+        hookSignature: HookSignature.Type,
+        build: @escaping HookBuilder<MethodSignature, HookSignature>
+    ) throws -> Hook {
+        return try Interpose.prepareHook(
+            on: self,
+            for: selector,
+            methodSignature: methodSignature,
+            hookSignature: hookSignature,
+            build: build
+        )
+    }
     
     /// Installs a hook for the specified selector on this object instance.
     ///
@@ -43,13 +58,13 @@ extension NSObject {
         hookSignature: HookSignature.Type,
         build: @escaping HookBuilder<MethodSignature, HookSignature>
     ) throws -> Hook {
-        let hook = try Hook(
-            target: .object(self),
-            selector: selector,
+        try Interpose.applyHook(
+            on: self,
+            for: selector,
+            methodSignature: methodSignature,
+            hookSignature: hookSignature,
             build: build
         )
-        try hook.apply()
-        return hook
     }
     
 }
