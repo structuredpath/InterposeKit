@@ -2,6 +2,52 @@ import ObjectiveC
 
 extension NSObject {
 
+    /// Prepares a hook for the specified method on this object.
+    ///
+    /// Builds a block-based hook for an instance method available to the Objective-C runtime,
+    /// with access to the original implementation.
+    ///
+    /// The hook is returned in a pending state and must be applied using `apply()` to take effect.
+    /// It can then be reverted using `revert()`.
+    ///
+    /// InterposeKit installs the hook by creating a dynamic subclass at runtime and assigning it
+    /// to the object. This ensures the hook only affects this specific object and leaves all other
+    /// instances unchanged.
+    ///
+    /// - Parameters:
+    ///   - selector: The selector of the method to hook.
+    ///   - methodSignature: The expected type of the original Objective-C method, declared using
+    ///     `@convention(c)`. The function must take the receiving object and selector as its first
+    ///     two parameters, e.g. `(@convention(c) (Receiver, Selector, Parameter) -> ReturnValue).self`.
+    ///   - hookSignature: The expected type of the hook block, declared using `@convention(block)`.
+    ///     It must match the method signature, excluding the `Selector` parameter, e.g.
+    ///     `(@convention(block) (Receiver, Parameter) -> ReturnValue).self`.
+    ///   - build: A closure that receives a proxy to the hook and returns the hook block.
+    ///
+    /// - Returns: The prepared hook instance in the pending state.
+    ///
+    /// - Throws: An ``InterposeError`` if the hook could not be prepared.
+    ///
+    /// ### Example
+    ///
+    /// ```swift
+    /// let object = MyClass()
+    /// let hook = try object.prepareHook(
+    ///     for: #selector(MyClass.getValue),
+    ///     methodSignature: (@convention(c) (MyClass, Selector) -> Int).self,
+    ///     hookSignature: (@convention(block) (MyClass) -> Int).self
+    /// ) { hook in
+    ///     return { `self` in
+    ///         print("Before")
+    ///         let result = hook.original(self, hook.selector)
+    ///         print("After")
+    ///         return result + 1
+    ///     }
+    /// }
+    ///
+    /// try hook.apply()
+    /// try hook.revert()
+    /// ```
     public func prepareHook<MethodSignature, HookSignature>(
         for selector: Selector,
         methodSignature: MethodSignature.Type,
@@ -17,35 +63,45 @@ extension NSObject {
         )
     }
     
-    /// Installs a hook for the specified selector on this object instance.
+    /// Applies a hook for the specified method on this object.
     ///
-    /// Replaces the implementation of an instance method with a block-based hook, while providing
-    /// access to the original implementation through a proxy.
+    /// Builds a block-based hook for an instance method available to the Objective-C runtime,
+    /// with access to the original implementation.
     ///
-    /// To be hookable, the method must be exposed to the Objective-C runtime. When written
-    /// in Swift, it must be marked `@objc dynamic`.
+    /// The hook takes effect immediately and can later be reverted using `revert()`.
+    ///
+    /// InterposeKit installs the hook by creating a dynamic subclass at runtime and assigning it
+    /// to the object. This ensures the hook only affects this specific object and leaves all other
+    /// instances unchanged.
     ///
     /// - Parameters:
-    ///   - selector: The selector of the instance method to hook.
-    ///   - methodSignature: The expected C function type of the original method implementation.
-    ///   - hookSignature: The type of the hook block.
-    ///   - build: A hook builder closure that receives a proxy to the hook (enabling access
-    ///     to the original implementation) and returns the hook block.
+    ///   - selector: The selector of the method to hook.
+    ///   - methodSignature: The expected type of the original Objective-C method, declared using
+    ///     `@convention(c)`. The function must take the receiving object and selector as its first
+    ///     two parameters, e.g. `(@convention(c) (Receiver, Selector, Parameter) -> ReturnValue).self`.
+    ///   - hookSignature: The expected type of the hook block, declared using `@convention(block)`.
+    ///     It must match the method signature, excluding the `Selector` parameter, e.g.
+    ///     `(@convention(block) (Receiver, Parameter) -> ReturnValue).self`.
+    ///   - build: A closure that receives a proxy to the hook and returns the hook block.
     ///
-    /// - Returns: The installed hook, which can later be reverted by calling `try hook.revert()`.
+    /// - Returns: The applied hook instance in the active state.
     ///
-    /// - Throws: An error if the hook could not be applied—for example, if the method
-    ///   does not exist or is not exposed to the Objective-C runtime.
+    /// - Throws: An ``InterposeError`` if the hook could not be applied.
     ///
     /// ### Example
+    ///
     /// ```swift
+    /// let object = MyClass()
     /// let hook = try object.applyHook(
-    ///     for: #selector(MyClass.someMethod),
-    ///     methodSignature: (@convention(c) (NSObject, Selector, Int) -> Void).self,
-    ///     hookSignature: (@convention(block) (NSObject, Int) -> Void).self
+    ///     for: #selector(MyClass.getValue),
+    ///     methodSignature: (@convention(c) (MyClass, Selector) -> Int).self,
+    ///     hookSignature: (@convention(block) (MyClass) -> Int).self
     /// ) { hook in
-    ///     return { `self`, parameter in
-    ///         hook.original(self, hook.selector, parameter)
+    ///     return { `self` in
+    ///         print("Before")
+    ///         let result = hook.original(self, hook.selector)
+    ///         print("After")
+    ///         return result + 1
     ///     }
     /// }
     ///
