@@ -23,8 +23,12 @@ public enum Interpose {
     ///   - class: The class on which the method is defined.
     ///   - selector: The selector of the method to hook.
     ///   - methodKind: Whether the method is an instance or class method. Defaults to `.instance`.
-    ///   - methodSignature: The expected C function type of the original method implementation.
-    ///   - hookSignature: The type of the hook block.
+    ///   - methodSignature: The expected type of the original Objective-C method, declared using
+    ///     `@convention(c)`. The function must take the receiving object and selector as its first
+    ///     two parameters, e.g. `(@convention(c) (Receiver, Selector, Parameter) -> ReturnValue).self`.
+    ///   - hookSignature: The expected type of the hook block, declared using `@convention(block)`.
+    ///     It must match the method signature, excluding the `Selector` parameter, e.g.
+    ///     `(@convention(block) (Receiver, Parameter) -> ReturnValue).self`.
     ///   - build: A closure that receives a proxy to the hook and returns the hook block.
     ///
     /// - Returns: The prepared hook instance in the pending state.
@@ -77,8 +81,12 @@ public enum Interpose {
     ///   - class: The class on which the method is defined.
     ///   - selector: The selector of the method to hook.
     ///   - methodKind: Whether the method is an instance or class method. Defaults to `.instance`.
-    ///   - methodSignature: The expected C function type of the original method implementation.
-    ///   - hookSignature: The type of the hook block.
+    ///   - methodSignature: The expected type of the original Objective-C method, declared using
+    ///     `@convention(c)`. The function must take the receiving object and selector as its first
+    ///     two parameters, e.g. `(@convention(c) (Receiver, Selector, Parameter) -> ReturnValue).self`.
+    ///   - hookSignature: The expected type of the hook block, declared using `@convention(block)`.
+    ///     It must match the method signature, excluding the `Selector` parameter, e.g.
+    ///     `(@convention(block) (Receiver, Parameter) -> ReturnValue).self`.
     ///   - build: A closure that receives a proxy to the hook and returns the hook block.
     ///
     /// - Returns: The applied hook instance in the active state.
@@ -144,8 +152,12 @@ public enum Interpose {
     /// - Parameters:
     ///   - object: The object on which to hook the method.
     ///   - selector: The selector of the method to hook.
-    ///   - methodSignature: The expected C function type of the original method implementation.
-    ///   - hookSignature: The type of the hook block.
+    ///   - methodSignature: The expected type of the original Objective-C method, declared using
+    ///     `@convention(c)`. The function must take the receiving object and selector as its first
+    ///     two parameters, e.g. `(@convention(c) (Receiver, Selector, Parameter) -> ReturnValue).self`.
+    ///   - hookSignature: The expected type of the hook block, declared using `@convention(block)`.
+    ///     It must match the method signature, excluding the `Selector` parameter, e.g.
+    ///     `(@convention(block) (Receiver, Parameter) -> ReturnValue).self`.
     ///   - build: A closure that receives a proxy to the hook and returns the hook block.
     ///
     /// - Returns: The prepared hook instance in the pending state.
@@ -201,8 +213,12 @@ public enum Interpose {
     /// - Parameters:
     ///   - object: The object on which to hook the method.
     ///   - selector: The selector of the method to hook.
-    ///   - methodSignature: The expected C function type of the original method implementation.
-    ///   - hookSignature: The type of the hook block.
+    ///   - methodSignature: The expected type of the original Objective-C method, declared using
+    ///     `@convention(c)`. The function must take the receiving object and selector as its first
+    ///     two parameters, e.g. `(@convention(c) (Receiver, Selector, Parameter) -> ReturnValue).self`.
+    ///   - hookSignature: The expected type of the hook block, declared using `@convention(block)`.
+    ///     It must match the method signature, excluding the `Selector` parameter, e.g.
+    ///     `(@convention(block) (Receiver, Parameter) -> ReturnValue).self`.
     ///   - build: A closure that receives a proxy to the hook and returns the hook block.
     ///
     /// - Returns: The applied hook instance in the active state.
