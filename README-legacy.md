@@ -58,36 +58,6 @@ InterposeKit can hook classes and object. Class hooking is similar to swizzling,
 
 Caveat: Hooking will fail with an error if the object uses KVO. The KVO machinery is fragile and it's to easy to cause a crash. Using KVO after a hook was created is supported and will not cause issues.
 
-## Various ways to define the signature
-
-Next to using  `methodSignature` and `hookSignature`, following variants to define the signature are also possible:
-
-### methodSignature + casted block
-```
-let interposer = try Interpose(testObj) {
-    try $0.hook(
-        #selector(TestClass.sayHi),
-        methodSignature: (@convention(c) (AnyObject, Selector) -> String).self) { store in { `self` in
-            let string = store.original(`self`, store.selector)
-            return string + testString
-            } as @convention(block) (AnyObject) -> String }
-}
-```
-
-### Define type via store object
-```
-// Functions need to be `@objc dynamic` to be hookable.
-let interposer = try Interpose(testObj) {
-    try $0.hook(#selector(TestClass.returnInt)) { (store: TypedHook<@convention(c) (AnyObject, Selector) -> Int, @convention(block) (AnyObject) -> Int>) in {
-
-        // You're free to skip calling the original implementation.
-        let int = store.original($0, store.selector)
-        return int + returnIntOverrideOffset
-        }
-    }
-}
-```
-
 ## FAQ
 
 ### Why didn't you call it Interpose? "Kit" feels so old-school.
