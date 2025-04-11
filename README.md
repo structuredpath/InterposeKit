@@ -19,11 +19,37 @@ This is a continuation and modernization of [Peter Steinberger’s original impl
 - There’s no runtime type checking, and the signature has to be written twice—a trade-off to avoid `NSInvocation`.
 - Written almost entirely in Swift on top of the Objective-C runtime[^2].
 
+## Requirements
+
+- Swift 5.9 or later
+- Xcode 15 or later
+- Apple platforms only (macOS, iOS, tvOS, watchOS)
+- arm64 or x86_64 architectures
+
 ## Installation
 
-- Installation Swift Package Manager
-- Swift 5.9+, Xcode 15+
-- arm64 and x86_64 architectures
+You can add InterposeKit to your project using the Swift Package Manager.
+
+In Xcode, open your project settings, select the *Package Dependencies* tab, click the *+* button, and enter the URL `https://github.com/structuredpath/InterposeKit`. Then select the latest version and add the package to your desired target.
+
+If you’re adding InterposeKit using a `Package.swift` manifest, include it in your `dependencies` like this:
+
+```swift
+dependencies: [
+  .package(url: "https://github.com/structuredpath/InterposeKit", from: "1.0.0")
+]
+```
+
+Then add the product to any target that needs it:
+
+```swift
+.target(
+  name: "YourTarget",
+  dependencies: [
+    .product(name: "InterposeKit", package: "InterposeKit")
+  ]
+)
+```
 
 ## Usage
 
