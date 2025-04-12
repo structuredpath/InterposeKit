@@ -34,7 +34,7 @@ In Xcode, open your project settings, select the *Package Dependencies* tab, cli
 
 If you’re adding InterposeKit using a `Package.swift` manifest, include it in your `dependencies` like this:
 
-```swift
+```
 dependencies: [
   .package(url: "https://github.com/structuredpath/InterposeKit", from: "1.0.0")
 ]
@@ -42,7 +42,7 @@ dependencies: [
 
 Then add the product to any target that needs it:
 
-```swift
+```
 .target(
   name: "YourTarget",
   dependencies: [
@@ -53,7 +53,7 @@ Then add the product to any target that needs it:
 
 ## Usage
 
-### Class Hook: Instance Method 
+### Class Hook on Instance Method 
 
 ```swift
 class MyClass: NSObject {
@@ -83,7 +83,7 @@ try hook.revert()
 print(object.getValue()) // => 42
 ```
 
-### Class Hook: Class Method
+### Class Hook on Class Method
 
 ```swift
 class MyClass: NSObject {
@@ -144,7 +144,7 @@ Compared to the [original implementation](https://github.com/steipete/InterposeK
 - Dynamic subclasses created at runtime are now cleaned up when the last hook is reverted on an object.
 - Class hooks must now target the exact class that actually implements the method to ensure the revert functionality works correctly.
 - Added initial Swift 6 support with basic concurrency checks. Should be thread-safe, but most usage is still expected to be single-threaded. 
-- Removed support for [delayed hooking](https://steipete.com/posts/mac-catalyst-crash-hunt/) (`whenAvailable(…)`) to keep the library laser-focused.
+- Removed support for [delayed hooking](https://github.com/steipete/InterposeKit?tab=readme-ov-file#delayed-hooking) (`Interpose.whenAvailable(…)`) to keep the library laser-focused.
 - …and heavily refactored the Swift part of the codebase: cleaner use of Objective-C runtime APIs, a revamped `InterposeError` enum, and new supporting types like `HookScope` or `HookState`.
 
 ### Fixes
@@ -164,7 +164,7 @@ Compared to the [original implementation](https://github.com/steipete/InterposeK
 
 ## License
 
-InterposeKit is available under the [MIT license](LICENSE).
+This library is released under the MIT license. See [LICENSE](LICENSE) for details.
 
 [^1]: Both applying and reverting a hook include safety checks. InterposeKit detects if the method was modified externally—such as by KVO or other swizzling—and prevents the operation if it would lead to inconsistent behavior.
 [^2]: The most advanced part of this library is `ITKSuperBuilder`, a component for constructing method implementations that simply call `super`, which is [surprisingly hard to do](https://steipete.me/posts/calling-super-at-runtime/). It’s written in Objective-C and assembly, lives in its own SPM target, and is invoked from Swift. All credit goes to Peter who originally came up with this masterpiece!
