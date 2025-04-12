@@ -152,6 +152,22 @@ Compared to the [original implementation](https://github.com/steipete/InterposeK
 - Fixed a crash where `IKTAddSuperImplementationToClass` was stripped in release builds per [steipete/InterposeKit#29](https://github.com/steipete/InterposeKit/issues/29) by using the fix from [steipete/InterposeKit#30](https://github.com/steipete/InterposeKit/issues/30) submitted by @Thomvis, which replaces a call via dynamic library with a direct Swift call to `IKTSuperBuilder.addSuperInstanceMethod(to:selector:)`.
 - Fixed floating-point register handling on arm64 using the patch from [steipete/InterposeKit#37](https://github.com/steipete/InterposeKit/issues/37) submitted by @ishutinvv, which resolves an issue affecting swizzled methods with `CGFloat` parameters or structs like `CGPoint` and `CGRect` due to floating-point registers not being restored in the correct order after the trampoline call.
 
+## Q&A
+
+### Why did Peter call it InterposeKit?
+### Why another Objective-C swizzling library?
+### Can I hook pure C functions or Swift methods?
+
+No. Peter had plans to experiment with [Swift method hooking](https://github.com/rodionovd/SWRoute) and hooking C functions via [`dyld_dynamic_interpose`](https://twitter.com/steipete/status/1258482647933870080), but neither made it into the library. And honestly, it doesn’t really fit the scope of this library anyway. 
+
+### What the fork?
+### Can I ship this?
+
+## Improvement Ideas
+
+- Signature type checking at hook construction
+- Add support for reverting multiple hooks on a class in arbitrary order
+
 ## References
 
 - [Peter’s original implementation](https://github.com/steipete/InterposeKit)

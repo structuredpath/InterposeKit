@@ -29,28 +29,9 @@ UIKit and AppKit won't go away, and the bugs won't go away either. I see this as
 ### Can I ship this?
 Yes, absolutely. The goal for this one project is a simple library that doesn't try to be too smart. I did this in [Aspects](https://github.com/steipete/Aspects) and while I loved this to no end, it's problematic and can cause side-effects with other code that tries to be clever. InterposeKit is boring, so you don't have to worry about conditions like "We added New Relic to our app and now [your thing crashes](https://github.com/steipete/Aspects/issues/21)".
 
-### It does not do X!
-Pull Requests welcome! You might wanna open a draft before to lay out what you plan, I want to keep the feature-set minimal so it stays simple and no-magic.
-
-## Installation
-
-Building InterposeKit requires Xcode 15+ or a Swift 5.9+ toolchain with the Swift Package Manager.
-
-### Swift Package Manager
-
-Add `.package(url: "https://github.com/steipete/InterposeKit.git", from: "0.0.1")` to your
-`Package.swift` file's `dependencies`.
-
 ## Improvement Ideas
 
 - Write proposal to allow to [convert the calling convention of existing types](https://twitter.com/steipete/status/1266799174563041282?s=21).
 - Use the C block struct to perform type checking between Method type and C type (I do that in  [Aspects library](https://github.com/steipete/Aspects)), it's still a runtime crash but could be at hook time, not when we call it.
 - Add a way to get all current hooks from an object/class.
-- Add a way to revert hooks without super helper.
-- Add a way to apply multiple hooks to classes
-- Enable hooking of class methods.
-- Add [dyld_dynamic_interpose](https://twitter.com/steipete/status/1258482647933870080) to hook pure C functions
-- Combine Promise-API for `Interpose.whenAvailable` for better error bubbling.
-- Experiment with [Swift function hooking](https://github.com/rodionovd/SWRoute/wiki/Function-hooking-in-Swift)? ⚡️
-- Test against Swift Nightly as Cron Job
 - Switch to Trampolines to manage cases where other code overrides super, so we end up with a super call that's [not on top of the class hierarchy](https://github.com/steipete/InterposeKit/pull/15#discussion_r439871752).
