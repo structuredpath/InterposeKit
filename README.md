@@ -2,29 +2,28 @@
 
 [![CI](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/structuredpath/InterposeKit/actions/workflows/ci.yml) ![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg) ![Xcode 15+](https://img.shields.io/badge/Xcode-15%2B-blue.svg)
 
-**InterposeKit** is a modern library for hooking Objective-C methods in Swift, also known as method swizzling. It supports both class-based and object-based hooks and it provides a clean, block-based, Swift-friendly API.
+**InterposeKit** is a modern library for hooking Objective-C methods in Swift, also known as method swizzling. It supports both class-based and object-based hooks, and it provides a clean, block-based, Swift-friendly API.
 
-This is a continuation and modernization of [Peter Steinberger’s original implementation](https://github.com/steipete/InterposeKit). For the background on why and how this revamp came about, see [my blog post](#). If you’re migrating, check out [what’s changed](#).
+This is a continuation and modernization of [Peter Steinberger’s original implementation](https://github.com/steipete/InterposeKit). <!-- For the background on why and how this revamp came about, see [my blog post](#). --> If you’re migrating, check out [what’s changed](#what-has-changed).
 
 ## Key Features
 
 - Swift-friendly, modern, and minimal API.
-- Block-based hooks targeting both classes and individual objects.
+- Block-based hooks using direct `Method` implementation replacement under the hood rather than less-safe [selector-based swizzling](https://pspdfkit.com/blog/2019/swizzling-in-swift/). 
+- Ability to target both classes and individual objects.  
 - Support for both instance and class methods.
-- Hooks get access to the original implementation via a proxy.
 - Object hooks are safely isolated using runtime subclassing, similar to the KVO mechanism.
+- Hooks get access to the original method implementation via a proxy.
 - Hooks can be applied immediately or prepared and applied later, and safely reverted at any time[^1].
-- Direct `Method` implementation replacement rather than less-safe [selector-based swizzling](https://pspdfkit.com/blog/2019/swizzling-in-swift/).
-- Typed signatures must be provided for both the original method and the hook block, enabling an ergonomic API.
-- There’s no runtime type checking, and the signature has to be written twice—a trade-off to avoid `NSInvocation`.
-- Written almost entirely in Swift on top of the Objective-C runtime[^2].
+- Typed signatures must be explicitly provided for both the original method and the hook block. This adds some boilerplate but ensures a clean API and better performance compared to using `NSInvocation`[^2].
+- Written almost entirely in Swift on top of the Objective-C runtime[^3].
 
 ## Requirements
 
 - Swift 5.9 or later
 - Xcode 15 or later
 - Apple platforms only (macOS, iOS, tvOS, watchOS)
-- arm64 or x86_64 architectures
+- `arm64` or `x86_64` architectures
 
 ## Installation
 
@@ -36,7 +35,7 @@ If you’re adding InterposeKit using a `Package.swift` manifest, include it in 
 
 ```
 dependencies: [
-  .package(url: "https://github.com/structuredpath/InterposeKit", from: "1.0.0")
+  .package(url: "https://github.com/structuredpath/InterposeKit", from: "0.5.0")
 ]
 ```
 
@@ -121,7 +120,7 @@ print(MyClass.getStaticValue()) // => 42
 
 You can check out the extensive test suite to see more advanced examples or the example Xcode project to see more real-life examples of tweaking AppKit classes.  
 
-## What’s Changed
+<h2 id="what-has-changed">What’s Changed</h2> 
 
 Compared to the [original implementation](https://github.com/steipete/InterposeKit), this fork introduces several API and internal changes. Here is a summary of key differences with migration hints.
 
@@ -129,7 +128,7 @@ Compared to the [original implementation](https://github.com/steipete/InterposeK
 
 - Switched the library to Swift Package Manager only. Carthage and CocoaPods support was removed.
 - Raised minimum Swift version to 5.9.
-- Limited to Apple platforms with arm64 and x86_64 architectures. Support for Linux was removed.
+- Limited to Apple platforms with `arm64` and `x86_64` architectures. Support for Linux was removed.
 
 ### API Changes
 
@@ -138,25 +137,25 @@ Compared to the [original implementation](https://github.com/steipete/InterposeK
 - Signature types must now be specified via parameters, improving clarity and streamlining the API.
 - Renamed `hook(…)` methods to `applyHook(…)`.
 - Removed fluent-style `Hook` API, meaning that methods no longer return `self`.
-- Introduced `HookProxy`, which is passed into the hook builder. It still provides access to the original method implementation and selector, but hides irrelevant APIs like `revert()`.
+- Introduced `HookProxy`, which is passed into the hook builder. It still provides access to the original method implementation and selector, but hides other irrelevant APIs like `revert()`.
 - Hook types now use composition instead of inheritance. The public `Hook` class delegates to internal strategies conforming to `HookStrategy`.
 - Object hooks now use a global counter instead of UUIDs for dynamic subclass names.
 - Dynamic subclasses created at runtime are now cleaned up when the last hook is reverted on an object.
 - Class hooks must now target the exact class that actually implements the method to ensure the revert functionality works correctly.
-- Added initial Swift 6 support with basic concurrency checks. Should be thread-safe, but most usage is still expected to be single-threaded. 
-- Removed support for [delayed hooking](https://github.com/steipete/InterposeKit?tab=readme-ov-file#delayed-hooking) (`Interpose.whenAvailable(…)`) to keep the library laser-focused.
+- Added initial Swift 6 support with basic concurrency checks. Should be thread-safe but most usage is still expected to be single-threaded. 
+- Removed support for [delayed hooking](https://github.com/steipete/InterposeKit?tab=readme-ov-file#delayed-hooking) via `Interpose.whenAvailable(…)` to keep the library laser-focused.
 - …and heavily refactored the Swift part of the codebase: cleaner use of Objective-C runtime APIs, a revamped `InterposeError` enum, and new supporting types like `HookScope` or `HookState`.
 
 ### Fixes
 
-- Fixed a crash where `IKTAddSuperImplementationToClass` was stripped in release builds per [steipete/InterposeKit#29](https://github.com/steipete/InterposeKit/issues/29) by using the fix from [steipete/InterposeKit#30](https://github.com/steipete/InterposeKit/issues/30) submitted by @Thomvis, which replaces a call via dynamic library with a direct Swift call to `IKTSuperBuilder.addSuperInstanceMethod(to:selector:)`.
-- Fixed floating-point register handling on arm64 using the patch from [steipete/InterposeKit#37](https://github.com/steipete/InterposeKit/issues/37) submitted by @ishutinvv, which resolves an issue affecting swizzled methods with `CGFloat` parameters or structs like `CGPoint` and `CGRect` due to floating-point registers not being restored in the correct order after the trampoline call.
+- Fixed a crash where `IKTAddSuperImplementationToClass` was stripped in release builds per [steipete/InterposeKit#29](https://github.com/steipete/InterposeKit/issues/29) by using the fix from [steipete/InterposeKit#30](https://github.com/steipete/InterposeKit/issues/30) submitted by [@Thomvis](https://github.com/Thomvis), which replaces a call via dynamic library with a direct Swift call to `IKTSuperBuilder.addSuperInstanceMethod(to:selector:)`.
+- Fixed floating-point register handling on arm64 using the patch from [steipete/InterposeKit#37](https://github.com/steipete/InterposeKit/issues/37) submitted by [@ishutinvv](https://github.com/ishutinvv), which resolves an issue affecting swizzled methods with `CGFloat` parameters or structs like `CGPoint` and `CGRect` due to floating-point registers not being restored in the correct order after the trampoline call.
 
 ## Q&A
 
 ### Why did Peter call it InterposeKit?
 ### Why another Objective-C swizzling library?
-### Can I hook pure C functions or Swift methods?
+### Can I hook Swift methods? And what about pure C functions?
 
 No. Peter had plans to experiment with [Swift method hooking](https://github.com/rodionovd/SWRoute) and hooking C functions via [`dyld_dynamic_interpose`](https://twitter.com/steipete/status/1258482647933870080), but neither made it into the library. And honestly, it doesn’t really fit the scope of this library anyway. 
 
@@ -165,8 +164,9 @@ No. Peter had plans to experiment with [Swift method hooking](https://github.com
 
 ## Improvement Ideas
 
+- Support for hooking KVO-enabled objects
 - Signature type checking at hook construction
-- Add support for reverting multiple hooks on a class in arbitrary order
+- Support for reverting multiple hooks on a class in an arbitrary order
 
 ## References
 
@@ -183,4 +183,5 @@ No. Peter had plans to experiment with [Swift method hooking](https://github.com
 This library is released under the MIT license. See [LICENSE](LICENSE) for details.
 
 [^1]: Both applying and reverting a hook include safety checks. InterposeKit detects if the method was modified externally—such as by KVO or other swizzling—and prevents the operation if it would lead to inconsistent behavior.
-[^2]: The most advanced part of this library is `ITKSuperBuilder`, a component for constructing method implementations that simply call `super`, which is [surprisingly hard to do](https://steipete.me/posts/calling-super-at-runtime/). It’s written in Objective-C and assembly, lives in its own SPM target, and is invoked from Swift. All credit goes to Peter who originally came up with this masterpiece!
+[^2]: There’s currently no runtime type checking. If the specified types don’t match, it will cause a runtime crash. 
+[^3]: The most advanced part of this library is `ITKSuperBuilder`, a component for constructing method implementations that simply call `super`, which is [surprisingly hard to do](https://steipete.me/posts/calling-super-at-runtime/). It’s written in Objective-C and assembly, lives in its own SPM target, and is invoked from Swift. All credit goes to Peter, who originally came up with this masterpiece!
