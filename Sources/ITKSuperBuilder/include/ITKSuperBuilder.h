@@ -63,9 +63,9 @@ There are a few important details:
 NSString *const ITKSuperBuilderErrorDomain;
 
 typedef NS_ERROR_ENUM(ITKSuperBuilderErrorDomain, ITKSuperBuilderErrorCode) {
-    SuperBuilderErrorCodeNoSuperClass,
-    SuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable,
-    SuperBuilderErrorCodeFailedToAddMethod
+    ITKSuperBuilderErrorCodeNoSuperClass,
+    ITKSuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable,
+    ITKSuperBuilderErrorCodeFailedToAddMethod
 };
 
 NS_ASSUME_NONNULL_END

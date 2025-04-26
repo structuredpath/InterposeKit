@@ -26,7 +26,7 @@ static BOOL ITKMethodIsSuperTrampoline(Method method);
         if (error) {
             let message = [NSString stringWithFormat:@"Unable to find superclass for %@", NSStringFromClass(originalClass)];
             *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain
-                                         code:SuperBuilderErrorCodeNoSuperClass
+                                         code:ITKSuperBuilderErrorCodeNoSuperClass
                                      userInfo:@{NSLocalizedDescriptionKey: message}];
             return NO;
         }
@@ -38,7 +38,7 @@ static BOOL ITKMethodIsSuperTrampoline(Method method);
         if (error) {
             let message = [NSString stringWithFormat:@"No dynamically dispatched method with selector %@ is available on any of the superclasses of %@", NSStringFromSelector(selector), NSStringFromClass(originalClass)];
             *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain
-                                         code:SuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable
+                                         code:ITKSuperBuilderErrorCodeNoDynamicallyDispatchedMethodAvailable
                                      userInfo:@{NSLocalizedDescriptionKey: message}];
             return NO;
         }
@@ -52,7 +52,7 @@ static BOOL ITKMethodIsSuperTrampoline(Method method);
         if (error) {
             let message = [NSString stringWithFormat:@"Failed to add method for selector %@ to class %@", NSStringFromSelector(selector), NSStringFromClass(originalClass)];
             *error = [NSError errorWithDomain:ITKSuperBuilderErrorDomain
-                                         code:SuperBuilderErrorCodeFailedToAddMethod
+                                         code:ITKSuperBuilderErrorCodeFailedToAddMethod
                                      userInfo:@{NSLocalizedDescriptionKey: message}];
             return NO;
         }
@@ -127,7 +127,7 @@ struct objc_super *ITKReturnThreadSuper(__unsafe_unretained id obj, SEL _cmd) {
      Assume you have a class hierarchy made of four classes `Level1` <- `Level2` <- `Level3` <- `Level4`,
      with `Level1` implementing a method called `-sayHello`, not implemented elsewhere in descendants classes.
 
-     If you use: `[SuperBuilder addSuperInstanceMethodToClass:Level2.class selector:@selector(sayHello) error:NULL];`
+     If you use: `[ITKSuperBuilder addSuperInstanceMethodToClass:Level2.class selector:@selector(sayHello) error:NULL];`
      to inject a _dummy_ implementation at `Level2`, the following will happen:
 
      - Calling `-[Level2 sayHello]` works. The trampoline is called, the `super_class ` is found to be `Level1`, and the `-sayHello` parent implementation is called.
