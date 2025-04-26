@@ -114,11 +114,47 @@ print(MyClass.getStaticValue()) // => 42
 
 ### Object Hook
 
-…  
+```swift
+class MyClass: NSObject {
+    @objc dynamic func getValue() -> Int {
+        return 42
+    }
+}
+
+let object1 = MyClass()
+let object2 = MyClass()
+
+print(object1.getValue()) // => 42
+print(object2.getValue()) // => 42
+
+let hook = try Interpose.applyHook(
+    on: object1,
+    for: #selector(MyClass.getValue),
+    methodSignature: (@convention(c) (MyClass, Selector) -> Int).self,
+    hookSignature: (@convention(block) (MyClass) -> Int).self
+) { hook in
+    return { `self` in
+        return hook.original(`self`, hook.selector) + 1
+    }
+}
+
+print(object1.getValue()) // => 43
+print(object2.getValue()) // => 42
+
+try hook.revert()
+
+print(object1.getValue()) // => 42
+print(object2.getValue()) // => 42
+```
+
+> [!IMPORTANT]  
+> If the object is already being observed via KVO when you apply or revert the hook, the operation will fail safely by throwing `InterposeError.kvoDetected(object:)`. Using KVO after the hook is installed is fully supported.
 
 ### More Examples
 
-You can check out the extensive test suite to see more advanced examples or the example Xcode project to see more real-life examples of tweaking AppKit classes.  
+You can check out the extensive test suite to see more advanced examples. The repository also comes with and example Xcode project, which showcases more real-life examples of tweaking AppKit classes.
+
+<!-- Screenshot of example app -->
 
 <h2 id="what-has-changed">What’s Changed</h2> 
 
