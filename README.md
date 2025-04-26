@@ -35,7 +35,7 @@ If you’re adding InterposeKit using a `Package.swift` manifest, include it in 
 
 ```
 dependencies: [
-    .package(url: "https://github.com/structuredpath/InterposeKit", from: "0.5.0")
+    .package(url: "https://github.com/structuredpath/InterposeKit", from: "1.0.0")
 ]
 ```
 
@@ -153,7 +153,7 @@ print(object2.getValue()) // => 42
 
 ### More Examples
 
-You can check out the extensive test suite to see more advanced examples. The repository also comes with and example Xcode project, which showcases more real-life examples of tweaking AppKit classes.
+You can check out the extensive test suite to see more advanced examples. The repository also comes with an example Xcode project, which showcases more real-life examples of tweaking AppKit classes.
 
 <!-- Screenshot of example app -->
 
@@ -196,21 +196,21 @@ Peter originally wanted to go with _Interpose_, but [Swift had (and still has) a
 
 ### Why another Objective-C swizzling library?
 
-UIKit, AppKit, and other system frameworks written in Objective-C won’t go away and sometimes you still need to swizzle to fix bugs or tweak internal behavior. InterposeKit is meant as a rarely-needed tool for these cases, providing a simple, Swift-friendly API.
+UIKit, AppKit, and other system frameworks written in Objective-C won’t go away and sometimes you still need to swizzle to fix bugs or tweak internal behavior. InterposeKit is meant as a rarely needed tool for these cases, providing a simple, Swift-friendly API.
 
 ### What the fork?
 
-This version of InterposeKit started as a fork of [Peter Steinberger’s original library](https://github.com/steipete/InterposeKit) but has since evolved into a significantly reworked and modernized version. The core ideas and underlying runtime techniques remain, but large parts of the Swift codebase were restructured and rewritten. <!-- To learn more about my motivation, see [my blog post](#). -->
+This version of InterposeKit started as a fork of [Peter Steinberger’s original library](https://github.com/steipete/InterposeKit) but has since evolved into a *significantly reworked and modernized* version. The core ideas and underlying runtime techniques remain, but large parts of the Swift codebase were restructured and rewritten. <!-- To learn more about my motivation, see [my blog post](#). -->
 
 ### Can I hook Swift methods? And what about pure C functions?
 
-No. Peter had plans to experiment with [Swift method hooking](https://github.com/rodionovd/SWRoute), [Swift dynamic function replacement](https://github.com/swiftlang/swift/pull/20333), and hooking C functions via [`dyld_dynamic_interpose`](https://twitter.com/steipete/status/1258482647933870080), but none made it into the library. And honestly, it doesn’t really fit the scope of this library anyway. 
+No. Peter had plans to experiment with [Swift method hooking](https://github.com/rodionovd/SWRoute), [Swift dynamic function replacement](https://github.com/swiftlang/swift/pull/20333), and hooking C functions via [`dyld_dynamic_interpose`](https://twitter.com/steipete/status/1258482647933870080), but none of these made it into InterposeKit, and frankly, they wouldn’t really fit the scope of this library anyway. 
 
 ### Can I ship this?
 
 Modifying the internal behavior of system frameworks always carries risks. You should know what you’re doing, use defensive programming techniques, and assume that future OS updates might break your hooks.
 
-That said, InterposeKit is designed to be safe for production use. It includes guardrails that verify method state before applying or reverting hooks, helping catch unexpected conditions early. The focus is on simplicity and predictability, avoiding clever tricks that could introduce hidden side effects.
+That said, InterposeKit is designed to be safe for production use. It includes guardrails that verify the method state before applying or reverting hooks, helping catch unexpected conditions early. The focus is on simplicity and predictability, avoiding clever tricks that could introduce hidden side effects.
 
 ## Improvement Ideas
 
