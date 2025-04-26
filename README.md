@@ -153,14 +153,27 @@ Compared to the [original implementation](https://github.com/steipete/InterposeK
 
 ## Q&A
 
-### Why did Peter call it InterposeKit?
-### Why another Objective-C swizzling library?
-### Can I hook Swift methods? And what about pure C functions?
+### Why is it called InterposeKit?
 
-No. Peter had plans to experiment with [Swift method hooking](https://github.com/rodionovd/SWRoute) and hooking C functions via [`dyld_dynamic_interpose`](https://twitter.com/steipete/status/1258482647933870080), but neither made it into the library. And honestly, it doesn’t really fit the scope of this library anyway. 
+Peter originally wanted to go with _Interpose_, but [Swift had (and still has) a bug](https://github.com/swiftlang/swift/issues/43510) where using the same name for a module and a type can break things in certain scenarios.
+
+### Why another Objective-C swizzling library?
+
+UIKit, AppKit, and other system frameworks written in Objective-C won’t go away and sometimes you still need to swizzle to fix bugs or tweak internal behavior. InterposeKit is meant as a rarely-needed tool for these cases, providing a simple, Swift-friendly API.
 
 ### What the fork?
+
+This version of InterposeKit started as a fork of [Peter Steinberger’s original library](https://github.com/steipete/InterposeKit) but has since evolved into a significantly reworked and modernized version. The core ideas and underlying runtime techniques remain, but large parts of the Swift codebase were restructured and rewritten. <!-- To learn more about my motivation, see [my blog post](#). -->
+
+### Can I hook Swift methods? And what about pure C functions?
+
+No. Peter had plans to experiment with [Swift method hooking](https://github.com/rodionovd/SWRoute), [Swift dynamic function replacement](https://github.com/swiftlang/swift/pull/20333), and hooking C functions via [`dyld_dynamic_interpose`](https://twitter.com/steipete/status/1258482647933870080), but none made it into the library. And honestly, it doesn’t really fit the scope of this library anyway. 
+
 ### Can I ship this?
+
+Modifying the internal behavior of system frameworks always carries risks. You should know what you’re doing, use defensive programming techniques, and assume that future OS updates might break your hooks.
+
+That said, InterposeKit is designed to be safe for production use. It includes guardrails that verify method state before applying or reverting hooks, helping catch unexpected conditions early. The focus is on simplicity and predictability, avoiding clever tricks that could introduce hidden side effects.
 
 ## Improvement Ideas
 
