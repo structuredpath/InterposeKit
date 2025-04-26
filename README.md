@@ -177,9 +177,11 @@ That said, InterposeKit is designed to be safe for production use. It includes g
 
 ## Improvement Ideas
 
-- Support for hooking KVO-enabled objects
-- Signature type checking at hook construction
-- Support for reverting multiple hooks on a class in an arbitrary order
+- Support for hooking KVO-enabled objects ([#19](https://github.com/structuredpath/InterposeKit/issues/19))
+- Correct super lookup when injecting a trampoline into classes with overridden methods ([#21](https://github.com/structuredpath/InterposeKit/issues/21))
+- Signature type checking at hook construction ([#20](https://github.com/structuredpath/InterposeKit/issues/20))
+- A way for retrieving all hooks on an object/class
+- Support for reverting multiple hooks on a class in an arbitrary order ([#12](https://github.com/structuredpath/InterposeKit/issues/12))
 
 ## References
 
