@@ -35,7 +35,7 @@ If you’re adding InterposeKit using a `Package.swift` manifest, include it in 
 
 ```
 dependencies: [
-  .package(url: "https://github.com/structuredpath/InterposeKit", from: "0.5.0")
+    .package(url: "https://github.com/structuredpath/InterposeKit", from: "0.5.0")
 ]
 ```
 
@@ -43,10 +43,10 @@ Then add the product to any target that needs it:
 
 ```
 .target(
-  name: "YourTarget",
-  dependencies: [
-    .product(name: "InterposeKit", package: "InterposeKit")
-  ]
+    name: "YourTarget",
+    dependencies: [
+        .product(name: "InterposeKit", package: "InterposeKit")
+    ]
 )
 ```
 
@@ -134,6 +134,7 @@ let hook = try Interpose.applyHook(
     hookSignature: (@convention(block) (MyClass) -> Int).self
 ) { hook in
     return { `self` in
+        // Retrieve the original result and add 1 to it. This can be skipped.
         return hook.original(`self`, hook.selector) + 1
     }
 }
