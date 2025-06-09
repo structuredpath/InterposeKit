@@ -226,9 +226,14 @@ That said, InterposeKit is designed to be safe for production use. It includes g
 - [Peter’s introductory blog post](https://steipete.me/posts/interposekit/)
 - [Peter’s blog post on swizzling in Swift](https://www.nutrient.io/blog/swizzling-in-swift/)
 - [Peter’s blog post on calling super at runtime](https://steipete.me/posts/calling-super-at-runtime/)
-- [Aspects - Objective-C predecessor to InterposeKit](https://github.com/steipete/Aspects)
 - [NSHipster on method swizzling](https://nshipster.com/method-swizzling/)
 - [Stack Overflow: How do I remove instance methods at runtime in Objective-C 2.0?](https://stackoverflow.com/questions/1315169/how-do-i-remove-instance-methods-at-runtime-in-objective-c-2-0)
+
+## Alternatives
+
+- [Aspects](https://github.com/steipete/Aspects) — Objective-C predecessor to InterposeKit that hooks methods via message forwarding.
+- [SwiftHook](https://github.com/623637646/SwiftHook) — Supports hooking Objective-C methods, Swift methods, and C functions. More feature-rich but also more complex. 
+- [swift-hook](https://github.com/p-x9/swift-hook) — Hooks Swift methods via vtable rewriting and doesn’t support Objective-C.  
 
 ## License
 
