@@ -227,6 +227,7 @@ That said, InterposeKit is designed to be safe for production use. It includes g
 - [Peter’s blog post on swizzling in Swift](https://www.nutrient.io/blog/swizzling-in-swift/)
 - [Peter’s blog post on calling super at runtime](https://steipete.me/posts/calling-super-at-runtime/)
 - [NSHipster on method swizzling](https://nshipster.com/method-swizzling/)
+- [NSHipster on key-value observing](https://nshipster.com/key-value-observing/)
 - [Stack Overflow: How do I remove instance methods at runtime in Objective-C 2.0?](https://stackoverflow.com/questions/1315169/how-do-i-remove-instance-methods-at-runtime-in-objective-c-2-0)
 
 ## Alternatives
