@@ -1,4 +1,4 @@
-import ITKSuperBuilder
+import InterposeKitObjC
 import ObjectiveC
 
 internal final class ObjectHookStrategy: HookStrategy {
